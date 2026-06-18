@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Classroom API 動作確認プロトタイプ</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+         max-width: 760px; margin: 24px auto; padding: 0 16px; color: #1d1d1f; }
+  h1 { font-size: 18px; }
+  button { font-size: 15px; padding: 8px 16px; border-radius: 8px;
+           border: 1px solid #ccc; background: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .status { margin: 12px 0; color: #86868b; font-size: 14px; white-space: pre-wrap; }
+  .course { border: 1px solid #eee; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+  .course h2 { font-size: 15px; margin: 0 0 8px; }
+  .work { font-size: 14px; padding: 6px 0; border-top: 1px solid #f3f3f3; }
+  .due { color: #007aff; font-size: 13px; }
+  .nodue { color: #aaa; font-size: 13px; }
+  pre { background: #f7f7f8; padding: 12px; border-radius: 8px; overflow: auto;
+        font-size: 12px; max-height: 320px; }
+  .warn { background: #fff7e6; border: 1px solid #ffe1a8; padding: 10px 12px;
+          border-radius: 8px; font-size: 13px; }
+</style>
+</head>
+<body>
+  <h1>Google Classroom API 動作確認プロトタイプ</h1>
+
+  <div class="warn" id="config-warn">
+    ⚠️ 起動前に <code>CLIENT_ID</code> を設定してください（このファイル下部の &lt;script&gt; 内）。
+    手順は README.md を参照。
+  </div>
+
+  <p>
+    <button id="login" disabled>Googleでログイン</button>
+    <button id="logout" disabled>ログアウト</button>
+  </p>
+
+  <div class="status" id="status">準備中…</div>
+
+  <div id="output"></div>
+
+  <h2 style="font-size:14px;color:#86868b;">取得した生データ (JSON)</h2>
+  <pre id="raw">（まだ取得していません）</pre>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    // ====== ここを自分の OAuth クライアントIDに置き換える ======
+    const CLIENT_ID = "440587564587-rkc9moajd4oloh6u6vf2orh4scorrugm.apps.googleusercontent.com";
+    // ===========================================================
+
+    // 読み取り専用スコープ（書き込みは要求しない）
+    const SCOPES = [
+      "https://www.googleapis.com/auth/classroom.courses.readonly",
+      "https://www.googleapis.com/auth/classroom.coursework.me.readonly",
+    ].join(" ");
+
+    const $status = document.getElementById("status");
+    const $output = document.getElementById("output");
+    const $raw = document.getElementById("raw");
+    const $login = document.getElementById("login");
+    const $logout = document.getElementById("logout");
+    const $warn = document.getElementById("config-warn");
+
+    let tokenClient = null;
+    let accessToken = null;
+
+    const setStatus = (msg) => { $status.textContent = msg; };
+
+    // Google Identity Services の読み込みを待つ
+    window.addEventListener("load", () => {
+      if (CLIENT_ID.startsWith("YOUR_CLIENT_ID")) {
+        setStatus("CLIENT_ID が未設定です。README.md の手順で設定してください。");
+        return;
+      }
+      $warn.style.display = "none";
+      const waitGis = setInterval(() => {
+        if (window.google && google.accounts && google.accounts.oauth2) {
+          clearInterval(waitGis);
+          initAuth();
+        }
+      }, 100);
+    });
+
+    function initAuth() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (resp) => {
+          if (resp.error) { setStatus("認証エラー: " + resp.error); return; }
+          accessToken = resp.access_token;
+          $logout.disabled = false;
+          setStatus("ログイン成功。課題を取得中…");
+          loadData();
+        },
+      });
+      $login.disabled = false;
+      setStatus("ログインできます。");
+    }
+
+    $login.onclick = () => tokenClient.requestAccessToken({ prompt: "consent" });
+    $logout.onclick = () => {
+      if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+      accessToken = null;
+      $output.innerHTML = "";
+      $raw.textContent = "（ログアウトしました）";
+      $logout.disabled = true;
+      setStatus("ログアウトしました。");
+    };
+
+    // Classroom REST API 呼び出し
+    async function api(path) {
+      const res = await fetch("https://classroom.googleapis.com/v1/" + path, {
+        headers: { Authorization: "Bearer " + accessToken },
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`HTTP ${res.status} ${path}\n${body}`);
+      }
+      return res.json();
+    }
+
+    async function loadData() {
+      try {
+        // 1. 受講中のコース一覧
+        const coursesResp = await api("courses?courseStates=ACTIVE&studentId=me");
+        const courses = coursesResp.courses || [];
+        if (courses.length === 0) {
+          setStatus("コースは0件でした。学生として参加しているクラスがあるか確認してください。");
+        } else {
+          setStatus(`コース ${courses.length} 件を取得。各コースの課題を取得中…`);
+        }
+
+        const full = [];
+        $output.innerHTML = "";
+
+        // 2. 各コースの課題を取得
+        for (const c of courses) {
+          let work = [];
+          try {
+            const cw = await api(`courses/${c.id}/courseWork`);
+            work = cw.courseWork || [];
+          } catch (e) {
+            work = [{ title: "(課題取得エラー: " + e.message.split("\n")[0] + ")" }];
+          }
+          full.push({ course: c, courseWork: work });
+          renderCourse(c, work);
+        }
+
+        $raw.textContent = JSON.stringify(full, null, 2);
+        setStatus(`完了。コース ${courses.length} 件・課題は合計 ` +
+          full.reduce((n, f) => n + f.courseWork.length, 0) + " 件。");
+      } catch (e) {
+        setStatus("エラーが発生しました:\n" + e.message);
+        $raw.textContent = e.message;
+      }
+    }
+
+    function formatDue(w) {
+      if (!w.dueDate) return null;
+      const d = w.dueDate;
+      const t = w.dueTime || {};
+      const date = new Date(Date.UTC(
+        d.year, (d.month || 1) - 1, d.day || 1,
+        t.hours || 0, t.minutes || 0));
+      return date.toLocaleString("ja-JP",
+        { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function renderCourse(course, work) {
+      const div = document.createElement("div");
+      div.className = "course";
+      const h = document.createElement("h2");
+      h.textContent = course.name || "(無題のコース)";
+      div.appendChild(h);
+
+      if (work.length === 0) {
+        const p = document.createElement("div");
+        p.className = "work nodue";
+        p.textContent = "課題なし";
+        div.appendChild(p);
+      }
+      for (const w of work) {
+        const row = document.createElement("div");
+        row.className = "work";
+        const due = formatDue(w);
+        row.innerHTML = `${w.title || "(無題)"} ` +
+          (due ? `<span class="due">締切: ${due}</span>`
+               : `<span class="nodue">締切なし</span>`);
+        div.appendChild(row);
+      }
+      $output.appendChild(div);
+    }
+  </script>
+</body>
+</html>
