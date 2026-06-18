@@ -19,17 +19,19 @@ export function useAssignments() {
     setError(null);
     try {
       const { allWork } = await fetchAllData();
-      const transformed = allWork.map(({ course, work, submission }) =>
+      const classroomItems = allWork.map(({ course, work, submission }) =>
         transformAssignment(course, work, submission)
       );
-      transformed.sort((a, b) => {
+      await cacheAssignments(classroomItems);
+
+      const all = await getCachedAssignments();
+      all.sort((a, b) => {
         if (!a.dueDate && !b.dueDate) return 0;
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
         return a.dueDate.getTime() - b.dueDate.getTime();
       });
-      setAssignments(transformed);
-      await cacheAssignments(transformed);
+      setAssignments(all);
     } catch (e) {
       setError(e instanceof Error ? e.message : "取得に失敗しました");
     } finally {

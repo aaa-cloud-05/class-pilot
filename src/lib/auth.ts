@@ -1,4 +1,5 @@
 const CLIENT_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ??
   "440587564587-rkc9moajd4oloh6u6vf2orh4scorrugm.apps.googleusercontent.com";
 
 const SCOPES = [

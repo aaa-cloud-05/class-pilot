@@ -44,6 +44,21 @@ export async function getCachedAssignments(): Promise<Assignment[]> {
   return all.map(deserialize);
 }
 
+export async function cacheWebClassAssignments(assignments: Assignment[]): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(STORE, "readwrite");
+  const allKeys = await tx.store.getAllKeys();
+  for (const key of allKeys) {
+    if (typeof key === "string" && key.startsWith("wc-")) {
+      tx.store.delete(key);
+    }
+  }
+  for (const a of assignments) {
+    tx.store.put(serialize(a));
+  }
+  await tx.done;
+}
+
 export async function clearCache(): Promise<void> {
   const db = await getDb();
   await db.clear(STORE);
