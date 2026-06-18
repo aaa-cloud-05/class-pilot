@@ -98,6 +98,13 @@ export default function HomePage() {
             タップして更新
           </button>
         )}
+
+        <a
+          href="/import"
+          className="block text-center text-xs text-gray-300 py-2"
+        >
+          WebClass 連携
+        </a>
       </main>
 
       <NavBar />
