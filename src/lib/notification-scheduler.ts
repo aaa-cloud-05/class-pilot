@@ -61,8 +61,11 @@ export async function checkAndNotify(): Promise<number> {
           console.log(`[通知] スキップ(送信済み): ${assignment.title} ${timing.type}`);
         } else {
           console.log(`[通知] 送信: ${assignment.title} (残り${Math.round(minutesLeft)}分, ${timing.type})`);
+          const timeLabel = timing.type === "24h" ? "24時間" : timing.type === "3h" ? "3時間" : "1時間";
+          const notifTitle = `締切まで${timeLabel}`;
+          const notifBody = `「${assignment.title}」（${assignment.courseName}）`;
           await showDeadlineNotification(assignment, timing.type);
-          await recordNotification(assignment.id, timing.type);
+          await recordNotification(assignment.id, timing.type, notifTitle, notifBody);
           sent++;
         }
       }
