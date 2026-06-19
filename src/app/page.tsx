@@ -145,6 +145,15 @@ export default function HomePage() {
         </a>
       </main>
 
+      <Link
+        href="/add"
+        className="fixed right-5 bottom-20 z-20 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 active:scale-95 transition mb-[env(safe-area-inset-bottom)]"
+      >
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </Link>
+
       <NavBar />
     </div>
   );
