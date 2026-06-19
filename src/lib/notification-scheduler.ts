@@ -74,18 +74,35 @@ export async function checkAndNotify(): Promise<number> {
 }
 
 export async function sendTestNotification(): Promise<void> {
-  const reg = await navigator.serviceWorker.getRegistration();
-  if (!reg) {
-    console.log("[通知テスト] Service Worker未登録");
-    return;
+  console.log(`[通知テスト] permission=${Notification.permission}`);
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    console.log(`[通知テスト] SW登録=${!!reg}, active=${!!reg?.active}`);
+    if (reg?.active) {
+      await reg.showNotification("テスト通知", {
+        body: "通知が正常に動作しています",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: "test",
+        data: { url: "/" },
+      });
+      console.log("[通知テスト] SW通知送信成功");
+      return;
+    }
+  } catch (e) {
+    console.log("[通知テスト] SW通知エラー:", e);
   }
-  await reg.showNotification("テスト通知", {
-    body: "通知が正常に動作しています",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
-    tag: "test",
-    data: { url: "/" },
-  });
+
+  try {
+    const n = new Notification("テスト通知", {
+      body: "通知が正常に動作しています",
+      icon: "/icons/icon-192.png",
+    });
+    console.log("[通知テスト] Notification API送信成功");
+    n.onclick = () => window.focus();
+  } catch (e) {
+    console.log("[通知テスト] Notification APIエラー:", e);
+  }
 }
 
 async function showDeadlineNotification(
@@ -96,14 +113,32 @@ async function showDeadlineNotification(
   const title = `締切まで${timeLabel}`;
   const body = `「${assignment.title}」（${assignment.courseName}）`;
 
-  const reg = await navigator.serviceWorker.getRegistration();
-  if (reg) {
-    await reg.showNotification(title, {
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg?.active) {
+      await reg.showNotification(title, {
+        body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: `${assignment.id}:${type}`,
+        data: { url: assignment.link || "/" },
+      });
+      console.log(`[通知] SW通知成功: ${assignment.title}`);
+      return;
+    }
+    console.log(`[通知] SW未アクティブ, Notification APIにフォールバック`);
+  } catch (e) {
+    console.log(`[通知] SW通知エラー:`, e);
+  }
+
+  try {
+    new Notification(title, {
       body,
       icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
       tag: `${assignment.id}:${type}`,
-      data: { url: assignment.link || "/" },
     });
+    console.log(`[通知] Notification API成功: ${assignment.title}`);
+  } catch (e) {
+    console.log(`[通知] Notification APIエラー:`, e);
   }
 }
