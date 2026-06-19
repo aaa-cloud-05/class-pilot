@@ -41,16 +41,19 @@ export function useAssignments() {
 
   useEffect(() => {
     async function init() {
-      const cached = await getCachedAssignments();
-      if (cached.length > 0) {
-        cached.sort((a, b) => {
-          if (!a.dueDate && !b.dueDate) return 0;
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return a.dueDate.getTime() - b.dueDate.getTime();
-        });
-        setAssignments(cached);
-        setLoading(false);
+      try {
+        const cached = await getCachedAssignments();
+        if (cached.length > 0) {
+          cached.sort((a, b) => {
+            if (!a.dueDate && !b.dueDate) return 0;
+            if (!a.dueDate) return 1;
+            if (!b.dueDate) return -1;
+            return a.dueDate.getTime() - b.dueDate.getTime();
+          });
+          setAssignments(cached);
+        }
+      } catch {
+        // IndexedDB unavailable
       }
       if (token) {
         await refresh();
