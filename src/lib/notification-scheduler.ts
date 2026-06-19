@@ -26,15 +26,24 @@ const PRESETS: Record<NotificationPreset, PresetTiming[]> = {
 
 export async function checkAndNotify(): Promise<number> {
   if (typeof window === "undefined") return 0;
-  if (Notification.permission !== "granted") return 0;
+
+  if (Notification.permission !== "granted") {
+    console.log("[通知] permission:", Notification.permission);
+    return 0;
+  }
 
   const settings = await getNotificationSettings();
-  if (!settings.enabled) return 0;
+  if (!settings.enabled) {
+    console.log("[通知] 通知が無効です");
+    return 0;
+  }
 
   const assignments = await getCachedAssignments();
   const now = Date.now();
   const timings = PRESETS[settings.preset];
   let sent = 0;
+
+  console.log(`[通知] チェック開始: ${assignments.length}件, preset=${settings.preset}`);
 
   for (const assignment of assignments) {
     if (!assignment.dueDate) continue;
@@ -48,7 +57,10 @@ export async function checkAndNotify(): Promise<number> {
     for (const timing of timings) {
       if (minutesLeft <= timing.minutes) {
         const alreadySent = await hasBeenNotified(assignment.id, timing.type);
-        if (!alreadySent) {
+        if (alreadySent) {
+          console.log(`[通知] スキップ(送信済み): ${assignment.title} ${timing.type}`);
+        } else {
+          console.log(`[通知] 送信: ${assignment.title} (残り${Math.round(minutesLeft)}分, ${timing.type})`);
           await showDeadlineNotification(assignment, timing.type);
           await recordNotification(assignment.id, timing.type);
           sent++;
@@ -57,7 +69,23 @@ export async function checkAndNotify(): Promise<number> {
     }
   }
 
+  console.log(`[通知] 完了: ${sent}件送信`);
   return sent;
+}
+
+export async function sendTestNotification(): Promise<void> {
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg) {
+    console.log("[通知テスト] Service Worker未登録");
+    return;
+  }
+  await reg.showNotification("テスト通知", {
+    body: "通知が正常に動作しています",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: "test",
+    data: { url: "/" },
+  });
 }
 
 async function showDeadlineNotification(

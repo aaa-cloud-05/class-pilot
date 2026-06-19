@@ -1,28 +1,11 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
 import { useAssignments } from "@/hooks/useAssignments";
 import { CalendarGrid } from "@/components/CalendarGrid";
 import { NavBar } from "@/components/NavBar";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function CalendarPage() {
-  const { token, loading: authLoading } = useAuth();
   const { assignments, loading } = useAssignments();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!authLoading && !token) router.replace("/login");
-  }, [authLoading, token, router]);
-
-  if (authLoading || !token) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-gray-400">
-        読み込み中…
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen pb-20">

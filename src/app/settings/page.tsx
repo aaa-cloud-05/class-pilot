@@ -10,6 +10,7 @@ import {
   type NotificationPreset,
   type NotificationSettings,
 } from "@/lib/notification-store";
+import { sendTestNotification } from "@/lib/notification-scheduler";
 
 const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
   { value: "relaxed", label: "余裕派", desc: "締切24時間前に1回" },
@@ -18,15 +19,11 @@ const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
 ];
 
 export default function SettingsPage() {
-  const { token, loading: authLoading, logout } = useAuth();
+  const { token, logout } = useAuth();
   const { assignments } = useAssignments();
   const router = useRouter();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("default");
-
-  useEffect(() => {
-    if (!authLoading && !token) router.replace("/login");
-  }, [authLoading, token, router]);
 
   useEffect(() => {
     getNotificationSettings().then(setSettings);
@@ -49,7 +46,7 @@ export default function SettingsPage() {
     (a) => settings?.mutedAssignments.includes(a.id)
   );
 
-  if (authLoading || !token || !settings) {
+  if (!settings) {
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-400">
         読み込み中…
@@ -93,6 +90,14 @@ export default function SettingsPage() {
             <p className="text-xs text-red-500 mt-1">
               ブラウザの通知がブロックされています。ブラウザの設定から許可してください。
             </p>
+          )}
+          {notifPermission === "granted" && (
+            <button
+              onClick={sendTestNotification}
+              className="mt-2 text-xs text-blue-600 font-medium"
+            >
+              テスト通知を送信
+            </button>
           )}
         </section>
 
@@ -198,14 +203,20 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {/* ログアウト */}
+        {/* アカウント */}
         <section className="pt-4 border-t border-gray-100">
-          <button
-            onClick={logout}
-            className="text-sm text-red-500 font-medium"
-          >
-            ログアウト
-          </button>
+          {token ? (
+            <button
+              onClick={logout}
+              className="text-sm text-red-500 font-medium"
+            >
+              Google ログアウト
+            </button>
+          ) : (
+            <a href="/login" className="text-sm text-blue-600 font-medium">
+              Google ログイン（Classroom連携）
+            </a>
+          )}
         </section>
       </main>
     </div>
