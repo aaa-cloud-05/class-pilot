@@ -26,9 +26,14 @@ export function initGis(): Promise<void> {
       resolve();
       return;
     }
+    const timeout = setTimeout(() => {
+      clearInterval(check);
+      resolve();
+    }, 5000);
     const check = setInterval(() => {
       if (window.google?.accounts?.oauth2) {
         clearInterval(check);
+        clearTimeout(timeout);
         tokenClient = google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
           scope: SCOPES,
