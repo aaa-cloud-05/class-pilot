@@ -27,11 +27,6 @@ const PRESETS: Record<NotificationPreset, PresetTiming[]> = {
 export async function checkAndNotify(): Promise<number> {
   if (typeof window === "undefined") return 0;
 
-  if (Notification.permission !== "granted") {
-    console.log("[通知] permission:", Notification.permission);
-    return 0;
-  }
-
   const settings = await getNotificationSettings();
   if (!settings.enabled) {
     console.log("[通知] 通知が無効です");
@@ -64,8 +59,10 @@ export async function checkAndNotify(): Promise<number> {
           const timeLabel = timing.type === "24h" ? "24時間" : timing.type === "3h" ? "3時間" : "1時間";
           const notifTitle = `締切まで${timeLabel}`;
           const notifBody = `「${assignment.title}」（${assignment.courseName}）`;
-          await showDeadlineNotification(assignment, timing.type);
           await recordNotification(assignment.id, timing.type, notifTitle, notifBody);
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+            await showDeadlineNotification(assignment, timing.type);
+          }
           sent++;
         }
       }

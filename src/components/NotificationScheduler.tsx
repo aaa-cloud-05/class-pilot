@@ -5,8 +5,7 @@ import { checkAndNotify } from "@/lib/notification-scheduler";
 
 export function NotificationScheduler() {
   useEffect(() => {
-    if (typeof Notification === "undefined") return;
-    if (Notification.permission !== "granted") return;
+    if (typeof window === "undefined") return;
 
     checkAndNotify();
 
