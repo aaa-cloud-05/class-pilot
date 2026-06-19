@@ -22,6 +22,7 @@ export default function SettingsPage() {
   const { assignments } = useAssignments();
   const router = useRouter();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("default");
 
   useEffect(() => {
     if (!authLoading && !token) router.replace("/login");
@@ -29,6 +30,9 @@ export default function SettingsPage() {
 
   useEffect(() => {
     getNotificationSettings().then(setSettings);
+    setNotifPermission(
+      typeof Notification !== "undefined" ? Notification.permission : "unsupported"
+    );
   }, []);
 
   async function updateSettings(patch: Partial<Omit<NotificationSettings, "id">>) {
@@ -85,7 +89,7 @@ export default function SettingsPage() {
               />
             </button>
           </div>
-          {Notification.permission === "denied" && (
+          {notifPermission === "denied" && (
             <p className="text-xs text-red-500 mt-1">
               ブラウザの通知がブロックされています。ブラウザの設定から許可してください。
             </p>
