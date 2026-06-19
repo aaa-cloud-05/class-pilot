@@ -18,6 +18,9 @@ export interface NotificationRecord {
   assignmentId: string;
   type: "24h" | "3h" | "1h";
   sentAt: number;
+  title: string;
+  body: string;
+  read: boolean;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -48,7 +51,9 @@ export async function saveNotificationSettings(
 
 export async function recordNotification(
   assignmentId: string,
-  type: NotificationRecord["type"]
+  type: NotificationRecord["type"],
+  title: string,
+  body: string
 ): Promise<void> {
   const db = await getDb();
   const record: NotificationRecord = {
@@ -56,8 +61,39 @@ export async function recordNotification(
     assignmentId,
     type,
     sentAt: Date.now(),
+    title,
+    body,
+    read: false,
   };
   await db.put("notification-history", record);
+}
+
+export async function getUnreadCount(): Promise<number> {
+  const db = await getDb();
+  const all: NotificationRecord[] = await db.getAll("notification-history");
+  return all.filter((r) => !r.read).length;
+}
+
+export async function markAsRead(id: string): Promise<void> {
+  const db = await getDb();
+  const record = await db.get("notification-history", id);
+  if (record) {
+    record.read = true;
+    await db.put("notification-history", record);
+  }
+}
+
+export async function markAllAsRead(): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction("notification-history", "readwrite");
+  const all = await tx.store.getAll();
+  for (const record of all) {
+    if (!record.read) {
+      record.read = true;
+      tx.store.put(record);
+    }
+  }
+  await tx.done;
 }
 
 export async function getNotificationHistory(): Promise<NotificationRecord[]> {
