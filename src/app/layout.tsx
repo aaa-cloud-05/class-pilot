@@ -1,11 +1,23 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
+import { NotificationScheduler } from "@/components/NotificationScheduler";
 
 export const metadata: Metadata = {
-  title: "課題リマインダー",
-  description: "Google Classroom の課題を管理・振り返り",
+  title: "Class Pilot",
+  description: "課題を、見逃さない。",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Class Pilot",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#007AFF",
 };
 
 export default function RootLayout({
@@ -20,6 +32,8 @@ export default function RootLayout({
           src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
         />
+        <ServiceWorkerRegistrar />
+        <NotificationScheduler />
         <AuthProvider>
           {children}
         </AuthProvider>
