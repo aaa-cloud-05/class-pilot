@@ -11,19 +11,13 @@ import {
   saveNotificationSettings,
 } from "@/lib/notification-store";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function HomePage() {
-  const { token, loading: authLoading } = useAuth();
+  const { token } = useAuth();
   const { assignments, loading, error, refresh } = useAssignments();
-  const router = useRouter();
 
   const [mutedAssignments, setMutedAssignments] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!authLoading && !token) router.replace("/login");
-  }, [authLoading, token, router]);
 
   useEffect(() => {
     getNotificationSettings().then((s) => setMutedAssignments(s.mutedAssignments));
@@ -53,14 +47,6 @@ export default function HomePage() {
   const notSubmittedCount = assignments.filter(
     (a) => a.submissionState === "not_submitted"
   ).length;
-
-  if (authLoading || !token) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-gray-400">
-        読み込み中…
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
@@ -101,9 +87,18 @@ export default function HomePage() {
         )}
 
         {!loading && assignments.length === 0 && !error && (
-          <p className="text-center text-gray-400 text-sm py-12">
-            課題はありません
-          </p>
+          <div className="text-center py-12 space-y-3">
+            <p className="text-gray-400 text-sm">課題はありません</p>
+            <p className="text-gray-400 text-xs">
+              右下の「+」から課題を追加、
+              {!token && (
+                <>
+                  <Link href="/login" className="text-blue-500">Google ログイン</Link>でClassroom連携、
+                </>
+              )}
+              または<Link href="/import" className="text-blue-500">WebClass連携</Link>で取り込めます
+            </p>
+          </div>
         )}
 
         {grouped.map(({ label, items }) => (
@@ -128,7 +123,7 @@ export default function HomePage() {
           </section>
         ))}
 
-        {!loading && assignments.length > 0 && (
+        {!loading && assignments.length > 0 && token && (
           <button
             onClick={refresh}
             className="w-full text-center text-xs text-gray-400 py-4"
