@@ -2,7 +2,7 @@ import { openDB, type IDBPDatabase } from "idb";
 import type { Assignment } from "./types";
 
 const DB_NAME = "classroom-reminder";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "assignments";
 
 async function getDb(): Promise<IDBPDatabase> {
@@ -12,6 +12,13 @@ async function getDb(): Promise<IDBPDatabase> {
         const store = db.createObjectStore(STORE, { keyPath: "id" });
         store.createIndex("courseId", "courseId");
         store.createIndex("dueDate", "dueDate");
+      }
+      if (!db.objectStoreNames.contains("notification-settings")) {
+        db.createObjectStore("notification-settings", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("notification-history")) {
+        const histStore = db.createObjectStore("notification-history", { keyPath: "id" });
+        histStore.createIndex("assignmentId", "assignmentId");
       }
     },
   });
