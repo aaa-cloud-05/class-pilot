@@ -70,7 +70,7 @@ export interface Assignment {
   isLate: boolean;
   grade?: number;
   maxPoints?: number;
-  source?: "classroom" | "webclass";
+  source?: "classroom" | "webclass" | "manual";
 }
 
 export const COURSE_COLORS = [
