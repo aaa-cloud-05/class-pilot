@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { NotificationScheduler } from "@/components/NotificationScheduler";
 
@@ -28,15 +27,11 @@ export default function RootLayout({
   return (
     <html lang="ja" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-white text-gray-900">
-        <Script
-          src="https://accounts.google.com/gsi/client"
-          strategy="afterInteractive"
-        />
         <ServiceWorkerRegistrar />
         <NotificationScheduler />
-        <AuthProvider>
+        <SessionProvider>
           {children}
-        </AuthProvider>
+        </SessionProvider>
       </body>
     </html>
   );

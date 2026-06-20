@@ -1,27 +1,32 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { fetchAllData } from "@/lib/classroom-api";
-import { transformAssignment } from "@/lib/transform";
+import { useSession } from "next-auth/react";
 import { cacheAssignments, getCachedAssignments } from "@/lib/cache";
 import type { Assignment } from "@/lib/types";
 
 export function useAssignments() {
-  const { token } = useAuth();
+  const { status } = useSession();
+  const loggedIn = status === "authenticated";
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!token) return;
+    if (!loggedIn) return;
     setLoading(true);
     setError(null);
     try {
-      const { allWork } = await fetchAllData();
-      const classroomItems = allWork.map(({ course, work, submission }) =>
-        transformAssignment(course, work, submission)
-      );
+      const res = await fetch("/api/classroom");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: "取得に失敗しました" }));
+        throw new Error(body.error ?? `API ${res.status}`);
+      }
+      const { assignments: items } = await res.json();
+      const classroomItems: Assignment[] = items.map((a: Assignment & { dueDate: string | null }) => ({
+        ...a,
+        dueDate: a.dueDate ? new Date(a.dueDate) : null,
+      }));
       await cacheAssignments(classroomItems);
 
       const all = await getCachedAssignments();
@@ -37,7 +42,7 @@ export function useAssignments() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [loggedIn]);
 
   useEffect(() => {
     async function init() {
@@ -55,14 +60,14 @@ export function useAssignments() {
       } catch {
         // IndexedDB unavailable
       }
-      if (token) {
+      if (loggedIn) {
         await refresh();
       } else {
         setLoading(false);
       }
     }
     init();
-  }, [token, refresh]);
+  }, [loggedIn, refresh]);
 
   return { assignments, loading, error, refresh };
 }
