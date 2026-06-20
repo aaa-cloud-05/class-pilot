@@ -1,28 +1,7 @@
-import { openDB, type IDBPDatabase } from "idb";
+import { getDb } from "./db";
 import type { Assignment } from "./types";
 
-const DB_NAME = "classroom-reminder";
-const DB_VERSION = 2;
 const STORE = "assignments";
-
-async function getDb(): Promise<IDBPDatabase> {
-  return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(STORE)) {
-        const store = db.createObjectStore(STORE, { keyPath: "id" });
-        store.createIndex("courseId", "courseId");
-        store.createIndex("dueDate", "dueDate");
-      }
-      if (!db.objectStoreNames.contains("notification-settings")) {
-        db.createObjectStore("notification-settings", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("notification-history")) {
-        const histStore = db.createObjectStore("notification-history", { keyPath: "id" });
-        histStore.createIndex("assignmentId", "assignmentId");
-      }
-    },
-  });
-}
 
 interface StoredAssignment extends Omit<Assignment, "dueDate"> {
   dueDate: string | null;

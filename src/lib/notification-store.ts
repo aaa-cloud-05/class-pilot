@@ -1,7 +1,4 @@
-import { openDB } from "idb";
-
-const DB_NAME = "classroom-reminder";
-const DB_VERSION = 2;
+import { getDb } from "./db";
 
 export type NotificationPreset = "relaxed" | "standard" | "urgent";
 
@@ -30,10 +27,6 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   mutedCourses: [],
   mutedAssignments: [],
 };
-
-async function getDb() {
-  return openDB(DB_NAME, DB_VERSION);
-}
 
 export async function getNotificationSettings(): Promise<NotificationSettings> {
   const db = await getDb();
