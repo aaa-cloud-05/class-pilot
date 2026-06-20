@@ -1,16 +1,16 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function LoginPage() {
-  const { token, loading, login } = useAuth();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (token) router.replace("/");
-  }, [token, router]);
+    if (status === "authenticated") router.replace("/");
+  }, [status, router]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6">
@@ -25,8 +25,8 @@ export default function LoginPage() {
         </p>
 
         <button
-          onClick={login}
-          disabled={loading}
+          onClick={() => signIn("google", { callbackUrl: "/" })}
+          disabled={status === "loading"}
           className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition disabled:opacity-50 shadow-sm"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useSession } from "next-auth/react";
 import { useAssignments } from "@/hooks/useAssignments";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { NavBar } from "@/components/NavBar";
@@ -16,7 +16,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function HomePage() {
-  const { token } = useAuth();
+  const { status } = useSession();
+  const loggedIn = status === "authenticated";
   const { assignments, loading, error, refresh } = useAssignments();
 
   const [mutedAssignments, setMutedAssignments] = useState<string[]>([]);
@@ -64,7 +65,7 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex items-center gap-1">
-            {token ? (
+            {loggedIn ? (
               <Link href="/settings" className="p-2 text-blue-500" title="Google ログイン中">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2a5 5 0 110 10 5 5 0 010-10zm0 12c5.523 0 10 2.239 10 5v1H2v-1c0-2.761 4.477-5 10-5z" />
@@ -124,7 +125,7 @@ export default function HomePage() {
             <p className="text-gray-400 text-sm">課題はありません</p>
             <p className="text-gray-400 text-xs">
               右下の「+」から課題を追加、
-              {!token && (
+              {!loggedIn && (
                 <>
                   <Link href="/login" className="text-blue-500">Google ログイン</Link>でClassroom連携、
                 </>
@@ -156,7 +157,7 @@ export default function HomePage() {
           </section>
         ))}
 
-        {!loading && assignments.length > 0 && token && (
+        {!loading && assignments.length > 0 && loggedIn && (
           <button
             onClick={refresh}
             className="w-full text-center text-xs text-gray-400 py-4"

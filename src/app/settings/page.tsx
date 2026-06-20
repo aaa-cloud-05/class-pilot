@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSession, signOut } from "next-auth/react";
 import { useAssignments } from "@/hooks/useAssignments";
 import {
   getNotificationSettings,
@@ -19,7 +19,8 @@ const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
 ];
 
 export default function SettingsPage() {
-  const { token, logout } = useAuth();
+  const { status } = useSession();
+  const loggedIn = status === "authenticated";
   const { assignments } = useAssignments();
   const router = useRouter();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
@@ -205,9 +206,9 @@ export default function SettingsPage() {
 
         {/* アカウント */}
         <section className="pt-4 border-t border-gray-100">
-          {token ? (
+          {loggedIn ? (
             <button
-              onClick={logout}
+              onClick={() => signOut()}
               className="text-sm text-red-500 font-medium"
             >
               Google ログアウト
