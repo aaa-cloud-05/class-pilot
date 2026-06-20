@@ -64,6 +64,19 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex items-center gap-1">
+            {token ? (
+              <Link href="/settings" className="p-2 text-blue-500" title="Google ログイン中">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2a5 5 0 110 10 5 5 0 010-10zm0 12c5.523 0 10 2.239 10 5v1H2v-1c0-2.761 4.477-5 10-5z" />
+                </svg>
+              </Link>
+            ) : (
+              <Link href="/login" className="p-2 text-gray-300" title="Google 未ログイン">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2a5 5 0 110 10 5 5 0 010-10zm0 12c5.523 0 10 2.239 10 5v1H2v-1c0-2.761 4.477-5 10-5z" />
+                </svg>
+              </Link>
+            )}
             <button
               onClick={() => setPanelOpen(true)}
               className="relative p-2 text-gray-400 hover:text-gray-600"
