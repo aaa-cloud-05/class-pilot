@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase } from "idb";
 
 const DB_NAME = "classroom-reminder";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export async function getDb(): Promise<IDBPDatabase> {
   return openDB(DB_NAME, DB_VERSION, {
