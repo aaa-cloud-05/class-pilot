@@ -19,12 +19,14 @@ const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
 ];
 
 export default function SettingsPage() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const loggedIn = status === "authenticated";
   const { assignments } = useAssignments();
   const router = useRouter();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
 
   useEffect(() => {
     getNotificationSettings().then(setSettings);
@@ -33,10 +35,34 @@ export default function SettingsPage() {
     );
   }, []);
 
+  useEffect(() => {
+    if (!loggedIn) return;
+    fetch("/api/notifications/settings")
+      .then((r) => r.json())
+      .then((data) => setEmailEnabled(data.settings?.emailEnabled ?? false))
+      .catch(() => {});
+  }, [loggedIn]);
+
   async function updateSettings(patch: Partial<Omit<NotificationSettings, "id">>) {
     await saveNotificationSettings(patch);
     const updated = await getNotificationSettings();
     setSettings(updated);
+  }
+
+  async function toggleEmailNotification() {
+    setEmailLoading(true);
+    try {
+      const res = await fetch("/api/notifications/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailEnabled: !emailEnabled }),
+      });
+      if (res.ok) {
+        setEmailEnabled(!emailEnabled);
+      }
+    } finally {
+      setEmailLoading(false);
+    }
   }
 
   const courses = Array.from(
@@ -101,6 +127,33 @@ export default function SettingsPage() {
             </button>
           )}
         </section>
+
+        {/* メール通知 */}
+        {loggedIn && settings.enabled && (
+          <section>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-700">メール通知</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {session?.user?.email ?? ""} に締切通知を送信
+                </p>
+              </div>
+              <button
+                onClick={toggleEmailNotification}
+                disabled={emailLoading}
+                className={`relative w-11 h-6 rounded-full transition-colors ${
+                  emailEnabled ? "bg-blue-600" : "bg-gray-300"
+                } ${emailLoading ? "opacity-50" : ""}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    emailEnabled ? "translate-x-5" : ""
+                  }`}
+                />
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* プリセット */}
         {settings.enabled && (

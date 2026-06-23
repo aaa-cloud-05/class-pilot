@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// --- NextAuth 標準テーブル ---
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts            Account[]
+  sessions            Session[]
+  assignments         Assignment[]
+  notificationSetting NotificationSetting?
+  notificationHistory NotificationHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- アプリ固有テーブル ---
+
+model Assignment {
+  id              String    @id @default(cuid())
+  userId          String
+  externalId      String?
+  source          String    @default("manual")
+  sourceKey       String?
+  courseId         String
+  courseName      String
+  courseColor      String    @default("#007AFF")
+  title           String
+  description     String?   @db.Text
+  dueDate         DateTime?
+  link            String    @default("")
+  submissionState String    @default("not_submitted")
+  isLate          Boolean   @default(false)
+  grade           Float?
+  maxPoints       Float?
+  customFields    Json?
+  editedFields    String[]  @default([])
+  deletedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sourceKey])
+  @@index([userId, deletedAt])
+  @@index([userId, dueDate])
+}
+
+model NotificationSetting {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  enabled          Boolean  @default(true)
+  preset           String   @default("standard")
+  emailEnabled     Boolean  @default(false)
+  mutedCourses     String[] @default([])
+  mutedAssignments String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  assignmentId String
+  type         String
+  channel      String   @default("push")
+  sentAt       DateTime @default(now())
+  title        String
+  body         String
+  read         Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId, type, channel])
+  @@index([userId, read])
+}
