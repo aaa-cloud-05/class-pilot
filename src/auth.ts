@@ -1,15 +1,19 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/server/prisma";
 
 declare module "next-auth" {
   interface Session {
     accessToken?: string;
     error?: string;
+    user: { id: string; name?: string | null; email?: string | null; image?: string | null };
   }
 }
 
 declare module "@auth/core/jwt" {
   interface JWT {
+    sub?: string;
     accessToken?: string;
     refreshToken?: string;
     expiresAt?: number;
@@ -27,6 +31,8 @@ const SCOPES = [
 ].join(" ");
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
   providers: [
     Google({
       clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
@@ -80,6 +86,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     },
     async session({ session, token }) {
+      if (token.sub) session.user.id = token.sub;
       session.accessToken = token.accessToken;
       session.error = token.error;
       return session;
