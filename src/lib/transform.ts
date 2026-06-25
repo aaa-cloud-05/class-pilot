@@ -30,8 +30,10 @@ export function transformCourse(raw: RawCourse): Course {
 function parseDueDate(work: RawCourseWork): Date | null {
   if (!work.dueDate) return null;
   const { year, month, day } = work.dueDate;
-  const t = work.dueTime ?? {};
-  return new Date(Date.UTC(year, month - 1, day, t.hours ?? 23, t.minutes ?? 59));
+  if (!work.dueTime) {
+    return new Date(Date.UTC(year, month - 1, day, 23, 59));
+  }
+  return new Date(Date.UTC(year, month - 1, day, work.dueTime.hours ?? 0, work.dueTime.minutes ?? 0));
 }
 
 function deriveSubmissionState(sub?: RawStudentSubmission): { state: SubmissionState; isLate: boolean } {
