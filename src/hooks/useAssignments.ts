@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { cacheAssignments, getCachedAssignments, clearCache } from "@/lib/cache";
+import {
+  cacheAssignments,
+  getCachedAssignments,
+  deleteCachedByPrefix,
+} from "@/lib/cache";
 import type { Assignment } from "@/lib/types";
 
 const TTL_MS = 5 * 60 * 1000;
@@ -22,6 +26,48 @@ function parseAssignments(items: Record<string, unknown>[]): Assignment[] {
     ...(a as unknown as Assignment),
     dueDate: a.dueDate ? new Date(a.dueDate as string) : null,
   }));
+}
+
+async function migrateLocalData(): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (localStorage.getItem("db-migrated")) return;
+
+  try {
+    const cached = await getCachedAssignments();
+
+    const wcEntries = cached.filter((a) => a.id.startsWith("wc-"));
+    if (wcEntries.length > 0) {
+      await fetch("/api/import/webclass", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignments: wcEntries }),
+      });
+    }
+
+    const manualEntries = cached.filter((a) => a.id.startsWith("manual-"));
+    for (const a of manualEntries) {
+      await fetch("/api/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseName: a.courseName,
+          courseColor: a.courseColor,
+          title: a.title,
+          dueDate: a.dueDate?.toISOString() ?? null,
+          submissionState: a.submissionState,
+        }),
+      });
+    }
+
+    // manual-* はDB側で新しいcuid IDになるため、IndexedDBの旧エントリを削除
+    if (manualEntries.length > 0) {
+      await deleteCachedByPrefix("manual-");
+    }
+  } catch {
+    return;
+  }
+
+  localStorage.setItem("db-migrated", "1");
 }
 
 export function useAssignments() {
@@ -45,7 +91,6 @@ export function useAssignments() {
 
       lastFetchTime = Date.now();
 
-      await clearCache();
       await cacheAssignments(all);
 
       setAssignments(sortByDueDate(all));
@@ -73,6 +118,8 @@ export function useAssignments() {
       }
 
       if (loggedIn) {
+        await migrateLocalData();
+
         if (Date.now() - lastFetchTime < TTL_MS) {
           setLoading(false);
         } else {
