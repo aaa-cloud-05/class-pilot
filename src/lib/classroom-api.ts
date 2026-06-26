@@ -46,12 +46,17 @@ export async function fetchSubmissions(
   return resp.studentSubmissions ?? [];
 }
 
-export async function fetchAllData(accessToken: string) {
+export async function fetchAllData(
+  accessToken: string,
+  hiddenCourseIds?: Set<string>,
+) {
   const courses = await fetchCourses(accessToken);
 
   const allWork: { course: RawCourse; work: RawCourseWork; submission?: RawStudentSubmission }[] = [];
 
   for (const course of courses) {
+    if (hiddenCourseIds?.has(course.id)) continue;
+
     const works = await fetchCourseWork(course.id, accessToken);
 
     let submissionMap = new Map<string, RawStudentSubmission>();

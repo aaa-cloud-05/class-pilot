@@ -57,7 +57,10 @@ export async function GET(request: Request) {
 
     try {
       const accessToken = await refreshAccessToken(refreshToken);
-      const { allWork } = await fetchAllData(accessToken);
+      const { allWork } = await fetchAllData(
+        accessToken,
+        new Set(ns.hiddenCourses),
+      );
       const assignments = allWork.map(({ course, work, submission }) => ({
         ...transformAssignment(course, work, submission),
         source: "classroom" as const,

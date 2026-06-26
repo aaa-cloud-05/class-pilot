@@ -35,12 +35,28 @@ function toClientAssignment(db: {
   };
 }
 
-export async function getUserAssignments(userId: string): Promise<Assignment[]> {
+export async function getUserAssignments(
+  userId: string,
+  hiddenCourseIds?: Set<string>,
+): Promise<Assignment[]> {
+  const where: Record<string, unknown> = { userId, deletedAt: null };
+  if (hiddenCourseIds && hiddenCourseIds.size > 0) {
+    where.courseId = { notIn: [...hiddenCourseIds] };
+  }
   const rows = await prisma.assignment.findMany({
-    where: { userId, deletedAt: null },
+    where,
     orderBy: { dueDate: { sort: "asc", nulls: "last" } },
   });
   return rows.map(toClientAssignment);
+}
+
+export async function getExistingCourseIds(userId: string): Promise<Set<string>> {
+  const rows = await prisma.assignment.findMany({
+    where: { userId, deletedAt: null },
+    select: { courseId: true },
+    distinct: ["courseId"],
+  });
+  return new Set(rows.map((r) => r.courseId));
 }
 
 export async function syncClassroomAssignments(

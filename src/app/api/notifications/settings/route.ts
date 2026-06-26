@@ -19,6 +19,7 @@ export async function GET() {
       emailEnabled: false,
       mutedCourses: [],
       mutedAssignments: [],
+      hiddenCourses: [],
     },
   });
 }
@@ -30,7 +31,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { enabled, preset, emailEnabled, mutedCourses, mutedAssignments } = body;
+  const { enabled, preset, emailEnabled, mutedCourses, mutedAssignments, hiddenCourses } = body;
 
   const data: Record<string, unknown> = {};
   if (typeof enabled === "boolean") data.enabled = enabled;
@@ -38,6 +39,7 @@ export async function PATCH(request: NextRequest) {
   if (typeof emailEnabled === "boolean") data.emailEnabled = emailEnabled;
   if (Array.isArray(mutedCourses)) data.mutedCourses = mutedCourses;
   if (Array.isArray(mutedAssignments)) data.mutedAssignments = mutedAssignments;
+  if (Array.isArray(hiddenCourses)) data.hiddenCourses = hiddenCourses;
 
   const settings = await prisma.notificationSetting.upsert({
     where: { userId: session.user.id },

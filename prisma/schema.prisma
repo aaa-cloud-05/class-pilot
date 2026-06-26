@@ -104,6 +104,7 @@ model NotificationSetting {
   emailEnabled     Boolean  @default(false)
   mutedCourses     String[] @default([])
   mutedAssignments String[] @default([])
+  hiddenCourses    String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

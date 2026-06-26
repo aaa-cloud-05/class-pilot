@@ -8,6 +8,7 @@ export interface NotificationSettings {
   preset: NotificationPreset;
   mutedCourses: string[];
   mutedAssignments: string[];
+  hiddenCourses: string[];
 }
 
 export interface NotificationRecord {
@@ -26,6 +27,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   preset: "standard",
   mutedCourses: [],
   mutedAssignments: [],
+  hiddenCourses: [],
 };
 
 export async function getNotificationSettings(): Promise<NotificationSettings> {
