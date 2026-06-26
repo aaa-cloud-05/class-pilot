@@ -1,6 +1,10 @@
 import { auth } from "@/auth";
 import { fetchAllData } from "@/lib/classroom-api";
 import { transformAssignment } from "@/lib/transform";
+import {
+  syncClassroomAssignments,
+  getUserAssignments,
+} from "@/lib/server/assignments";
 
 export async function GET() {
   const session = await auth();
@@ -10,10 +14,14 @@ export async function GET() {
 
   try {
     const { allWork } = await fetchAllData(session.accessToken);
-    const assignments = allWork.map(({ course, work, submission }) => ({
+    const classroomAssignments = allWork.map(({ course, work, submission }) => ({
       ...transformAssignment(course, work, submission),
       source: "classroom" as const,
     }));
+
+    await syncClassroomAssignments(session.user.id, classroomAssignments);
+
+    const assignments = await getUserAssignments(session.user.id);
     return Response.json({ assignments });
   } catch (error) {
     const message = error instanceof Error ? error.message : "取得に失敗しました";

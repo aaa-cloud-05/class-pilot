@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cacheAssignments } from "@/lib/cache";
 import { COURSE_COLORS } from "@/lib/types";
 import type { Assignment, SubmissionState } from "@/lib/types";
 
 export default function AddAssignmentPage() {
   const router = useRouter();
+  const session = useSession();
+  const loggedIn = session.status === "authenticated";
   const [courseName, setCourseName] = useState("");
   const [title, setTitle] = useState("");
   const [colorIndex, setColorIndex] = useState(0);
@@ -23,23 +26,48 @@ export default function AddAssignmentPage() {
     setSaving(true);
 
     const dueDate = date ? new Date(`${date}T${time}:00`) : null;
-    const id = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const courseId = `manual-course-${courseName.trim().toLowerCase().replace(/\s+/g, "-")}`;
 
-    const assignment: Assignment = {
-      id,
-      courseId,
-      courseName: courseName.trim(),
-      courseColor: COURSE_COLORS[colorIndex],
-      title: title.trim(),
-      dueDate,
-      link: "",
-      submissionState: status,
-      isLate: dueDate ? dueDate < new Date() && status === "not_submitted" : false,
-      source: "manual",
-    };
+    if (loggedIn) {
+      try {
+        const res = await fetch("/api/assignments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            courseName: courseName.trim(),
+            courseColor: COURSE_COLORS[colorIndex],
+            title: title.trim(),
+            dueDate: dueDate?.toISOString() ?? null,
+            submissionState: status,
+          }),
+        });
+        if (!res.ok) throw new Error("保存に失敗しました");
+        const { assignment } = await res.json();
+        await cacheAssignments([
+          { ...assignment, dueDate: assignment.dueDate ? new Date(assignment.dueDate) : null },
+        ]);
+      } catch {
+        setSaving(false);
+        return;
+      }
+    } else {
+      const id = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const courseId = `manual-course-${courseName.trim().toLowerCase().replace(/\s+/g, "-")}`;
 
-    await cacheAssignments([assignment]);
+      const assignment: Assignment = {
+        id,
+        courseId,
+        courseName: courseName.trim(),
+        courseColor: COURSE_COLORS[colorIndex],
+        title: title.trim(),
+        dueDate,
+        link: "",
+        submissionState: status,
+        isLate: dueDate ? dueDate < new Date() && status === "not_submitted" : false,
+        source: "manual",
+      };
+      await cacheAssignments([assignment]);
+    }
+
     router.push("/");
   }
 

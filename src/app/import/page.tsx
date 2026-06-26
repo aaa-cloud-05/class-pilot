@@ -2,16 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { transformWebClassTasks, type WebClassRawTask } from "@/lib/webclass";
-import { cacheWebClassAssignments } from "@/lib/cache";
+import { cacheWebClassAssignments, cacheAssignments, clearCache } from "@/lib/cache";
 
 export default function ImportPage() {
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
+  const loggedIn = sessionStatus === "authenticated";
   const [status, setStatus] = useState<"idle" | "importing" | "done" | "error">("idle");
   const [count, setCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
+    if (sessionStatus === "loading") return;
+
     const hash = window.location.hash.slice(1);
     if (!hash) return;
 
@@ -19,17 +24,45 @@ export default function ImportPage() {
     try {
       const raw: WebClassRawTask[] = JSON.parse(decodeURIComponent(hash));
       const assignments = transformWebClassTasks(raw);
-      cacheWebClassAssignments(assignments).then(() => {
-        setCount(assignments.length);
+
+      const finish = (n: number) => {
+        setCount(n);
         setStatus("done");
         window.location.hash = "";
         setTimeout(() => router.push("/"), 1500);
-      });
+      };
+
+      if (loggedIn) {
+        fetch("/api/import/webclass", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assignments }),
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("インポートに失敗しました");
+            return res.json();
+          })
+          .then(async ({ assignments: all }) => {
+            const parsed = all.map((a: Record<string, unknown>) => ({
+              ...a,
+              dueDate: a.dueDate ? new Date(a.dueDate as string) : null,
+            }));
+            await clearCache();
+            await cacheAssignments(parsed);
+            finish(assignments.length);
+          })
+          .catch((e) => {
+            setErrorMsg(e instanceof Error ? e.message : "インポートに失敗しました");
+            setStatus("error");
+          });
+      } else {
+        cacheWebClassAssignments(assignments).then(() => finish(assignments.length));
+      }
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "データの解析に失敗しました");
       setStatus("error");
     }
-  }, [router]);
+  }, [router, sessionStatus, loggedIn]);
 
   const bookmarkletRef = useRef<HTMLAnchorElement>(null);
   const [copied, setCopied] = useState(false);
