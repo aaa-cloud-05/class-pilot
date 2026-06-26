@@ -45,6 +45,18 @@ export async function cacheWebClassAssignments(assignments: Assignment[]): Promi
   await tx.done;
 }
 
+export async function deleteCachedByPrefix(prefix: string): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(STORE, "readwrite");
+  const allKeys = await tx.store.getAllKeys();
+  for (const key of allKeys) {
+    if (typeof key === "string" && key.startsWith(prefix)) {
+      tx.store.delete(key);
+    }
+  }
+  await tx.done;
+}
+
 export async function clearCache(): Promise<void> {
   const db = await getDb();
   await db.clear(STORE);
