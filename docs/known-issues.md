@@ -16,23 +16,29 @@
 - 「テスト」モードではテストユーザーのみログイン可能
 - 他ユーザーに公開するにはGoogleの審査を通す必要がある
 
-## Phase 2 実装時の注意
+## Phase 2 で解消済み
 
-### Assignment IDの不一致（重要）
-- 現在のCronは`NotificationHistory.assignmentId`にClassroom APIの`work.id`（例: `"614325789"`）を保存
-- Phase 2でAssignmentをDBに保存すると、IDが`cuid()`に変わる
-- 通知重複チェックが壊れる可能性がある
-- 対応: Phase 2実装時に`sourceKey`または`externalId`でマッチングする設計に変更
+### ~~Assignment IDの不一致~~ → 解消
+- DB保存時に`externalId`にClassroom APIの`work.id`を保存
+- クライアントへは`externalId`を`id`として返却するため、既存のCron通知履歴と整合性を維持
+- CronはPhase 2では変更なし（従来通りClassroom APIから直接取得）
 
-### IndexedDBの古いデータ蓄積
-- `cacheAssignments()`は`put()`（upsert）のみで、Classroomから消えた課題を削除しない
-- 長期使用でIndexedDBにゴミデータが蓄積する
-- 対応: Phase 2でDB同期時にIndexedDBも同期（DBにない課題を削除）
+### ~~IndexedDBの古いデータ蓄積~~ → 解消
+- ログイン済みユーザーのAPI取得時に`clearCache()` + `cacheAssignments()`でIndexedDBを完全リフレッシュ
 
-### ページ遷移のたびにClassroom APIを呼ぶ非効率
-- `useAssignments`フックが各ページのマウント時に`refresh()`を呼ぶ
-- Home → Dashboard → Calendar と遷移すると3回APIを叩く
-- 対応: Phase 2でTTLキャッシュ（5分）を実装
+### ~~ページ遷移のたびにClassroom APIを呼ぶ非効率~~ → 解消
+- モジュールレベル変数で最終取得時刻を保持、5分TTLでデデュプ
+
+## Phase 2 残存
+
+### CronとDBの課題データ不整合
+- Cronは依然としてClassroom APIから直接取得して通知を計算
+- DBに保存された課題データ（WebClass・手動追加含む）はCronに使われていない
+- 対応: 将来的にCronもDBデータを使用するよう改修（優先度低）
+
+### 未ログイン→ログイン時のデータ移行
+- ログイン前にIndexedDBに保存した手動追加・WebClass課題はDBに移行されない
+- 対応: Phase 4で一回限りの移行を実装
 
 ## Phase 3 実装時の注意
 

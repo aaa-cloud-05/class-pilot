@@ -2,8 +2,27 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { cacheAssignments, getCachedAssignments } from "@/lib/cache";
+import { cacheAssignments, getCachedAssignments, clearCache } from "@/lib/cache";
 import type { Assignment } from "@/lib/types";
+
+const TTL_MS = 5 * 60 * 1000;
+let lastFetchTime = 0;
+
+function sortByDueDate(list: Assignment[]): Assignment[] {
+  return [...list].sort((a, b) => {
+    if (!a.dueDate && !b.dueDate) return 0;
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    return a.dueDate.getTime() - b.dueDate.getTime();
+  });
+}
+
+function parseAssignments(items: Record<string, unknown>[]): Assignment[] {
+  return items.map((a) => ({
+    ...(a as unknown as Assignment),
+    dueDate: a.dueDate ? new Date(a.dueDate as string) : null,
+  }));
+}
 
 export function useAssignments() {
   const { status } = useSession();
@@ -12,8 +31,7 @@ export function useAssignments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (!loggedIn) return;
+  const fetchFromApi = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -23,51 +41,49 @@ export function useAssignments() {
         throw new Error(body.error ?? `API ${res.status}`);
       }
       const { assignments: items } = await res.json();
-      const classroomItems: Assignment[] = items.map((a: Assignment & { dueDate: string | null }) => ({
-        ...a,
-        dueDate: a.dueDate ? new Date(a.dueDate) : null,
-      }));
-      await cacheAssignments(classroomItems);
+      const all = parseAssignments(items);
 
-      const all = await getCachedAssignments();
-      all.sort((a, b) => {
-        if (!a.dueDate && !b.dueDate) return 0;
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
-        return a.dueDate.getTime() - b.dueDate.getTime();
-      });
-      setAssignments(all);
+      lastFetchTime = Date.now();
+
+      await clearCache();
+      await cacheAssignments(all);
+
+      setAssignments(sortByDueDate(all));
     } catch (e) {
       setError(e instanceof Error ? e.message : "取得に失敗しました");
     } finally {
       setLoading(false);
     }
-  }, [loggedIn]);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    if (!loggedIn) return;
+    await fetchFromApi();
+  }, [loggedIn, fetchFromApi]);
 
   useEffect(() => {
     async function init() {
       try {
         const cached = await getCachedAssignments();
         if (cached.length > 0) {
-          cached.sort((a, b) => {
-            if (!a.dueDate && !b.dueDate) return 0;
-            if (!a.dueDate) return 1;
-            if (!b.dueDate) return -1;
-            return a.dueDate.getTime() - b.dueDate.getTime();
-          });
-          setAssignments(cached);
+          setAssignments(sortByDueDate(cached));
         }
       } catch {
         // IndexedDB unavailable
       }
+
       if (loggedIn) {
-        await refresh();
+        if (Date.now() - lastFetchTime < TTL_MS) {
+          setLoading(false);
+        } else {
+          await fetchFromApi();
+        }
       } else {
         setLoading(false);
       }
     }
     init();
-  }, [loggedIn, refresh]);
+  }, [loggedIn, fetchFromApi]);
 
   return { assignments, loading, error, refresh };
 }
