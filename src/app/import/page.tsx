@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { transformWebClassTasks, type WebClassRawTask } from "@/lib/webclass";
 import { cacheWebClassAssignments, cacheAssignments } from "@/lib/cache";
+import { saveNotificationSettings } from "@/lib/notification-store";
+import { CourseSelectDialog } from "@/components/CourseSelectDialog";
 
 export default function ImportPage() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function ImportPage() {
   const [status, setStatus] = useState<"idle" | "importing" | "done" | "error">("idle");
   const [count, setCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
+  const [pendingCourses, setPendingCourses] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -42,13 +45,20 @@ export default function ImportPage() {
             if (!res.ok) throw new Error("インポートに失敗しました");
             return res.json();
           })
-          .then(async ({ assignments: all }) => {
+          .then(async ({ assignments: all, newCourses }) => {
             const parsed = all.map((a: Record<string, unknown>) => ({
               ...a,
               dueDate: a.dueDate ? new Date(a.dueDate as string) : null,
             }));
             await cacheAssignments(parsed);
-            finish(assignments.length);
+            if (newCourses && newCourses.length > 0) {
+              setCount(assignments.length);
+              setStatus("done");
+              window.location.hash = "";
+              setPendingCourses(newCourses);
+            } else {
+              finish(assignments.length);
+            }
           })
           .catch((e) => {
             setErrorMsg(e instanceof Error ? e.message : "インポートに失敗しました");
@@ -80,6 +90,27 @@ export default function ImportPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-gray-500">取り込み中…</p>
+      </div>
+    );
+  }
+
+  if (status === "done" && pendingCourses.length > 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3">
+        <div className="text-4xl">&#10003;</div>
+        <p className="text-lg font-semibold">{count}件の課題を取り込みました</p>
+        <CourseSelectDialog
+          courses={pendingCourses}
+          onConfirm={async (hiddenIds) => {
+            await fetch("/api/notifications/settings", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ hiddenCourses: hiddenIds }),
+            });
+            await saveNotificationSettings({ hiddenCourses: hiddenIds });
+            router.push("/");
+          }}
+        />
       </div>
     );
   }

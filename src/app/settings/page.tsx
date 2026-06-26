@@ -21,12 +21,13 @@ const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const loggedIn = status === "authenticated";
-  const { assignments } = useAssignments();
+  const { assignments, refresh } = useAssignments();
   const router = useRouter();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("default");
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [hiddenCourses, setHiddenCourses] = useState<string[]>([]);
 
   useEffect(() => {
     getNotificationSettings().then(setSettings);
@@ -39,7 +40,10 @@ export default function SettingsPage() {
     if (!loggedIn) return;
     fetch("/api/notifications/settings")
       .then((r) => r.json())
-      .then((data) => setEmailEnabled(data.settings?.emailEnabled ?? false))
+      .then((data) => {
+        setEmailEnabled(data.settings?.emailEnabled ?? false);
+        setHiddenCourses(data.settings?.hiddenCourses ?? []);
+      })
       .catch(() => {});
   }, [loggedIn]);
 
@@ -183,6 +187,53 @@ export default function SettingsPage() {
                   </div>
                 </label>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* コース管理 */}
+        {loggedIn && courses.length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-gray-700 mb-1">コース管理</h2>
+            <p className="text-xs text-gray-500 mb-2">
+              非表示にしたコースの課題は取り込まれません
+            </p>
+            <div className="space-y-1">
+              {courses.map((course) => {
+                const hidden = hiddenCourses.includes(course.id);
+                return (
+                  <div
+                    key={course.id}
+                    className="flex items-center justify-between py-2 px-3 rounded-lg"
+                  >
+                    <span className={`text-sm truncate flex-1 ${hidden ? "text-gray-400" : "text-gray-800"}`}>
+                      {course.name}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        const next = hidden
+                          ? hiddenCourses.filter((id) => id !== course.id)
+                          : [...hiddenCourses, course.id];
+                        setHiddenCourses(next);
+                        await fetch("/api/notifications/settings", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ hiddenCourses: next }),
+                        });
+                        await saveNotificationSettings({ hiddenCourses: next });
+                        if (hidden) refresh();
+                      }}
+                      className={`text-xs px-2 py-1 rounded ${
+                        hidden
+                          ? "bg-gray-200 text-gray-600"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {hidden ? "非表示" : "追跡中"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}

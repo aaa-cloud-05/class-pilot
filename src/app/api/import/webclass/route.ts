@@ -1,5 +1,10 @@
 import { auth } from "@/auth";
-import { syncWebClassAssignments, getUserAssignments } from "@/lib/server/assignments";
+import { prisma } from "@/lib/server/prisma";
+import {
+  syncWebClassAssignments,
+  getUserAssignments,
+  getExistingCourseIds,
+} from "@/lib/server/assignments";
 import type { Assignment } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -8,15 +13,33 @@ export async function POST(request: Request) {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
 
+  const ns = await prisma.notificationSetting.findUnique({
+    where: { userId: session.user.id },
+    select: { hiddenCourses: true },
+  });
+  const hiddenCourseIds = new Set(ns?.hiddenCourses ?? []);
+
+  const existingCourseIds = await getExistingCourseIds(session.user.id);
+
   const { assignments: raw } = await request.json();
 
-  const assignments: Assignment[] = raw.map((a: Record<string, unknown>) => ({
+  const allAssignments: Assignment[] = raw.map((a: Record<string, unknown>) => ({
     ...a,
     dueDate: a.dueDate ? new Date(a.dueDate as string) : null,
   }));
 
-  await syncWebClassAssignments(session.user.id, assignments);
+  const filtered = allAssignments.filter((a) => !hiddenCourseIds.has(a.courseId));
 
-  const all = await getUserAssignments(session.user.id);
-  return Response.json({ assignments: all, synced: assignments.length });
+  const courseIds = new Set(allAssignments.map((a) => a.courseId));
+  const newCourses = [...courseIds]
+    .filter((id) => !hiddenCourseIds.has(id) && !existingCourseIds.has(id))
+    .map((id) => {
+      const a = allAssignments.find((x) => x.courseId === id)!;
+      return { id, name: a.courseName };
+    });
+
+  await syncWebClassAssignments(session.user.id, filtered);
+
+  const all = await getUserAssignments(session.user.id, hiddenCourseIds);
+  return Response.json({ assignments: all, synced: filtered.length, newCourses });
 }
