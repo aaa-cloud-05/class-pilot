@@ -7,6 +7,8 @@ import { NavBar } from "@/components/NavBar";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { NotificationPanel } from "@/components/NotificationPanel";
 import { CourseSelectDialog } from "@/components/CourseSelectDialog";
+import { EditAssignmentDialog } from "@/components/EditAssignmentDialog";
+import type { Assignment } from "@/lib/types";
 import { groupLabel, GROUP_ORDER } from "@/lib/date-utils";
 import {
   getNotificationSettings,
@@ -24,6 +26,7 @@ export default function HomePage() {
   const [mutedAssignments, setMutedAssignments] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     getNotificationSettings().then((s) => setMutedAssignments(s.mutedAssignments));
@@ -38,6 +41,29 @@ export default function HomePage() {
     await saveNotificationSettings({ mutedAssignments: muted });
     setMutedAssignments(muted);
   }, []);
+
+  const handleEdit = useCallback((id: string) => {
+    const a = assignments.find((x) => x.id === id);
+    if (a) setEditingAssignment(a);
+  }, [assignments]);
+
+  const handleSaveEdit = useCallback(async (id: string, data: Record<string, unknown>) => {
+    await fetch(`/api/assignments/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    setEditingAssignment(null);
+    refresh();
+  }, [refresh]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!confirm("この課題を削除しますか？")) return;
+    await fetch(`/api/assignments/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    refresh();
+  }, [refresh]);
 
   const grouped = useMemo(() => {
     const groups = new Map<string, typeof assignments>();
@@ -152,6 +178,8 @@ export default function HomePage() {
                   assignment={a}
                   muted={mutedAssignments.includes(a.id)}
                   onToggleMute={toggleMute}
+                  onEdit={loggedIn ? handleEdit : undefined}
+                  onDelete={loggedIn ? handleDelete : undefined}
                 />
               ))}
             </div>
@@ -194,6 +222,14 @@ export default function HomePage() {
 
       {newCourses.length > 0 && (
         <CourseSelectDialog courses={newCourses} onConfirm={confirmCourses} />
+      )}
+
+      {editingAssignment && (
+        <EditAssignmentDialog
+          assignment={editingAssignment}
+          onSave={handleSaveEdit}
+          onClose={() => setEditingAssignment(null)}
+        />
       )}
     </div>
   );

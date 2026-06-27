@@ -208,3 +208,63 @@ export async function createManualAssignment(
 
   return toClientAssignment(created);
 }
+
+const EDITABLE_FIELDS = [
+  "title", "description", "dueDate", "courseName",
+  "courseColor", "submissionState", "link",
+] as const;
+
+export async function editAssignment(
+  userId: string,
+  assignmentId: string,
+  data: Record<string, unknown>,
+): Promise<Assignment | null> {
+  const row = await prisma.assignment.findFirst({
+    where: {
+      userId,
+      OR: [{ id: assignmentId }, { externalId: assignmentId }],
+      deletedAt: null,
+    },
+  });
+  if (!row) return null;
+
+  const update: Record<string, unknown> = {};
+  const newEdited = new Set(row.editedFields);
+
+  for (const field of EDITABLE_FIELDS) {
+    if (field in data) {
+      update[field] = data[field];
+      newEdited.add(field);
+    }
+  }
+
+  if (Object.keys(update).length === 0) return toClientAssignment(row);
+
+  update.editedFields = [...newEdited];
+
+  const updated = await prisma.assignment.update({
+    where: { id: row.id },
+    data: update,
+  });
+  return toClientAssignment(updated);
+}
+
+export async function softDeleteAssignment(
+  userId: string,
+  assignmentId: string,
+): Promise<boolean> {
+  const row = await prisma.assignment.findFirst({
+    where: {
+      userId,
+      OR: [{ id: assignmentId }, { externalId: assignmentId }],
+      deletedAt: null,
+    },
+  });
+  if (!row) return false;
+
+  await prisma.assignment.update({
+    where: { id: row.id },
+    data: { deletedAt: new Date() },
+  });
+  return true;
+}
