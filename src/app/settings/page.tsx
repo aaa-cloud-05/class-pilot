@@ -28,6 +28,7 @@ export default function SettingsPage() {
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [hiddenCourses, setHiddenCourses] = useState<string[]>([]);
+  const [allCourses, setAllCourses] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     getNotificationSettings().then(setSettings);
@@ -42,7 +43,14 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((data) => {
         setEmailEnabled(data.settings?.emailEnabled ?? false);
-        setHiddenCourses(data.settings?.hiddenCourses ?? []);
+      })
+      .catch(() => {});
+    // 非表示コースも含めた全コースを取得（再追跡できるようにするため）
+    fetch("/api/courses")
+      .then((r) => r.json())
+      .then((data) => {
+        setAllCourses(data.courses ?? []);
+        setHiddenCourses(data.hiddenCourses ?? []);
       })
       .catch(() => {});
   }, [loggedIn]);
@@ -199,14 +207,14 @@ export default function SettingsPage() {
         )}
 
         {/* コース管理 */}
-        {loggedIn && courses.length > 0 && (
+        {loggedIn && allCourses.length > 0 && (
           <section>
             <h2 className="text-sm font-semibold text-gray-700 mb-1">コース管理</h2>
             <p className="text-xs text-gray-500 mb-2">
-              非表示にしたコースの課題は取り込まれません
+              非表示にしたコースの課題は取り込まれません。「非表示」をタップすると再び追跡します。
             </p>
             <div className="space-y-1">
-              {courses.map((course) => {
+              {allCourses.map((course) => {
                 const hidden = hiddenCourses.includes(course.id);
                 return (
                   <div

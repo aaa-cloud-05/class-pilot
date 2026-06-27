@@ -6,7 +6,6 @@ import { AssignmentCard } from "@/components/AssignmentCard";
 import { NavBar } from "@/components/NavBar";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { NotificationPanel } from "@/components/NotificationPanel";
-import { CourseSelectDialog } from "@/components/CourseSelectDialog";
 import { EditAssignmentDialog } from "@/components/EditAssignmentDialog";
 import type { Assignment } from "@/lib/types";
 import { groupLabel, GROUP_ORDER } from "@/lib/date-utils";
@@ -21,7 +20,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 export default function HomePage() {
   const { status } = useSession();
   const loggedIn = status === "authenticated";
-  const { assignments, loading, error, refresh, newCourses, confirmCourses, removeAssignment, applyEdit } = useAssignments();
+  const { assignments, loading, error, refresh, removeAssignment, applyEdit } = useAssignments();
 
   const [mutedAssignments, setMutedAssignments] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -233,10 +232,6 @@ export default function HomePage() {
         onClose={() => setPanelOpen(false)}
         onUnreadChange={setUnreadCount}
       />
-
-      {newCourses.length > 0 && (
-        <CourseSelectDialog courses={newCourses} onConfirm={confirmCourses} />
-      )}
 
       {editingAssignment && (
         <EditAssignmentDialog
