@@ -103,8 +103,9 @@ model NotificationSetting {
   preset           String   @default("standard")
   emailEnabled     Boolean  @default(false)
   mutedCourses     String[] @default([])
-  mutedAssignments String[] @default([])
-  hiddenCourses    String[] @default([])
+  mutedAssignments    String[] @default([])
+  hiddenCourses       String[] @default([])
+  acknowledgedCourses String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

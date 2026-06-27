@@ -15,9 +15,10 @@ export async function POST(request: Request) {
 
   const ns = await prisma.notificationSetting.findUnique({
     where: { userId: session.user.id },
-    select: { hiddenCourses: true },
+    select: { hiddenCourses: true, acknowledgedCourses: true },
   });
   const hiddenCourseIds = new Set(ns?.hiddenCourses ?? []);
+  const acknowledgedCourseIds = new Set(ns?.acknowledgedCourses ?? []);
 
   const existingCourseIds = await getExistingCourseIds(session.user.id);
 
@@ -32,7 +33,11 @@ export async function POST(request: Request) {
 
   const courseIds = new Set(allAssignments.map((a) => a.courseId));
   const newCourses = [...courseIds]
-    .filter((id) => !hiddenCourseIds.has(id) && !existingCourseIds.has(id))
+    .filter((id) =>
+      !hiddenCourseIds.has(id) &&
+      !acknowledgedCourseIds.has(id) &&
+      !existingCourseIds.has(id),
+    )
     .map((id) => {
       const a = allAssignments.find((x) => x.courseId === id)!;
       return { id, name: a.courseName };

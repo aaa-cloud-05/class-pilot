@@ -26,7 +26,6 @@ export function EditAssignmentDialog({ assignment, onSave, onClose }: EditAssign
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    setSaving(true);
     const data: Record<string, unknown> = {};
     if (title !== assignment.title) data.title = title;
     if (dueDate !== toLocalDatetime(assignment.dueDate)) {
@@ -35,7 +34,16 @@ export function EditAssignmentDialog({ assignment, onSave, onClose }: EditAssign
     if (submissionState !== assignment.submissionState) {
       data.submissionState = submissionState;
     }
-    await onSave(assignment.id, data);
+    if (Object.keys(data).length === 0) {
+      onClose();
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(assignment.id, data);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

@@ -135,16 +135,20 @@ export function useAssignments() {
 
   const confirmCourses = useCallback(async (hiddenIds: string[]) => {
     const current = await getNotificationSettings();
-    const merged = [...new Set([...current.hiddenCourses, ...hiddenIds])];
+    const mergedHidden = [...new Set([...current.hiddenCourses, ...hiddenIds])];
+    const allCourseIds = newCourses.map((c) => c.id);
     await fetch("/api/notifications/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hiddenCourses: merged }),
+      body: JSON.stringify({
+        hiddenCourses: mergedHidden,
+        acknowledgedCourses: allCourseIds,
+      }),
     });
-    await saveNotificationSettings({ hiddenCourses: merged });
+    await saveNotificationSettings({ hiddenCourses: mergedHidden });
     setNewCourses([]);
     await fetchFromApi();
-  }, [fetchFromApi]);
+  }, [fetchFromApi, newCourses]);
 
   useEffect(() => {
     async function init() {
