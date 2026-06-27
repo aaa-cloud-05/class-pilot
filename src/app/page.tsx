@@ -48,20 +48,28 @@ export default function HomePage() {
   }, [assignments]);
 
   const handleSaveEdit = useCallback(async (id: string, data: Record<string, unknown>) => {
-    await fetch(`/api/assignments/${encodeURIComponent(id)}`, {
+    const res = await fetch(`/api/assignments/${encodeURIComponent(id)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (!res.ok) {
+      alert("保存に失敗しました");
+      return;
+    }
     setEditingAssignment(null);
     refresh();
   }, [refresh]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("この課題を削除しますか？")) return;
-    await fetch(`/api/assignments/${encodeURIComponent(id)}`, {
+    const res = await fetch(`/api/assignments/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
+    if (!res.ok) {
+      alert("削除に失敗しました");
+      return;
+    }
     refresh();
   }, [refresh]);
 

@@ -74,5 +74,8 @@ export async function fetchAllData(
     }
   }
 
-  return { courses, allWork };
+  const visibleCourses = hiddenCourseIds
+    ? courses.filter((c) => !hiddenCourseIds.has(c.id))
+    : courses;
+  return { courses: visibleCourses, allWork };
 }

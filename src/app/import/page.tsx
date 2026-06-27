@@ -103,13 +103,17 @@ export default function ImportPage() {
           courses={pendingCourses}
           onConfirm={async (hiddenIds) => {
             const current = await getNotificationSettings();
-            const merged = [...new Set([...current.hiddenCourses, ...hiddenIds])];
+            const mergedHidden = [...new Set([...current.hiddenCourses, ...hiddenIds])];
+            const allCourseIds = pendingCourses.map((c) => c.id);
             await fetch("/api/notifications/settings", {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ hiddenCourses: merged }),
+              body: JSON.stringify({
+                hiddenCourses: mergedHidden,
+                acknowledgedCourses: allCourseIds,
+              }),
             });
-            await saveNotificationSettings({ hiddenCourses: merged });
+            await saveNotificationSettings({ hiddenCourses: mergedHidden });
             router.push("/");
           }}
         />
