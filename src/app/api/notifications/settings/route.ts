@@ -20,7 +20,6 @@ export async function GET() {
       mutedCourses: [],
       mutedAssignments: [],
       hiddenCourses: [],
-      acknowledgedCourses: [],
     },
   });
 }
@@ -32,7 +31,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { enabled, preset, emailEnabled, mutedCourses, mutedAssignments, hiddenCourses, acknowledgedCourses } = body;
+  const { enabled, preset, emailEnabled, mutedCourses, mutedAssignments, hiddenCourses } = body;
 
   const data: Record<string, unknown> = {};
   if (typeof enabled === "boolean") data.enabled = enabled;
@@ -41,13 +40,6 @@ export async function PATCH(request: NextRequest) {
   if (Array.isArray(mutedCourses)) data.mutedCourses = mutedCourses;
   if (Array.isArray(mutedAssignments)) data.mutedAssignments = mutedAssignments;
   if (Array.isArray(hiddenCourses)) data.hiddenCourses = hiddenCourses;
-  if (Array.isArray(acknowledgedCourses)) {
-    const current = await prisma.notificationSetting.findUnique({
-      where: { userId: session.user.id },
-      select: { acknowledgedCourses: true },
-    });
-    data.acknowledgedCourses = [...new Set([...(current?.acknowledgedCourses ?? []), ...acknowledgedCourses])];
-  }
 
   const settings = await prisma.notificationSetting.upsert({
     where: { userId: session.user.id },

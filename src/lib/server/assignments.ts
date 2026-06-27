@@ -50,13 +50,20 @@ export async function getUserAssignments(
   return rows.map(toClientAssignment);
 }
 
-export async function getExistingCourseIds(userId: string): Promise<Set<string>> {
+/**
+ * ユーザーの全コース（非表示含む）を返す。
+ * 設定画面のコース管理で、非表示にしたコースも再追跡できるようにするため使用。
+ */
+export async function getUserCourses(
+  userId: string,
+): Promise<{ id: string; name: string }[]> {
   const rows = await prisma.assignment.findMany({
     where: { userId, deletedAt: null },
-    select: { courseId: true },
+    select: { courseId: true, courseName: true },
     distinct: ["courseId"],
+    orderBy: { courseName: "asc" },
   });
-  return new Set(rows.map((r) => r.courseId));
+  return rows.map((r) => ({ id: r.courseId, name: r.courseName }));
 }
 
 export async function syncClassroomAssignments(

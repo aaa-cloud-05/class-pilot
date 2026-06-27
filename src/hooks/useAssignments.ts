@@ -9,7 +9,7 @@ import {
   putCachedAssignment,
   removeCachedAssignment,
 } from "@/lib/cache";
-import { getNotificationSettings, saveNotificationSettings } from "@/lib/notification-store";
+import { getNotificationSettings } from "@/lib/notification-store";
 import type { Assignment } from "@/lib/types";
 
 const TTL_MS = 5 * 60 * 1000;
@@ -103,7 +103,6 @@ export function useAssignments() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newCourses, setNewCourses] = useState<{ id: string; name: string }[]>([]);
 
   const fetchFromApi = useCallback(async () => {
     setLoading(true);
@@ -114,7 +113,7 @@ export function useAssignments() {
         const body = await res.json().catch(() => ({ error: "取得に失敗しました" }));
         throw new Error(body.error ?? `API ${res.status}`);
       }
-      const { assignments: items, newCourses: nc } = await res.json();
+      const { assignments: items } = await res.json();
       const all = parseAssignments(items);
 
       lastFetchTime = Date.now();
@@ -122,7 +121,6 @@ export function useAssignments() {
       await cacheAssignments(all);
 
       setAssignments(sortByDueDate(all));
-      setNewCourses(nc ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "取得に失敗しました");
     } finally {
@@ -134,23 +132,6 @@ export function useAssignments() {
     if (!loggedIn) return;
     await fetchFromApi();
   }, [loggedIn, fetchFromApi]);
-
-  const confirmCourses = useCallback(async (hiddenIds: string[]) => {
-    const current = await getNotificationSettings();
-    const mergedHidden = [...new Set([...current.hiddenCourses, ...hiddenIds])];
-    const allCourseIds = newCourses.map((c) => c.id);
-    await fetch("/api/notifications/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        hiddenCourses: mergedHidden,
-        acknowledgedCourses: allCourseIds,
-      }),
-    });
-    await saveNotificationSettings({ hiddenCourses: mergedHidden });
-    setNewCourses([]);
-    await fetchFromApi();
-  }, [fetchFromApi, newCourses]);
 
   useEffect(() => {
     async function init() {
@@ -204,8 +185,6 @@ export function useAssignments() {
     loading,
     error,
     refresh,
-    newCourses,
-    confirmCourses,
     removeAssignment,
     applyEdit,
   };

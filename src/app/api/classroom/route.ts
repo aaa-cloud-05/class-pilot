@@ -5,7 +5,6 @@ import { prisma } from "@/lib/server/prisma";
 import {
   syncClassroomAssignments,
   getUserAssignments,
-  getExistingCourseIds,
 } from "@/lib/server/assignments";
 
 export async function GET() {
@@ -17,27 +16,12 @@ export async function GET() {
   try {
     const ns = await prisma.notificationSetting.findUnique({
       where: { userId: session.user.id },
-      select: { hiddenCourses: true, acknowledgedCourses: true },
+      select: { hiddenCourses: true },
     });
     const hiddenCourseIds = new Set(ns?.hiddenCourses ?? []);
-    const acknowledgedCourseIds = new Set(ns?.acknowledgedCourses ?? []);
-
-    const existingCourseIds = await getExistingCourseIds(session.user.id);
-
-    let newCourses: { id: string; name: string }[] = [];
 
     try {
-      const { courses, allWork } = await fetchAllData(
-        session.accessToken,
-        hiddenCourseIds,
-      );
-
-      newCourses = courses.filter(
-        (c) =>
-          !hiddenCourseIds.has(c.id) &&
-          !acknowledgedCourseIds.has(c.id) &&
-          !existingCourseIds.has(c.id),
-      ).map((c) => ({ id: c.id, name: c.name }));
+      const { allWork } = await fetchAllData(session.accessToken, hiddenCourseIds);
 
       const classroomAssignments = allWork.map(({ course, work, submission }) => ({
         ...transformAssignment(course, work, submission),
@@ -51,7 +35,7 @@ export async function GET() {
     }
 
     const assignments = await getUserAssignments(session.user.id, hiddenCourseIds);
-    return Response.json({ assignments, newCourses });
+    return Response.json({ assignments });
   } catch (error) {
     const message = error instanceof Error ? error.message : "取得に失敗しました";
     return Response.json({ error: message }, { status: 500 });
