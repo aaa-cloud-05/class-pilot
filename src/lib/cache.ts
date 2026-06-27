@@ -18,10 +18,11 @@ function deserialize(s: StoredAssignment): Assignment {
 export async function cacheAssignments(assignments: Assignment[]): Promise<void> {
   const db = await getDb();
   const tx = db.transaction(STORE, "readwrite");
-  await Promise.all([
-    ...assignments.map((a) => tx.store.put(serialize(a))),
-    tx.done,
-  ]);
+  await tx.store.clear();
+  for (const a of assignments) {
+    tx.store.put(serialize(a));
+  }
+  await tx.done;
 }
 
 export async function getCachedAssignments(): Promise<Assignment[]> {
@@ -43,6 +44,16 @@ export async function cacheWebClassAssignments(assignments: Assignment[]): Promi
     tx.store.put(serialize(a));
   }
   await tx.done;
+}
+
+export async function putCachedAssignment(a: Assignment): Promise<void> {
+  const db = await getDb();
+  await db.put(STORE, serialize(a));
+}
+
+export async function removeCachedAssignment(id: string): Promise<void> {
+  const db = await getDb();
+  await db.delete(STORE, id);
 }
 
 export async function deleteCachedByPrefix(prefix: string): Promise<void> {

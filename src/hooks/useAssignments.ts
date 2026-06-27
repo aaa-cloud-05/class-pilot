@@ -6,6 +6,8 @@ import {
   cacheAssignments,
   getCachedAssignments,
   deleteCachedByPrefix,
+  putCachedAssignment,
+  removeCachedAssignment,
 } from "@/lib/cache";
 import { getNotificationSettings, saveNotificationSettings } from "@/lib/notification-store";
 import type { Assignment } from "@/lib/types";
@@ -177,5 +179,34 @@ export function useAssignments() {
     init();
   }, [loggedIn, fetchFromApi]);
 
-  return { assignments, loading, error, refresh, newCourses, confirmCourses };
+  const removeAssignment = useCallback(async (id: string) => {
+    setAssignments((prev) => prev.filter((a) => a.id !== id));
+    try {
+      await removeCachedAssignment(id);
+    } catch {
+      // IndexedDB unavailable
+    }
+  }, []);
+
+  const applyEdit = useCallback(async (updated: Assignment) => {
+    setAssignments((prev) =>
+      sortByDueDate(prev.map((a) => (a.id === updated.id ? updated : a))),
+    );
+    try {
+      await putCachedAssignment(updated);
+    } catch {
+      // IndexedDB unavailable
+    }
+  }, []);
+
+  return {
+    assignments,
+    loading,
+    error,
+    refresh,
+    newCourses,
+    confirmCourses,
+    removeAssignment,
+    applyEdit,
+  };
 }

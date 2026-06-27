@@ -21,7 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 export default function HomePage() {
   const { status } = useSession();
   const loggedIn = status === "authenticated";
-  const { assignments, loading, error, refresh, newCourses, confirmCourses } = useAssignments();
+  const { assignments, loading, error, refresh, newCourses, confirmCourses, removeAssignment, applyEdit } = useAssignments();
 
   const [mutedAssignments, setMutedAssignments] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -54,24 +54,30 @@ export default function HomePage() {
       body: JSON.stringify(data),
     });
     if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error("[EDIT]", res.status, body);
       alert("保存に失敗しました");
       return;
     }
+    const { assignment } = await res.json();
+    await applyEdit({
+      ...assignment,
+      dueDate: assignment.dueDate ? new Date(assignment.dueDate) : null,
+    });
     setEditingAssignment(null);
-    refresh();
-  }, [refresh]);
+  }, [applyEdit]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("この課題を削除しますか？")) return;
     const res = await fetch(`/api/assignments/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
-    if (!res.ok) {
+    if (!res.ok && res.status !== 404) {
       alert("削除に失敗しました");
       return;
     }
-    refresh();
-  }, [refresh]);
+    removeAssignment(id);
+  }, [removeAssignment]);
 
   const grouped = useMemo(() => {
     const groups = new Map<string, typeof assignments>();

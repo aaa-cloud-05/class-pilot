@@ -24,24 +24,31 @@ export async function GET() {
 
     const existingCourseIds = await getExistingCourseIds(session.user.id);
 
-    const { courses, allWork } = await fetchAllData(
-      session.accessToken,
-      hiddenCourseIds,
-    );
+    let newCourses: { id: string; name: string }[] = [];
 
-    const newCourses = courses.filter(
-      (c) =>
-        !hiddenCourseIds.has(c.id) &&
-        !acknowledgedCourseIds.has(c.id) &&
-        !existingCourseIds.has(c.id),
-    ).map((c) => ({ id: c.id, name: c.name }));
+    try {
+      const { courses, allWork } = await fetchAllData(
+        session.accessToken,
+        hiddenCourseIds,
+      );
 
-    const classroomAssignments = allWork.map(({ course, work, submission }) => ({
-      ...transformAssignment(course, work, submission),
-      source: "classroom" as const,
-    }));
+      newCourses = courses.filter(
+        (c) =>
+          !hiddenCourseIds.has(c.id) &&
+          !acknowledgedCourseIds.has(c.id) &&
+          !existingCourseIds.has(c.id),
+      ).map((c) => ({ id: c.id, name: c.name }));
 
-    await syncClassroomAssignments(session.user.id, classroomAssignments);
+      const classroomAssignments = allWork.map(({ course, work, submission }) => ({
+        ...transformAssignment(course, work, submission),
+        source: "classroom" as const,
+      }));
+
+      await syncClassroomAssignments(session.user.id, classroomAssignments);
+    } catch (e) {
+      // Google 取得・同期に失敗してもDBの既存データは返す
+      console.error("[CLASSROOM] sync failed, returning DB data:", e);
+    }
 
     const assignments = await getUserAssignments(session.user.id, hiddenCourseIds);
     return Response.json({ assignments, newCourses });
