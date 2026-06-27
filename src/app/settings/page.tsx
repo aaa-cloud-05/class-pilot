@@ -51,6 +51,13 @@ export default function SettingsPage() {
     await saveNotificationSettings(patch);
     const updated = await getNotificationSettings();
     setSettings(updated);
+    if (loggedIn) {
+      fetch("/api/notifications/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      }).catch(() => {});
+    }
   }
 
   async function toggleEmailNotification() {

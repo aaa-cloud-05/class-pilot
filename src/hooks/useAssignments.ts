@@ -7,7 +7,7 @@ import {
   getCachedAssignments,
   deleteCachedByPrefix,
 } from "@/lib/cache";
-import { saveNotificationSettings } from "@/lib/notification-store";
+import { getNotificationSettings, saveNotificationSettings } from "@/lib/notification-store";
 import type { Assignment } from "@/lib/types";
 
 const TTL_MS = 5 * 60 * 1000;
@@ -71,6 +71,30 @@ async function migrateLocalData(): Promise<void> {
   localStorage.setItem("db-migrated", "1");
 }
 
+async function migrateNotificationSettings(): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (localStorage.getItem("settings-synced")) return;
+
+  try {
+    const local = await getNotificationSettings();
+    await fetch("/api/notifications/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        enabled: local.enabled,
+        preset: local.preset,
+        mutedCourses: local.mutedCourses,
+        mutedAssignments: local.mutedAssignments,
+        hiddenCourses: local.hiddenCourses,
+      }),
+    });
+  } catch {
+    return;
+  }
+
+  localStorage.setItem("settings-synced", "1");
+}
+
 export function useAssignments() {
   const { status } = useSession();
   const loggedIn = status === "authenticated";
@@ -110,12 +134,14 @@ export function useAssignments() {
   }, [loggedIn, fetchFromApi]);
 
   const confirmCourses = useCallback(async (hiddenIds: string[]) => {
+    const current = await getNotificationSettings();
+    const merged = [...new Set([...current.hiddenCourses, ...hiddenIds])];
     await fetch("/api/notifications/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hiddenCourses: hiddenIds }),
+      body: JSON.stringify({ hiddenCourses: merged }),
     });
-    await saveNotificationSettings({ hiddenCourses: hiddenIds });
+    await saveNotificationSettings({ hiddenCourses: merged });
     setNewCourses([]);
     await fetchFromApi();
   }, [fetchFromApi]);
@@ -133,6 +159,7 @@ export function useAssignments() {
 
       if (loggedIn) {
         await migrateLocalData();
+        await migrateNotificationSettings();
 
         if (Date.now() - lastFetchTime < TTL_MS) {
           setLoading(false);

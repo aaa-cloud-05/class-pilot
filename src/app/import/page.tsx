@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { transformWebClassTasks, type WebClassRawTask } from "@/lib/webclass";
 import { cacheWebClassAssignments, cacheAssignments } from "@/lib/cache";
-import { saveNotificationSettings } from "@/lib/notification-store";
+import { getNotificationSettings, saveNotificationSettings } from "@/lib/notification-store";
 import { CourseSelectDialog } from "@/components/CourseSelectDialog";
 
 export default function ImportPage() {
@@ -102,12 +102,14 @@ export default function ImportPage() {
         <CourseSelectDialog
           courses={pendingCourses}
           onConfirm={async (hiddenIds) => {
+            const current = await getNotificationSettings();
+            const merged = [...new Set([...current.hiddenCourses, ...hiddenIds])];
             await fetch("/api/notifications/settings", {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ hiddenCourses: hiddenIds }),
+              body: JSON.stringify({ hiddenCourses: merged }),
             });
-            await saveNotificationSettings({ hiddenCourses: hiddenIds });
+            await saveNotificationSettings({ hiddenCourses: merged });
             router.push("/");
           }}
         />
