@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { prisma } from "@/lib/server/prisma";
 import { createManualAssignment, getUserAssignments } from "@/lib/server/assignments";
 
 export async function GET() {
@@ -7,7 +8,13 @@ export async function GET() {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
 
-  const assignments = await getUserAssignments(session.user.id);
+  const ns = await prisma.notificationSetting.findUnique({
+    where: { userId: session.user.id },
+    select: { hiddenCourses: true },
+  });
+  const hiddenCourseIds = new Set(ns?.hiddenCourses ?? []);
+
+  const assignments = await getUserAssignments(session.user.id, hiddenCourseIds);
   return Response.json({ assignments });
 }
 

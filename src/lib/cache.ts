@@ -15,7 +15,12 @@ function deserialize(s: StoredAssignment): Assignment {
   return { ...s, dueDate: s.dueDate ? new Date(s.dueDate) : null };
 }
 
-export async function cacheAssignments(assignments: Assignment[]): Promise<void> {
+/**
+ * キャッシュを与えられた一覧で全置換する。
+ * DB全件読込・全同期の結果など「完全な一覧」を受け取ったときのみ使用すること。
+ * 単一の追加・更新には upsertCache を使う（これは他の課題を消してしまう）。
+ */
+export async function replaceCache(assignments: Assignment[]): Promise<void> {
   const db = await getDb();
   const tx = db.transaction(STORE, "readwrite");
   // Safari対策: トランザクション内で await すると自動コミットされ
@@ -49,12 +54,14 @@ export async function cacheWebClassAssignments(assignments: Assignment[]): Promi
   await tx.done;
 }
 
-export async function putCachedAssignment(a: Assignment): Promise<void> {
+/** 単一課題を追加または更新する（他の課題は消さない）。 */
+export async function upsertCache(a: Assignment): Promise<void> {
   const db = await getDb();
   await db.put(STORE, serialize(a));
 }
 
-export async function removeCachedAssignment(id: string): Promise<void> {
+/** 単一課題をキャッシュから削除する。 */
+export async function removeCache(id: string): Promise<void> {
   const db = await getDb();
   await db.delete(STORE, id);
 }

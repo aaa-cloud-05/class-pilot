@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
-  cacheAssignments,
+  replaceCache,
   getCachedAssignments,
   deleteCachedByPrefix,
-  putCachedAssignment,
-  removeCachedAssignment,
+  upsertCache,
+  removeCache,
 } from "@/lib/cache";
 import { getNotificationSettings } from "@/lib/notification-store";
 import type { Assignment } from "@/lib/types";
@@ -118,7 +118,7 @@ export function useAssignments() {
 
       lastFetchTime = Date.now();
 
-      await cacheAssignments(all);
+      await replaceCache(all);
 
       setAssignments(sortByDueDate(all));
     } catch (e) {
@@ -163,7 +163,7 @@ export function useAssignments() {
   const removeAssignment = useCallback(async (id: string) => {
     setAssignments((prev) => prev.filter((a) => a.id !== id));
     try {
-      await removeCachedAssignment(id);
+      await removeCache(id);
     } catch {
       // IndexedDB unavailable
     }
@@ -174,7 +174,7 @@ export function useAssignments() {
       sortByDueDate(prev.map((a) => (a.id === updated.id ? updated : a))),
     );
     try {
-      await putCachedAssignment(updated);
+      await upsertCache(updated);
     } catch {
       // IndexedDB unavailable
     }

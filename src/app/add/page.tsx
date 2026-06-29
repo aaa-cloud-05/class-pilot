@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { cacheAssignments } from "@/lib/cache";
+import { upsertCache } from "@/lib/cache";
 import { COURSE_COLORS } from "@/lib/types";
 import type { Assignment, SubmissionState } from "@/lib/types";
 
@@ -42,9 +42,10 @@ export default function AddAssignmentPage() {
         });
         if (!res.ok) throw new Error("保存に失敗しました");
         const { assignment } = await res.json();
-        await cacheAssignments([
-          { ...assignment, dueDate: assignment.dueDate ? new Date(assignment.dueDate) : null },
-        ]);
+        await upsertCache({
+          ...assignment,
+          dueDate: assignment.dueDate ? new Date(assignment.dueDate) : null,
+        });
       } catch {
         setSaving(false);
         return;
@@ -65,7 +66,7 @@ export default function AddAssignmentPage() {
         isLate: dueDate ? dueDate < new Date() && status === "not_submitted" : false,
         source: "manual",
       };
-      await cacheAssignments([assignment]);
+      await upsertCache(assignment);
     }
 
     router.push("/");
