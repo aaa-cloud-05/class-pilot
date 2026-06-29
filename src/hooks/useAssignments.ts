@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
   replaceCache,
@@ -9,11 +9,12 @@ import {
   upsertCache,
   removeCache,
 } from "@/lib/cache";
-import { getNotificationSettings } from "@/lib/notification-store";
+import { getNotificationSettings, saveNotificationSettings } from "@/lib/notification-store";
 import type { Assignment } from "@/lib/types";
 
-const TTL_MS = 5 * 60 * 1000;
-let lastFetchTime = 0;
+// Google同期(段3)のみ throttle する。DB読込(段2)は毎回実行する。
+const SYNC_TTL_MS = 5 * 60 * 1000;
+let lastSyncTime = 0;
 
 function sortByDueDate(list: Assignment[]): Assignment[] {
   return [...list].sort((a, b) => {
@@ -31,6 +32,7 @@ function parseAssignments(items: Record<string, unknown>[]): Assignment[] {
   }));
 }
 
+/** ローカル専用課題(wc-/manual-)を初回ログイン時にDBへ引き上げる（方向: local→server）。 */
 async function migrateLocalData(): Promise<void> {
   if (typeof window === "undefined") return;
   if (localStorage.getItem("db-migrated")) return;
@@ -73,28 +75,28 @@ async function migrateLocalData(): Promise<void> {
   localStorage.setItem("db-migrated", "1");
 }
 
-async function migrateNotificationSettings(): Promise<void> {
+/**
+ * サーバの通知設定をローカル(IndexedDB)へ取り込む（方向: server→local pull）。
+ * サーバが真実のソース。以前のように「デフォルトをpushして上書き」しないため、
+ * キャッシュ消去や別端末ログインでサーバ設定(hiddenCourses等)が消えない。
+ */
+async function pullNotificationSettings(): Promise<void> {
   if (typeof window === "undefined") return;
-  if (localStorage.getItem("settings-synced")) return;
-
   try {
-    const local = await getNotificationSettings();
-    await fetch("/api/notifications/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        enabled: local.enabled,
-        preset: local.preset,
-        mutedCourses: local.mutedCourses,
-        mutedAssignments: local.mutedAssignments,
-        hiddenCourses: local.hiddenCourses,
-      }),
+    const res = await fetch("/api/notifications/settings");
+    if (!res.ok) return;
+    const { settings } = await res.json();
+    if (!settings) return;
+    await saveNotificationSettings({
+      enabled: settings.enabled,
+      preset: settings.preset,
+      mutedCourses: settings.mutedCourses ?? [],
+      mutedAssignments: settings.mutedAssignments ?? [],
+      hiddenCourses: settings.hiddenCourses ?? [],
     });
   } catch {
-    return;
+    // ignore
   }
-
-  localStorage.setItem("settings-synced", "1");
 }
 
 export function useAssignments() {
@@ -104,61 +106,95 @@ export function useAssignments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchFromApi = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // 現在表示中の件数を追跡し、表示がある状態でのエラー点滅を防ぐ
+  const assignmentsRef = useRef<Assignment[]>([]);
+  useEffect(() => {
+    assignmentsRef.current = assignments;
+  }, [assignments]);
+
+  // 段2: DBから高速読込（Googleを叩かない＝速い・堅牢）。毎回実行。
+  const loadFromDb = useCallback(async () => {
     try {
-      const res = await fetch("/api/classroom");
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({ error: "取得に失敗しました" }));
-        throw new Error(body.error ?? `API ${res.status}`);
-      }
+      const res = await fetch("/api/assignments");
+      if (!res.ok) throw new Error(`API ${res.status}`);
       const { assignments: items } = await res.json();
       const all = parseAssignments(items);
-
-      lastFetchTime = Date.now();
-
-      await replaceCache(all);
-
       setAssignments(sortByDueDate(all));
+      setError(null);
+      await replaceCache(all);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "取得に失敗しました");
-    } finally {
-      setLoading(false);
+      // 表示済みデータがある場合はエラーを出さない（キャッシュ表示を維持）
+      if (assignmentsRef.current.length === 0) {
+        setError(e instanceof Error ? e.message : "取得に失敗しました");
+      }
+    }
+  }, []);
+
+  // 段3: Google同期（裏で実行・throttle）。失敗しても既存表示を維持。
+  const syncWithGoogle = useCallback(async (force: boolean) => {
+    if (!force && Date.now() - lastSyncTime < SYNC_TTL_MS) return;
+    try {
+      const res = await fetch("/api/classroom/sync", { method: "POST" });
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const { assignments: items } = await res.json();
+      const all = parseAssignments(items);
+      lastSyncTime = Date.now();
+      setAssignments(sortByDueDate(all));
+      setError(null);
+      await replaceCache(all);
+    } catch (e) {
+      console.error("[useAssignments] Google同期に失敗:", e);
     }
   }, []);
 
   const refresh = useCallback(async () => {
     if (!loggedIn) return;
-    await fetchFromApi();
-  }, [loggedIn, fetchFromApi]);
+    setLoading(true);
+    await loadFromDb();
+    await syncWithGoogle(true);
+    setLoading(false);
+  }, [loggedIn, loadFromDb, syncWithGoogle]);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function init() {
+      // 段1: キャッシュを即描画
+      let hadCache = false;
       try {
         const cached = await getCachedAssignments();
-        if (cached.length > 0) {
+        if (cached.length > 0 && !cancelled) {
           setAssignments(sortByDueDate(cached));
+          hadCache = true;
         }
       } catch {
         // IndexedDB unavailable
       }
 
-      if (loggedIn) {
-        await migrateLocalData();
-        await migrateNotificationSettings();
-
-        if (Date.now() - lastFetchTime < TTL_MS) {
-          setLoading(false);
-        } else {
-          await fetchFromApi();
-        }
-      } else {
-        setLoading(false);
+      if (!loggedIn) {
+        if (!cancelled) setLoading(false);
+        return;
       }
+
+      await migrateLocalData();
+      await pullNotificationSettings();
+
+      // キャッシュ表示があればローディングは外してよい（段2は裏で更新）
+      if (hadCache && !cancelled) setLoading(false);
+
+      // 段2: DB読込（毎回・throttleしない）。キャッシュ空でもここで素早く表示される。
+      await loadFromDb();
+      if (!cancelled) setLoading(false);
+
+      // 段3: Google同期（throttle付き・待たずに裏で）
+      if (!cancelled) void syncWithGoogle(false);
     }
+
     init();
-  }, [loggedIn, fetchFromApi]);
+    return () => {
+      cancelled = true;
+    };
+  }, [loggedIn, loadFromDb, syncWithGoogle]);
 
   const removeAssignment = useCallback(async (id: string) => {
     setAssignments((prev) => prev.filter((a) => a.id !== id));
