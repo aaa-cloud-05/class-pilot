@@ -11,6 +11,7 @@ import {
   type NotificationSettings,
 } from "@/lib/notification-store";
 import { sendTestNotification } from "@/lib/notification-scheduler";
+import { clearAllClientData } from "@/lib/debug-clear";
 
 const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
   { value: "relaxed", label: "余裕派", desc: "締切24時間前に1回" },
@@ -29,6 +30,7 @@ export default function SettingsPage() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [hiddenCourses, setHiddenCourses] = useState<string[]>([]);
   const [allCourses, setAllCourses] = useState<{ id: string; name: string }[]>([]);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     getNotificationSettings().then(setSettings);
@@ -337,6 +339,35 @@ export default function SettingsPage() {
               Google ログイン（Classroom連携）
             </a>
           )}
+        </section>
+
+        {/* デバッグ: ローカルデータ削除 */}
+        <section className="pt-4 border-t border-gray-100">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">デバッグ</h2>
+          <p className="text-xs text-gray-500 mb-2">
+            端末内のキャッシュ（IndexedDB・Cache・SW・localStorage）を全削除します。
+            ログイン状態は維持されます。
+          </p>
+          <button
+            onClick={async () => {
+              if (
+                !confirm(
+                  "この端末に保存されたローカルデータ（IndexedDB等）を全て削除します。よろしいですか？"
+                )
+              )
+                return;
+              setClearing(true);
+              await clearAllClientData();
+              alert("ローカルデータを削除しました。再読み込みします。");
+              window.location.reload();
+            }}
+            disabled={clearing}
+            className={`text-sm font-medium ${
+              clearing ? "text-gray-400" : "text-red-500"
+            }`}
+          >
+            {clearing ? "削除中…" : "ローカルデータを全消去"}
+          </button>
         </section>
       </main>
     </div>
