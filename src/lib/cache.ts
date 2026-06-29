@@ -18,7 +18,9 @@ function deserialize(s: StoredAssignment): Assignment {
 export async function cacheAssignments(assignments: Assignment[]): Promise<void> {
   const db = await getDb();
   const tx = db.transaction(STORE, "readwrite");
-  await tx.store.clear();
+  // Safari対策: トランザクション内で await すると自動コミットされ
+  // 後続の put が TransactionInactiveError になる。await せず一気に発行する。
+  tx.store.clear();
   for (const a of assignments) {
     tx.store.put(serialize(a));
   }
@@ -33,8 +35,9 @@ export async function getCachedAssignments(): Promise<Assignment[]> {
 
 export async function cacheWebClassAssignments(assignments: Assignment[]): Promise<void> {
   const db = await getDb();
+  // 読み取りは別トランザクションで行い、書き込みtx内では await しない（Safari対策）
+  const allKeys = await db.getAllKeys(STORE);
   const tx = db.transaction(STORE, "readwrite");
-  const allKeys = await tx.store.getAllKeys();
   for (const key of allKeys) {
     if (typeof key === "string" && key.startsWith("wc-")) {
       tx.store.delete(key);
@@ -58,8 +61,9 @@ export async function removeCachedAssignment(id: string): Promise<void> {
 
 export async function deleteCachedByPrefix(prefix: string): Promise<void> {
   const db = await getDb();
+  // 読み取りは別トランザクションで行い、書き込みtx内では await しない（Safari対策）
+  const allKeys = await db.getAllKeys(STORE);
   const tx = db.transaction(STORE, "readwrite");
-  const allKeys = await tx.store.getAllKeys();
   for (const key of allKeys) {
     if (typeof key === "string" && key.startsWith(prefix)) {
       tx.store.delete(key);
