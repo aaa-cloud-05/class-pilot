@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { transformWebClassTasks, type WebClassRawTask } from "@/lib/webclass";
-import { cacheWebClassAssignments, cacheAssignments } from "@/lib/cache";
+import { cacheWebClassAssignments, replaceCache } from "@/lib/cache";
 
 export default function ImportPage() {
   const router = useRouter();
@@ -47,7 +47,7 @@ export default function ImportPage() {
               ...a,
               dueDate: a.dueDate ? new Date(a.dueDate as string) : null,
             }));
-            await cacheAssignments(parsed);
+            await replaceCache(parsed);
             finish(assignments.length);
           })
           .catch((e) => {
