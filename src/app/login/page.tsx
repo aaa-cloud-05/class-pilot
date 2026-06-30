@@ -3,6 +3,7 @@
 import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const { status } = useSession();
@@ -52,6 +53,14 @@ export default function LoginPage() {
 
         <p className="text-xs text-gray-400 mt-6">
           課題データは読み取り専用で取得します
+        </p>
+
+        <p className="text-xs text-gray-400 mt-8">
+          ログインすると
+          <Link href="/terms" className="text-blue-500 underline">利用規約</Link>
+          と
+          <Link href="/privacy" className="text-blue-500 underline">プライバシーポリシー</Link>
+          に同意したものとみなされます
         </p>
       </div>
     </div>

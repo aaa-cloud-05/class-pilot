@@ -369,6 +369,14 @@ export default function SettingsPage() {
             {clearing ? "削除中…" : "ローカルデータを全消去"}
           </button>
         </section>
+
+        {/* 法的情報 */}
+        <section className="pt-4 border-t border-gray-100">
+          <div className="flex gap-4 text-xs text-gray-400">
+            <a href="/privacy" className="hover:text-gray-600">プライバシーポリシー</a>
+            <a href="/terms" className="hover:text-gray-600">利用規約</a>
+          </div>
+        </section>
       </main>
     </div>
   );
