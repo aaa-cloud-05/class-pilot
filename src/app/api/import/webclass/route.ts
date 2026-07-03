@@ -28,6 +28,10 @@ export async function POST(request: Request) {
   const filtered = allAssignments.filter((a) => !hiddenCourseIds.has(a.courseId));
 
   await syncWebClassAssignments(session.user.id, filtered);
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { webclassSyncedAt: new Date() },
+  });
 
   const all = await getUserAssignments(session.user.id, hiddenCourseIds);
   return Response.json({ assignments: all, synced: filtered.length });

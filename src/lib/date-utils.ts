@@ -49,3 +49,9 @@ export function formatTime(date: Date): string {
     minute: "2-digit",
   });
 }
+
+export function timeAgo(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 60_000) return "たった今";
+  return `${formatDistanceToNow(date, { locale: ja })}前`;
+}
