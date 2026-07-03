@@ -7,6 +7,7 @@ import { NavBar } from "@/components/NavBar";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { NotificationPanel } from "@/components/NotificationPanel";
 import { EditAssignmentDialog } from "@/components/EditAssignmentDialog";
+import { SyncStatus } from "@/components/SyncStatus";
 import type { Assignment } from "@/lib/types";
 import { groupLabel, GROUP_ORDER } from "@/lib/date-utils";
 import {
@@ -20,7 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 export default function HomePage() {
   const { status } = useSession();
   const loggedIn = status === "authenticated";
-  const { assignments, loading, error, refresh, removeAssignment, applyEdit } = useAssignments();
+  const { assignments, loading, error, refresh, removeAssignment, applyEdit, syncedAt } = useAssignments();
 
   const [mutedAssignments, setMutedAssignments] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -140,6 +141,8 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+
+      <SyncStatus syncedAt={syncedAt} loggedIn={loggedIn} onRefresh={refresh} />
 
       <NotificationBanner />
 

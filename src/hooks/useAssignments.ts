@@ -10,7 +10,22 @@ import {
   removeCache,
 } from "@/lib/cache";
 import { getNotificationSettings, saveNotificationSettings } from "@/lib/notification-store";
+import { getLocalWebclassSyncedAt } from "@/lib/sync-meta";
 import type { Assignment } from "@/lib/types";
+
+interface SyncedAt {
+  classroom: Date | null;
+  webclass: Date | null;
+}
+
+function parseSyncedAt(
+  s: { classroom?: string | null; webclass?: string | null } | undefined,
+): SyncedAt {
+  return {
+    classroom: s?.classroom ? new Date(s.classroom) : null,
+    webclass: s?.webclass ? new Date(s.webclass) : null,
+  };
+}
 
 // Google同期(段3)のみ throttle する。DB読込(段2)は毎回実行する。
 const SYNC_TTL_MS = 5 * 60 * 1000;
@@ -105,6 +120,7 @@ export function useAssignments() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [syncedAt, setSyncedAt] = useState<SyncedAt>({ classroom: null, webclass: null });
 
   // 現在表示中の件数を追跡し、表示がある状態でのエラー点滅を防ぐ
   const assignmentsRef = useRef<Assignment[]>([]);
@@ -117,9 +133,10 @@ export function useAssignments() {
     try {
       const res = await fetch("/api/assignments");
       if (!res.ok) throw new Error(`API ${res.status}`);
-      const { assignments: items } = await res.json();
-      const all = parseAssignments(items);
+      const data = await res.json();
+      const all = parseAssignments(data.assignments);
       setAssignments(sortByDueDate(all));
+      setSyncedAt(parseSyncedAt(data.syncedAt));
       setError(null);
       await replaceCache(all);
     } catch (e) {
@@ -136,10 +153,11 @@ export function useAssignments() {
     try {
       const res = await fetch("/api/classroom/sync", { method: "POST" });
       if (!res.ok) throw new Error(`API ${res.status}`);
-      const { assignments: items } = await res.json();
-      const all = parseAssignments(items);
+      const data = await res.json();
+      const all = parseAssignments(data.assignments);
       lastSyncTime = Date.now();
       setAssignments(sortByDueDate(all));
+      setSyncedAt(parseSyncedAt(data.syncedAt));
       setError(null);
       await replaceCache(all);
     } catch (e) {
@@ -172,7 +190,11 @@ export function useAssignments() {
       }
 
       if (!loggedIn) {
-        if (!cancelled) setLoading(false);
+        const localWc = getLocalWebclassSyncedAt();
+        if (!cancelled) {
+          setSyncedAt({ classroom: null, webclass: localWc ? new Date(localWc) : null });
+          setLoading(false);
+        }
         return;
       }
 
@@ -223,5 +245,6 @@ export function useAssignments() {
     refresh,
     removeAssignment,
     applyEdit,
+    syncedAt,
   };
 }

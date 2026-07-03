@@ -8,14 +8,24 @@ export async function GET() {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
 
-  const ns = await prisma.notificationSetting.findUnique({
-    where: { userId: session.user.id },
-    select: { hiddenCourses: true },
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      classroomSyncedAt: true,
+      webclassSyncedAt: true,
+      notificationSetting: { select: { hiddenCourses: true } },
+    },
   });
-  const hiddenCourseIds = new Set(ns?.hiddenCourses ?? []);
+  const hiddenCourseIds = new Set(user?.notificationSetting?.hiddenCourses ?? []);
 
   const assignments = await getUserAssignments(session.user.id, hiddenCourseIds);
-  return Response.json({ assignments });
+  return Response.json({
+    assignments,
+    syncedAt: {
+      classroom: user?.classroomSyncedAt ?? null,
+      webclass: user?.webclassSyncedAt ?? null,
+    },
+  });
 }
 
 export async function POST(request: Request) {

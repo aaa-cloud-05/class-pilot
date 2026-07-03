@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { transformWebClassTasks, type WebClassRawTask } from "@/lib/webclass";
 import { cacheWebClassAssignments, replaceCache } from "@/lib/cache";
+import { setLocalWebclassSyncedAt } from "@/lib/sync-meta";
 
 export default function ImportPage() {
   const router = useRouter();
@@ -55,7 +56,10 @@ export default function ImportPage() {
             setStatus("error");
           });
       } else {
-        cacheWebClassAssignments(assignments).then(() => finish(assignments.length));
+        cacheWebClassAssignments(assignments).then(() => {
+          setLocalWebclassSyncedAt(Date.now());
+          finish(assignments.length);
+        });
       }
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "データの解析に失敗しました");

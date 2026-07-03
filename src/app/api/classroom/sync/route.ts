@@ -35,12 +35,29 @@ export async function POST() {
       }));
 
       await syncClassroomAssignments(userId, classroomAssignments);
+      await prisma.user.update({
+        where: { id: userId },
+        data: { classroomSyncedAt: new Date() },
+      });
     } catch (e) {
       // Google取得・同期に失敗してもDBの既存データを返す
       console.error("[SYNC] Google同期に失敗、DBデータを返します:", e);
     }
   }
 
-  const assignments = await getUserAssignments(userId, hiddenCourseIds);
-  return Response.json({ assignments });
+  const [assignments, user] = await Promise.all([
+    getUserAssignments(userId, hiddenCourseIds),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { classroomSyncedAt: true, webclassSyncedAt: true },
+    }),
+  ]);
+
+  return Response.json({
+    assignments,
+    syncedAt: {
+      classroom: user?.classroomSyncedAt ?? null,
+      webclass: user?.webclassSyncedAt ?? null,
+    },
+  });
 }
