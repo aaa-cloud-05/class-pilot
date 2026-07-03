@@ -66,6 +66,13 @@ export async function getUserCourses(
   return rows.map((r) => ({ id: r.courseId, name: r.courseName }));
 }
 
+/** Date同士の等値比較（null対応）。 */
+function sameDate(a: Date | null, b: Date | null): boolean {
+  if (a === null && b === null) return true;
+  if (a === null || b === null) return false;
+  return a.getTime() === b.getTime();
+}
+
 export async function syncClassroomAssignments(
   userId: string,
   assignments: Assignment[],
@@ -78,6 +85,7 @@ export async function syncClassroomAssignments(
   const byKey = new Map(existing.map((e) => [e.sourceKey!, e]));
 
   const creates: Prisma.AssignmentCreateManyInput[] = [];
+  const updates: Prisma.PrismaPromise<unknown>[] = [];
 
   for (const a of assignments) {
     const sourceKey = `classroom:${a.courseId}:${a.id}`;
@@ -86,21 +94,23 @@ export async function syncClassroomAssignments(
     if (ex) {
       if (ex.deletedAt) continue;
 
+      // 既存値と異なるフィールドだけ更新（ユーザー編集済みは保護）。
+      // 変更なしなら UPDATE を発行しないため、再同期は一瞬で終わる。
       const data: Record<string, unknown> = {};
       const edited = ex.editedFields;
-      if (!edited.includes("courseName")) data.courseName = a.courseName;
-      if (!edited.includes("courseColor")) data.courseColor = a.courseColor;
-      if (!edited.includes("title")) data.title = a.title;
-      if (!edited.includes("description")) data.description = a.description ?? null;
-      if (!edited.includes("dueDate")) data.dueDate = a.dueDate;
-      if (!edited.includes("link")) data.link = a.link;
-      if (!edited.includes("submissionState")) data.submissionState = a.submissionState;
-      if (!edited.includes("isLate")) data.isLate = a.isLate;
-      if (!edited.includes("grade")) data.grade = a.grade ?? null;
-      if (!edited.includes("maxPoints")) data.maxPoints = a.maxPoints ?? null;
+      if (!edited.includes("courseName") && ex.courseName !== a.courseName) data.courseName = a.courseName;
+      if (!edited.includes("courseColor") && ex.courseColor !== a.courseColor) data.courseColor = a.courseColor;
+      if (!edited.includes("title") && ex.title !== a.title) data.title = a.title;
+      if (!edited.includes("description") && (ex.description ?? null) !== (a.description ?? null)) data.description = a.description ?? null;
+      if (!edited.includes("dueDate") && !sameDate(ex.dueDate, a.dueDate)) data.dueDate = a.dueDate;
+      if (!edited.includes("link") && ex.link !== a.link) data.link = a.link;
+      if (!edited.includes("submissionState") && ex.submissionState !== a.submissionState) data.submissionState = a.submissionState;
+      if (!edited.includes("isLate") && ex.isLate !== a.isLate) data.isLate = a.isLate;
+      if (!edited.includes("grade") && (ex.grade ?? null) !== (a.grade ?? null)) data.grade = a.grade ?? null;
+      if (!edited.includes("maxPoints") && (ex.maxPoints ?? null) !== (a.maxPoints ?? null)) data.maxPoints = a.maxPoints ?? null;
 
       if (Object.keys(data).length > 0) {
-        await prisma.assignment.update({ where: { id: ex.id }, data });
+        updates.push(prisma.assignment.update({ where: { id: ex.id }, data }));
       }
     } else {
       creates.push({
@@ -123,6 +133,10 @@ export async function syncClassroomAssignments(
     }
   }
 
+  // 直列awaitだと件数分のDB往復を待つことになるため、まとめて並列実行する
+  if (updates.length > 0) {
+    await Promise.all(updates);
+  }
   if (creates.length > 0) {
     await prisma.assignment.createMany({ data: creates, skipDuplicates: true });
   }
@@ -140,6 +154,7 @@ export async function syncWebClassAssignments(
   const byKey = new Map(existing.map((e) => [e.sourceKey!, e]));
 
   const creates: Prisma.AssignmentCreateManyInput[] = [];
+  const updates: Prisma.PrismaPromise<unknown>[] = [];
 
   for (const a of assignments) {
     const sourceKey = `webclass:${a.courseName}::${a.title}`;
@@ -148,17 +163,19 @@ export async function syncWebClassAssignments(
     if (ex) {
       if (ex.deletedAt) continue;
 
+      // 既存値と異なるフィールドだけ更新（ユーザー編集済みは保護）。
+      // 変更なしなら UPDATE を発行しないため、再取り込みは一瞬で終わる。
       const data: Record<string, unknown> = {};
       const edited = ex.editedFields;
-      if (!edited.includes("courseColor")) data.courseColor = a.courseColor;
-      if (!edited.includes("dueDate")) data.dueDate = a.dueDate;
-      if (!edited.includes("link")) data.link = a.link;
-      if (!edited.includes("submissionState")) data.submissionState = a.submissionState;
-      if (!edited.includes("isLate")) data.isLate = a.isLate;
-      if (!edited.includes("grade")) data.grade = a.grade ?? null;
+      if (!edited.includes("courseColor") && ex.courseColor !== a.courseColor) data.courseColor = a.courseColor;
+      if (!edited.includes("dueDate") && !sameDate(ex.dueDate, a.dueDate)) data.dueDate = a.dueDate;
+      if (!edited.includes("link") && ex.link !== a.link) data.link = a.link;
+      if (!edited.includes("submissionState") && ex.submissionState !== a.submissionState) data.submissionState = a.submissionState;
+      if (!edited.includes("isLate") && ex.isLate !== a.isLate) data.isLate = a.isLate;
+      if (!edited.includes("grade") && (ex.grade ?? null) !== (a.grade ?? null)) data.grade = a.grade ?? null;
 
       if (Object.keys(data).length > 0) {
-        await prisma.assignment.update({ where: { id: ex.id }, data });
+        updates.push(prisma.assignment.update({ where: { id: ex.id }, data }));
       }
     } else {
       creates.push({
@@ -179,6 +196,10 @@ export async function syncWebClassAssignments(
     }
   }
 
+  // 直列awaitだと件数分のDB往復を待つことになるため、まとめて並列実行する
+  if (updates.length > 0) {
+    await Promise.all(updates);
+  }
   if (creates.length > 0) {
     await prisma.assignment.createMany({ data: creates, skipDuplicates: true });
   }
