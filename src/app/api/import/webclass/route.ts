@@ -12,6 +12,16 @@ export async function POST(request: Request) {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
 
+  // 古いセッション対策: JWTのuserIdがUserに存在しないと書き込みがFK違反で500になる。
+  // 先に検出して再ログインを促す(sync APIと同じ守り)。
+  const userExists = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true },
+  });
+  if (!userExists) {
+    return Response.json({ error: "reauth_required" }, { status: 401 });
+  }
+
   const ns = await prisma.notificationSetting.findUnique({
     where: { userId: session.user.id },
     select: { hiddenCourses: true },
