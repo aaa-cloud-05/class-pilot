@@ -21,7 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 export default function HomePage() {
   const { status } = useSession();
   const loggedIn = status === "authenticated";
-  const { assignments, loading, error, refresh, removeAssignment, applyEdit, syncedAt } = useAssignments();
+  const { assignments, loading, error, refresh, removeAssignment, applyEdit, syncedAt, syncError } = useAssignments();
 
   const [mutedAssignments, setMutedAssignments] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -141,6 +141,17 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+
+      {syncError === "reauth_required" && (
+        <div className="mx-5 mt-3 flex items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <span>
+            Google 連携の有効期限が切れています。Classroom を更新するには再ログインしてください。
+          </span>
+          <Link href="/login" className="shrink-0 font-semibold text-amber-900 underline">
+            再ログイン
+          </Link>
+        </div>
+      )}
 
       <SyncStatus syncedAt={syncedAt} loggedIn={loggedIn} onRefresh={refresh} />
 

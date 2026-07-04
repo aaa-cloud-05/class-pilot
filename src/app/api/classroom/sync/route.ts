@@ -25,7 +25,17 @@ export async function POST() {
   });
   const hiddenCourseIds = new Set(ns?.hiddenCourses ?? []);
 
-  if (session.accessToken) {
+  // 同期の成否をクライアントへ返す（握りつぶさない）。
+  // 失敗を隠すと「一覧は出るが最終更新時刻が固まる」原因が分からなくなるため。
+  let synced = false;
+  let syncError: string | undefined;
+
+  if (session.error === "RefreshAccessTokenError") {
+    // リフレッシュトークン失効（例: OAuth Testing モードの7日失効）。再ログインが必要。
+    syncError = "reauth_required";
+  } else if (!session.accessToken) {
+    syncError = "no_access_token";
+  } else {
     try {
       const { allWork } = await fetchAllData(session.accessToken, hiddenCourseIds);
 
@@ -39,9 +49,11 @@ export async function POST() {
         where: { id: userId },
         data: { classroomSyncedAt: new Date() },
       });
+      synced = true;
     } catch (e) {
-      // Google取得・同期に失敗してもDBの既存データを返す
+      // Google取得・同期に失敗してもDBの既存データを返す（時刻は更新しない＝正直に据え置き）
       console.error("[SYNC] Google同期に失敗、DBデータを返します:", e);
+      syncError = "sync_failed";
     }
   }
 
@@ -55,6 +67,8 @@ export async function POST() {
 
   return Response.json({
     assignments,
+    synced,
+    syncError,
     syncedAt: {
       classroom: user?.classroomSyncedAt ?? null,
       webclass: user?.webclassSyncedAt ?? null,
