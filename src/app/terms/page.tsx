@@ -14,6 +14,12 @@ export default function TermsPage() {
       <p className="text-xs text-gray-400 mb-8">最終更新日: {UPDATED}</p>
 
       <div className="space-y-7 text-sm leading-relaxed text-gray-700">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+          <strong>本サービスは個人が開発・運営する非公式のツールです。</strong>
+          Google LLC、日本データパシフィック株式会社（WebClass 提供元）その他いかなる組織とも
+          提携・関係していません。各サービスの名称・商標は各権利者に帰属します。
+        </div>
+
         <p>
           本規約は、個人開発アプリ Class Pilot（以下「本サービス」）の利用条件を定めるものです。
           本サービスを利用することで、本規約に同意したものとみなされます。
