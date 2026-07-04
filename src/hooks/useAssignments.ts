@@ -121,6 +121,8 @@ export function useAssignments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncedAt, setSyncedAt] = useState<SyncedAt>({ classroom: null, webclass: null });
+  // Google同期の状態（"reauth_required" 等）。null は問題なし。
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   // 現在表示中の件数を追跡し、表示がある状態でのエラー点滅を防ぐ
   const assignmentsRef = useRef<Assignment[]>([]);
@@ -158,6 +160,7 @@ export function useAssignments() {
       lastSyncTime = Date.now();
       setAssignments(sortByDueDate(all));
       setSyncedAt(parseSyncedAt(data.syncedAt));
+      setSyncError(data.syncError ?? null);
       setError(null);
       await replaceCache(all);
     } catch (e) {
@@ -246,5 +249,6 @@ export function useAssignments() {
     removeAssignment,
     applyEdit,
     syncedAt,
+    syncError,
   };
 }
