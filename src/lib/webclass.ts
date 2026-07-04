@@ -6,9 +6,8 @@ export interface WebClassRawTask {
   u: string; // courseUrl
   t: string; // title
   d: string; // deadline
-  f: string; // completedDate (実施日)
-  s: string; // score
   st: string; // status
+  // 実施日(f)・最高点(s)はペイロード削減とプライバシー配慮のため取得しない
 }
 
 function simpleHash(str: string): string {
@@ -49,7 +48,6 @@ export function transformWebClassTasks(tasks: WebClassRawTask[]): Assignment[] {
       courseColors.set(courseId, COURSE_COLORS[idx++ % COURSE_COLORS.length]);
     }
     const { state, isLate } = mapStatus(task.st, task.d);
-    const score = parseInt(task.s, 10);
 
     return {
       id: "wc-" + simpleHash(task.c + task.t + task.d),
@@ -61,7 +59,6 @@ export function transformWebClassTasks(tasks: WebClassRawTask[]): Assignment[] {
       link: task.u,
       submissionState: state,
       isLate,
-      grade: isNaN(score) ? undefined : score,
       source: "webclass" as const,
     };
   });
