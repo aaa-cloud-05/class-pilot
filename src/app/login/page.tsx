@@ -62,6 +62,10 @@ export default function LoginPage() {
           <Link href="/privacy" className="text-blue-500 underline">プライバシーポリシー</Link>
           に同意したものとみなされます
         </p>
+
+        <p className="text-xs text-gray-400 mt-4">
+          本アプリは Google・WebClass とは関係のない非公式ツールです
+        </p>
       </div>
     </div>
   );
