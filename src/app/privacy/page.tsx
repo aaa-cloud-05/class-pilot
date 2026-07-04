@@ -31,10 +31,10 @@ export default function PrivacyPage() {
           <ul className="list-disc list-inside space-y-1">
             <li>Google アカウント情報（メールアドレス、氏名、プロフィール画像）</li>
             <li>
-              Google Classroom のデータ（受講コース名、課題のタイトル・説明・締切・リンク、提出状況）。
+              Google Classroom のデータ（受講コース名、課題のタイトル・説明・締切・課題ページへのリンク、提出状況）。
               <strong>読み取り専用</strong>で取得し、Classroom 側のデータを変更することはありません。
             </li>
-            <li>WebClass から取り込んだデータ（コース名、課題名、締切、リンク、状態）</li>
+            <li>WebClass から取り込んだデータ（コース名、教材、締切、コースページへのリンク、状態）</li>
             <li>ユーザーが本サービス内で作成・編集した課題、および通知設定</li>
           </ul>
 
