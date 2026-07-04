@@ -19,6 +19,22 @@ export async function POST() {
   }
   const userId = session.user.id;
 
+  // 古いセッション対策: JWTのuserIdがUserに存在しない(過去のDBリセット後など)と、
+  // 書き込みがFK違反(P2003)で無言のsync_failedになる。存在しなければ先に再ログインを促し、
+  // 無駄なGoogle取得もスキップする。
+  const userExists = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+  if (!userExists) {
+    return Response.json({
+      assignments: [],
+      synced: false,
+      syncError: "reauth_required",
+      syncedAt: { classroom: null, webclass: null },
+    });
+  }
+
   const ns = await prisma.notificationSetting.findUnique({
     where: { userId },
     select: { hiddenCourses: true },
@@ -53,7 +69,11 @@ export async function POST() {
     } catch (e) {
       // Google取得・同期に失敗してもDBの既存データを返す（時刻は更新しない＝正直に据え置き）
       console.error("[SYNC] Google同期に失敗、DBデータを返します:", e);
-      syncError = "sync_failed";
+      // 401/403(トークン失効)・P2003(userId不在の古いセッション)は再ログインで回復する。
+      const msg = e instanceof Error ? e.message : "";
+      const code = (e as { code?: string })?.code;
+      syncError =
+        /API 40[13]/.test(msg) || code === "P2003" ? "reauth_required" : "sync_failed";
     }
   }
 

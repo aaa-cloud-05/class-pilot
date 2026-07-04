@@ -13,7 +13,8 @@ async function apiFetch<T>(path: string, accessToken: string): Promise<T> {
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`API ${res.status}: ${body}`);
+    // どのエンドポイントで落ちたか分かるよう path を含める（診断用）。
+    throw new Error(`API ${res.status} (${path}): ${body}`);
   }
 
   return res.json();
