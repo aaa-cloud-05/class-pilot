@@ -31,12 +31,25 @@ export default function PrivacyPage() {
           <ul className="list-disc list-inside space-y-1">
             <li>Google アカウント情報（メールアドレス、氏名、プロフィール画像）</li>
             <li>
-              Google Classroom のデータ（受講コース、課題、提出状況）。
+              Google Classroom のデータ（受講コース名、課題のタイトル・説明・締切・リンク、提出状況）。
               <strong>読み取り専用</strong>で取得し、Classroom 側のデータを変更することはありません。
             </li>
-            <li>ユーザーが WebClass から取り込んだ課題データ</li>
+            <li>WebClass から取り込んだデータ（コース名、課題名、締切、リンク、状態）</li>
             <li>ユーザーが本サービス内で作成・編集した課題、および通知設定</li>
           </ul>
+
+          <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <p className="font-semibold text-gray-900 mb-1">取得・保存しない情報</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>
+                <strong>成績・点数</strong>（Classroom の評点、WebClass の最高点）は取得・保存しません。
+              </li>
+              <li>締切管理に不要な情報（WebClass の実施日など）は取り込みません。</li>
+              <li>
+                上記以外の Google データ（ドライブ、Gmail の本文、連絡先など）にはアクセスしません。
+              </li>
+            </ul>
+          </div>
         </section>
 
         <section>

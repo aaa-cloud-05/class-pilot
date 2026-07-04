@@ -72,7 +72,7 @@ export function transformAssignment(
     link: work.alternateLink,
     submissionState: state,
     isLate,
-    grade: submission?.assignedGrade,
-    maxPoints: work.maxPoints,
+    // 成績(assignedGrade)・満点(maxPoints)はUI未使用かつ機微情報のため保存しない。
+    // 提出状況(state)の取得は継続する。既存の保存値は再同期でnullに戻る。
   };
 }
