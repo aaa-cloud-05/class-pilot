@@ -43,11 +43,14 @@ function deriveSubmissionState(sub?: RawStudentSubmission): { state: SubmissionS
   if (!sub || sub.state === "NEW" || sub.state === "CREATED") {
     return { state: "not_submitted", isLate: false };
   }
+  // Google は late=false のとき late を省略する→ sub.late が undefined になり、
+  // isLate=undefined は保存されず(Prismaがundefinedを無視)、再同期で毎回差分になる。
+  // 必ず boolean に正規化する(docs/classroom-sync-flow.md §4)。
   if (sub.state === "RETURNED") {
-    return { state: "returned", isLate: sub.late };
+    return { state: "returned", isLate: sub.late ?? false };
   }
   if (sub.state === "TURNED_IN") {
-    return { state: sub.late ? "late" : "submitted", isLate: sub.late };
+    return { state: sub.late ? "late" : "submitted", isLate: sub.late ?? false };
   }
   return { state: "not_submitted", isLate: false };
 }

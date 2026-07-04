@@ -70,12 +70,23 @@ Timed out fetching a new connection from the connection pool.
 - 接続設定は正常（`DATABASE_URL`=pooler:6543+`pgbouncer=true`、`DIRECT_URL`=5432 を確認済み）。
   設定ミスではなく**並列度が無制限**なことが原因。
 
-**差分が毎回出る原因 — 確定（`updates=90 fields=[courseColor]`）**:
-`transform.ts` の `getCourseColor` が色を「コースの初回登場順」で採番し module 変数
-`colorMap` に保持していた。サーバレスはコールドスタートで `colorMap` が空に戻り、コース
-取得順も一定でないため、**同じコースでも同期毎に色が変わり** `ex.courseColor !== a.courseColor`
-で全件が UPDATE 対象になっていた。→ `courseId` からのハッシュで**決定的**に色を割り当てて解消
-（一度だけ全件 recolor が走り、以後 `updates≈0`）。
+**差分が毎回出る原因 — 2つ確定**:
+
+1. `fields=[courseColor]`: `transform.ts` の `getCourseColor` が色を「コースの初回登場順」で
+   採番し module 変数 `colorMap` に保持。サーバレスのコールドスタート/取得順の揺れで
+   同じコースの色が同期毎に変わり全件 UPDATE 対象に。→ `courseId` ハッシュで**決定的**に採番して解消。
+
+2. `fields=[isLate]`（より厄介＝**書いても直らない無限フラップ**）:
+   `deriveSubmissionState` が `isLate: sub.late` をそのまま返すが、**Google は late=false を省略**
+   するため提出/返却済みの課題で `sub.late=undefined`。すると
+   - 差分判定 `ex.isLate(false) !== a.isLate(undefined)` → 常に差分
+   - 書込 `data.isLate = undefined` → **Prisma は undefined を無視**して書かない → 直らず毎回フラップ
+   → `sub.late ?? false` で boolean 正規化。同期側の差分も `!!a.isLate` に。`link` も同種の
+   潜在バグ（`alternateLink` 欠落時）があるため `?? ""` に正規化。
+
+**教訓**: 差分同期では「比較値」と「書込値」を必ず同じ正規化で扱う（`undefined` を混ぜない）。
+`undefined` は Prisma の update で無視されるため、比較で差分・書込で無視＝無限フラップになる。
+grade/maxPoints/description は既に `?? null` 済み。
 
 （参考・その他の候補は未発生: Google 429 / Vercel タイムアウト(`maxDuration`未設定・ローカル27〜31s) / Google 5xx。
 赤「同期に失敗」＝200+`sync_failed`、**無反応で時刻据え置き**＝段3 fetch 自体の失敗(504等、§5-a)という判別は今後も有効。）
