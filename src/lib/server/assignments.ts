@@ -104,9 +104,9 @@ export async function syncClassroomAssignments(
       if (!edited.includes("title") && ex.title !== a.title) data.title = a.title;
       if (!edited.includes("description") && (ex.description ?? null) !== (a.description ?? null)) data.description = a.description ?? null;
       if (!edited.includes("dueDate") && !sameDate(ex.dueDate, a.dueDate)) data.dueDate = a.dueDate;
-      if (!edited.includes("link") && ex.link !== a.link) data.link = a.link;
+      if (!edited.includes("link") && ex.link !== (a.link ?? "")) data.link = a.link ?? "";
       if (!edited.includes("submissionState") && ex.submissionState !== a.submissionState) data.submissionState = a.submissionState;
-      if (!edited.includes("isLate") && ex.isLate !== a.isLate) data.isLate = a.isLate;
+      if (!edited.includes("isLate") && ex.isLate !== !!a.isLate) data.isLate = !!a.isLate;
       if (!edited.includes("grade") && (ex.grade ?? null) !== (a.grade ?? null)) data.grade = a.grade ?? null;
       if (!edited.includes("maxPoints") && (ex.maxPoints ?? null) !== (a.maxPoints ?? null)) data.maxPoints = a.maxPoints ?? null;
 
@@ -176,9 +176,9 @@ export async function syncWebClassAssignments(
       const edited = ex.editedFields;
       if (!edited.includes("courseColor") && ex.courseColor !== a.courseColor) data.courseColor = a.courseColor;
       if (!edited.includes("dueDate") && !sameDate(ex.dueDate, a.dueDate)) data.dueDate = a.dueDate;
-      if (!edited.includes("link") && ex.link !== a.link) data.link = a.link;
+      if (!edited.includes("link") && ex.link !== (a.link ?? "")) data.link = a.link ?? "";
       if (!edited.includes("submissionState") && ex.submissionState !== a.submissionState) data.submissionState = a.submissionState;
-      if (!edited.includes("isLate") && ex.isLate !== a.isLate) data.isLate = a.isLate;
+      if (!edited.includes("isLate") && ex.isLate !== !!a.isLate) data.isLate = !!a.isLate;
       if (!edited.includes("grade") && (ex.grade ?? null) !== (a.grade ?? null)) data.grade = a.grade ?? null;
 
       if (Object.keys(data).length > 0) {
