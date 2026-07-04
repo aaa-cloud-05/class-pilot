@@ -86,6 +86,7 @@ export async function syncClassroomAssignments(
 
   const creates: Prisma.AssignmentCreateManyInput[] = [];
   const updates: Prisma.PrismaPromise<unknown>[] = [];
+  const changedFields = new Set<string>();
 
   for (const a of assignments) {
     const sourceKey = `classroom:${a.courseId}:${a.id}`;
@@ -110,6 +111,7 @@ export async function syncClassroomAssignments(
       if (!edited.includes("maxPoints") && (ex.maxPoints ?? null) !== (a.maxPoints ?? null)) data.maxPoints = a.maxPoints ?? null;
 
       if (Object.keys(data).length > 0) {
+        Object.keys(data).forEach((k) => changedFields.add(k));
         updates.push(prisma.assignment.update({ where: { id: ex.id }, data }));
       }
     } else {
@@ -134,7 +136,7 @@ export async function syncClassroomAssignments(
   }
 
   // 変更なしなら0件のはず。多数出る場合は差分検出の不備を疑う(docs/classroom-sync-flow.md §4)
-  console.log(`[SYNC] classroom diff: creates=${creates.length} updates=${updates.length}`);
+  console.log(`[SYNC] classroom diff: creates=${creates.length} updates=${updates.length} fields=[${[...changedFields]}]`);
 
   // Promise.allでの一斉並列はプール(接続5本)を枯渇させP2024になるため、
   // $transactionで1接続に多重化して順次実行する(直列awaitより速く、プールも安全)
@@ -159,6 +161,7 @@ export async function syncWebClassAssignments(
 
   const creates: Prisma.AssignmentCreateManyInput[] = [];
   const updates: Prisma.PrismaPromise<unknown>[] = [];
+  const changedFields = new Set<string>();
 
   for (const a of assignments) {
     const sourceKey = `webclass:${a.courseName}::${a.title}`;
@@ -179,6 +182,7 @@ export async function syncWebClassAssignments(
       if (!edited.includes("grade") && (ex.grade ?? null) !== (a.grade ?? null)) data.grade = a.grade ?? null;
 
       if (Object.keys(data).length > 0) {
+        Object.keys(data).forEach((k) => changedFields.add(k));
         updates.push(prisma.assignment.update({ where: { id: ex.id }, data }));
       }
     } else {
@@ -201,7 +205,7 @@ export async function syncWebClassAssignments(
   }
 
   // 変更なしなら0件のはず。多数出る場合は差分検出の不備を疑う(docs/classroom-sync-flow.md §4)
-  console.log(`[SYNC] webclass diff: creates=${creates.length} updates=${updates.length}`);
+  console.log(`[SYNC] webclass diff: creates=${creates.length} updates=${updates.length} fields=[${[...changedFields]}]`);
 
   // Promise.allでの一斉並列はプール(接続5本)を枯渇させP2024になるため、
   // $transactionで1接続に多重化して順次実行する(直列awaitより速く、プールも安全)

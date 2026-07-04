@@ -8,13 +8,16 @@ import type {
 } from "./types";
 import { COURSE_COLORS } from "./types";
 
-const colorMap = new Map<string, string>();
-
+// courseId から決定的に色を割り当てる。
+// 以前は「初回登場順」で採番し module 変数に保持していたため、サーバレスの
+// コールドスタートやコース取得順の揺れで同じコースの色が変わり、再同期で
+// courseColor が毎回差分になり全件UPDATEを誘発していた(docs/classroom-sync-flow.md §4)。
 function getCourseColor(courseId: string): string {
-  if (!colorMap.has(courseId)) {
-    colorMap.set(courseId, COURSE_COLORS[colorMap.size % COURSE_COLORS.length]);
+  let hash = 0;
+  for (let i = 0; i < courseId.length; i++) {
+    hash = (hash * 31 + courseId.charCodeAt(i)) | 0;
   }
-  return colorMap.get(courseId)!;
+  return COURSE_COLORS[Math.abs(hash) % COURSE_COLORS.length];
 }
 
 export function transformCourse(raw: RawCourse): Course {

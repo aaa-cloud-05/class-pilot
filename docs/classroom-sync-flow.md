@@ -70,10 +70,12 @@ Timed out fetching a new connection from the connection pool.
 - 接続設定は正常（`DATABASE_URL`=pooler:6543+`pgbouncer=true`、`DIRECT_URL`=5432 を確認済み）。
   設定ミスではなく**並列度が無制限**なことが原因。
 
-**残る疑問（要観測）**: ログイン直後の同期から数分後で、なぜ差分 UPDATE が多数出るのか。
-全フィールドは差分比較しているので理論上 0 件のはず。`courseColor` の割当順ドリフト
-（`transform.ts` の module 変数 `colorMap` が Lambda ごとに空から始まる）等の疑いあり。
-修正時に `updates.length / creates.length` のログを仕込んで確認する。
+**差分が毎回出る原因 — 確定（`updates=90 fields=[courseColor]`）**:
+`transform.ts` の `getCourseColor` が色を「コースの初回登場順」で採番し module 変数
+`colorMap` に保持していた。サーバレスはコールドスタートで `colorMap` が空に戻り、コース
+取得順も一定でないため、**同じコースでも同期毎に色が変わり** `ex.courseColor !== a.courseColor`
+で全件が UPDATE 対象になっていた。→ `courseId` からのハッシュで**決定的**に色を割り当てて解消
+（一度だけ全件 recolor が走り、以後 `updates≈0`）。
 
 （参考・その他の候補は未発生: Google 429 / Vercel タイムアウト(`maxDuration`未設定・ローカル27〜31s) / Google 5xx。
 赤「同期に失敗」＝200+`sync_failed`、**無反応で時刻据え置き**＝段3 fetch 自体の失敗(504等、§5-a)という判別は今後も有効。）
