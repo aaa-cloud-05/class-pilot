@@ -153,7 +153,13 @@ export default function HomePage() {
         </div>
       )}
 
-      <SyncStatus syncedAt={syncedAt} loggedIn={loggedIn} onRefresh={refresh} />
+      <SyncStatus
+        syncedAt={syncedAt}
+        loggedIn={loggedIn}
+        onRefresh={refresh}
+        refreshing={loading}
+        syncError={syncError}
+      />
 
       <NotificationBanner />
 
