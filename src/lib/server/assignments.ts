@@ -133,9 +133,13 @@ export async function syncClassroomAssignments(
     }
   }
 
-  // 直列awaitだと件数分のDB往復を待つことになるため、まとめて並列実行する
+  // 変更なしなら0件のはず。多数出る場合は差分検出の不備を疑う(docs/classroom-sync-flow.md §4)
+  console.log(`[SYNC] classroom diff: creates=${creates.length} updates=${updates.length}`);
+
+  // Promise.allでの一斉並列はプール(接続5本)を枯渇させP2024になるため、
+  // $transactionで1接続に多重化して順次実行する(直列awaitより速く、プールも安全)
   if (updates.length > 0) {
-    await Promise.all(updates);
+    await prisma.$transaction(updates);
   }
   if (creates.length > 0) {
     await prisma.assignment.createMany({ data: creates, skipDuplicates: true });
@@ -196,9 +200,13 @@ export async function syncWebClassAssignments(
     }
   }
 
-  // 直列awaitだと件数分のDB往復を待つことになるため、まとめて並列実行する
+  // 変更なしなら0件のはず。多数出る場合は差分検出の不備を疑う(docs/classroom-sync-flow.md §4)
+  console.log(`[SYNC] webclass diff: creates=${creates.length} updates=${updates.length}`);
+
+  // Promise.allでの一斉並列はプール(接続5本)を枯渇させP2024になるため、
+  // $transactionで1接続に多重化して順次実行する(直列awaitより速く、プールも安全)
   if (updates.length > 0) {
-    await Promise.all(updates);
+    await prisma.$transaction(updates);
   }
   if (creates.length > 0) {
     await prisma.assignment.createMany({ data: creates, skipDuplicates: true });
