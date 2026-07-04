@@ -2,6 +2,7 @@
 
 import type { Assignment } from "@/lib/types";
 import { relativeDeadline, formatDate, formatTime } from "@/lib/date-utils";
+import { isSafeHttpUrl } from "@/lib/webclass";
 import { isPast } from "date-fns";
 import { useState } from "react";
 
@@ -22,7 +23,7 @@ export function AssignmentCard({ assignment, muted, onToggleMute, onEdit, onDele
   return (
     <div className="relative">
       <a
-        href={a.link}
+        href={isSafeHttpUrl(a.link) ? a.link : undefined}
         target="_blank"
         rel="noopener noreferrer"
         className={`block rounded-2xl border p-4 transition active:scale-[0.98] ${

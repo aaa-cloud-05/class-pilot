@@ -4,7 +4,7 @@ import {
   syncWebClassAssignments,
   getUserAssignments,
 } from "@/lib/server/assignments";
-import type { Assignment } from "@/lib/types";
+import { sanitizeImportedAssignments } from "@/lib/webclass";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -28,14 +28,21 @@ export async function POST(request: Request) {
   });
   const hiddenCourseIds = new Set(ns?.hiddenCourses ?? []);
 
-  const { assignments: raw } = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "invalid_json" }, { status: 400 });
+  }
+  const raw = (body as { assignments?: unknown })?.assignments;
+  if (!Array.isArray(raw)) {
+    return Response.json({ error: "invalid_payload" }, { status: 400 });
+  }
 
-  const allAssignments: Assignment[] = raw.map((a: Record<string, unknown>) => ({
-    ...a,
-    dueDate: a.dueDate ? new Date(a.dueDate as string) : null,
-  }));
-
-  const filtered = allAssignments.filter((a) => !hiddenCourseIds.has(a.courseId));
+  // 非信頼入力を再検証（型・長さ・件数上限・危険なlink除去）。不正な行はスキップ。
+  const filtered = sanitizeImportedAssignments(raw).filter(
+    (a) => !hiddenCourseIds.has(a.courseId),
+  );
 
   await syncWebClassAssignments(session.user.id, filtered);
   await prisma.user.update({
