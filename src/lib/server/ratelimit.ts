@@ -10,8 +10,10 @@ import { Redis } from "@upstash/redis";
  * - フェイルオープン: env 未設定や Upstash 接続失敗時は常に許可し、アプリを止めない。
  */
 
-const url = process.env.UPSTASH_REDIS_REST_URL;
-const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+// Upstash を直接使う場合は UPSTASH_*、Vercel の Upstash 統合(KV)経由だと KV_* に
+// なるため、どちらの命名でも拾えるようにする。
+const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
 const redis = url && token ? new Redis({ url, token }) : null;
 
 if (!redis && process.env.NODE_ENV === "production") {
