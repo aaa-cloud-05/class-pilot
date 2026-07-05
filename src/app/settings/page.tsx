@@ -31,6 +31,9 @@ export default function SettingsPage() {
   const [hiddenCourses, setHiddenCourses] = useState<string[]>([]);
   const [allCourses, setAllCourses] = useState<{ id: string; name: string }[]>([]);
   const [clearing, setClearing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     getNotificationSettings().then(setSettings);
@@ -83,6 +86,20 @@ export default function SettingsPage() {
       }
     } finally {
       setEmailLoading(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/account", { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      // サーバー削除に成功したら、端末内ミラーも消してサインアウト（JWT Cookie破棄）
+      await clearAllClientData();
+      await signOut({ callbackUrl: "/" });
+    } catch {
+      setDeleting(false);
+      alert("アカウント削除に失敗しました。時間をおいて再度お試しください。");
     }
   }
 
@@ -370,6 +387,26 @@ export default function SettingsPage() {
           </button>
         </section>
 
+        {/* アカウント削除（危険ゾーン） */}
+        {loggedIn && (
+          <section className="pt-4 border-t border-gray-100">
+            <h2 className="text-sm font-semibold text-red-600 mb-1">アカウント削除</h2>
+            <p className="text-xs text-gray-500 mb-2">
+              アカウントとサーバー上の全データ（課題・通知設定・履歴・Google 連携情報）を
+              完全に削除します。この操作は取り消せません。
+            </p>
+            <button
+              onClick={() => {
+                setDeleteConfirm("");
+                setShowDeleteModal(true);
+              }}
+              className="text-sm font-medium text-red-600"
+            >
+              アカウントを削除
+            </button>
+          </section>
+        )}
+
         {/* 法的情報 */}
         <section className="pt-4 border-t border-gray-100">
           <div className="flex gap-4 text-xs text-gray-400">
@@ -378,6 +415,50 @@ export default function SettingsPage() {
           </div>
         </section>
       </main>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-bold text-red-600 mb-2">
+              本当にアカウントを削除しますか？
+            </h3>
+            <p className="text-sm text-gray-600 mb-1">
+              以下がすべて削除され、復元できません：
+            </p>
+            <ul className="list-disc list-inside text-sm text-gray-600 mb-3 space-y-0.5">
+              <li>登録・取り込んだ課題</li>
+              <li>通知設定・履歴</li>
+              <li>Google 連携情報</li>
+            </ul>
+            <p className="text-xs text-gray-500 mb-1">
+              確認のため <strong className="text-gray-700">削除</strong> と入力してください
+            </p>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="削除"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 disabled:opacity-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirm !== "削除" || deleting}
+                className="flex-1 py-2 rounded-lg bg-red-600 text-white text-sm font-medium disabled:opacity-50"
+              >
+                {deleting ? "削除中…" : "完全に削除"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
