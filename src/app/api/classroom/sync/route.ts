@@ -6,6 +6,7 @@ import {
   syncClassroomAssignments,
   getUserAssignments,
 } from "@/lib/server/assignments";
+import { checkRateLimit } from "@/lib/server/ratelimit";
 
 /**
  * Google Classroom と同期し、最新のDB課題を返す。
@@ -18,6 +19,10 @@ export async function POST() {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
   const userId = session.user.id;
+
+  // レートリミット（連打・暴走の抑制）。超過なら429。
+  const limited = await checkRateLimit("sync", userId);
+  if (limited) return limited;
 
   // 古いセッション対策: JWTのuserIdがUserに存在しない(過去のDBリセット後など)と、
   // 書き込みがFK違反(P2003)で無言のsync_failedになる。存在しなければ先に再ログインを促し、
