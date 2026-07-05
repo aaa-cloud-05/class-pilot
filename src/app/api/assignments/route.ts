@@ -1,6 +1,10 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/server/prisma";
-import { createManualAssignment, getUserAssignments } from "@/lib/server/assignments";
+import {
+  createManualAssignment,
+  getUserAssignments,
+  validateManualCreate,
+} from "@/lib/server/assignments";
 
 export async function GET() {
   const session = await auth();
@@ -34,14 +38,18 @@ export async function POST(request: Request) {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const assignment = await createManualAssignment(session.user.id, {
-    courseName: body.courseName,
-    courseColor: body.courseColor,
-    title: body.title,
-    dueDate: body.dueDate ? new Date(body.dueDate) : null,
-    submissionState: body.submissionState ?? "not_submitted",
-  });
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "invalid_json" }, { status: 400 });
+  }
 
+  const v = validateManualCreate(body);
+  if (!v.ok) {
+    return Response.json({ error: v.error }, { status: 400 });
+  }
+
+  const assignment = await createManualAssignment(session.user.id, v.data);
   return Response.json({ assignment });
 }

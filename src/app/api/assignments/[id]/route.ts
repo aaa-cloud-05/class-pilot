@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { editAssignment, softDeleteAssignment } from "@/lib/server/assignments";
+import { editAssignment, softDeleteAssignment, validateEdit } from "@/lib/server/assignments";
 import type { NextRequest } from "next/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -11,9 +11,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const body = await request.json();
 
-  const updated = await editAssignment(session.user.id, id, body);
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "invalid_json" }, { status: 400 });
+  }
+
+  const v = validateEdit(body);
+  if (!v.ok) {
+    return Response.json({ error: v.error }, { status: 400 });
+  }
+
+  const updated = await editAssignment(session.user.id, id, v.data);
   if (!updated) {
     return Response.json({ error: "課題が見つかりません" }, { status: 404 });
   }
