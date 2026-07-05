@@ -5,12 +5,17 @@ import {
   getUserAssignments,
 } from "@/lib/server/assignments";
 import { sanitizeImportedAssignments } from "@/lib/webclass";
+import { checkRateLimit } from "@/lib/server/ratelimit";
 
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
+
+  // レートリミット（一括書込の連打抑制）。超過なら429。
+  const limited = await checkRateLimit("import", session.user.id);
+  if (limited) return limited;
 
   // 古いセッション対策: JWTのuserIdがUserに存在しないと書き込みがFK違反で500になる。
   // 先に検出して再ログインを促す(sync APIと同じ守り)。
