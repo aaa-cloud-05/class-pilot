@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import type { Prisma } from "@prisma/client";
 import type { Assignment } from "@/lib/types";
+import { isSafeHttpUrl } from "@/lib/webclass";
 
 function toClientAssignment(db: {
   id: string;
@@ -215,6 +216,100 @@ export async function syncWebClassAssignments(
   if (creates.length > 0) {
     await prisma.assignment.createMany({ data: creates, skipDuplicates: true });
   }
+}
+
+// ---- 入力バリデーション（手動追加/編集の非信頼入力対策）----
+export const SUBMISSION_STATES = ["not_submitted", "submitted", "late", "returned"] as const;
+const INPUT_LIMITS = { courseName: 200, title: 500, description: 5000, courseColor: 20, link: 2000 };
+
+function clampStr(v: unknown, max: number): string {
+  return typeof v === "string" ? v.slice(0, max) : "";
+}
+function isHexColor(v: string): boolean {
+  return /^#[0-9a-fA-F]{3,8}$/.test(v);
+}
+/** dueDate入力を Date|null に。値はあるが不正な日付なら ok:false。 */
+function parseInputDate(v: unknown): { ok: true; value: Date | null } | { ok: false } {
+  if (v == null || v === "") return { ok: true, value: null };
+  const d = new Date(v as string);
+  return isNaN(d.getTime()) ? { ok: false } : { ok: true, value: d };
+}
+
+export type ManualCreateInput = {
+  courseName: string;
+  courseColor: string;
+  title: string;
+  dueDate: Date | null;
+  submissionState: string;
+};
+
+/** 手動追加(POST /api/assignments)の入力を検証。必須欠落・不正日付は拒否、その他は正規化。 */
+export function validateManualCreate(
+  body: unknown,
+): { ok: true; data: ManualCreateInput } | { ok: false; error: string } {
+  if (!body || typeof body !== "object") return { ok: false, error: "invalid_body" };
+  const b = body as Record<string, unknown>;
+  const title = clampStr(b.title, INPUT_LIMITS.title).trim();
+  const courseName = clampStr(b.courseName, INPUT_LIMITS.courseName).trim();
+  if (!title) return { ok: false, error: "title_required" };
+  if (!courseName) return { ok: false, error: "courseName_required" };
+  const due = parseInputDate(b.dueDate);
+  if (!due.ok) return { ok: false, error: "invalid_dueDate" };
+  const color = clampStr(b.courseColor, INPUT_LIMITS.courseColor);
+  const state = clampStr(b.submissionState, 20);
+  return {
+    ok: true,
+    data: {
+      courseName,
+      courseColor: isHexColor(color) ? color : "#007AFF",
+      title,
+      dueDate: due.value,
+      submissionState: (SUBMISSION_STATES as readonly string[]).includes(state)
+        ? state
+        : "not_submitted",
+    },
+  };
+}
+
+/** 編集(PATCH /api/assignments/[id])の入力を検証。渡されたフィールドのみ正規化して返す。 */
+export function validateEdit(
+  body: unknown,
+): { ok: true; data: Record<string, unknown> } | { ok: false; error: string } {
+  if (!body || typeof body !== "object") return { ok: false, error: "invalid_body" };
+  const b = body as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  if ("title" in b) {
+    const t = clampStr(b.title, INPUT_LIMITS.title).trim();
+    if (!t) return { ok: false, error: "title_required" };
+    out.title = t;
+  }
+  if ("courseName" in b) {
+    const c = clampStr(b.courseName, INPUT_LIMITS.courseName).trim();
+    if (!c) return { ok: false, error: "courseName_required" };
+    out.courseName = c;
+  }
+  if ("description" in b) out.description = clampStr(b.description, INPUT_LIMITS.description);
+  if ("courseColor" in b) {
+    const c = clampStr(b.courseColor, INPUT_LIMITS.courseColor);
+    out.courseColor = isHexColor(c) ? c : "#007AFF";
+  }
+  if ("link" in b) {
+    const l = clampStr(b.link, INPUT_LIMITS.link);
+    out.link = isSafeHttpUrl(l) ? l : "";
+  }
+  if ("dueDate" in b) {
+    const due = parseInputDate(b.dueDate);
+    if (!due.ok) return { ok: false, error: "invalid_dueDate" };
+    out.dueDate = due.value;
+  }
+  if ("submissionState" in b) {
+    const s = clampStr(b.submissionState, 20);
+    if (!(SUBMISSION_STATES as readonly string[]).includes(s)) {
+      return { ok: false, error: "invalid_state" };
+    }
+    out.submissionState = s;
+  }
+  return { ok: true, data: out };
 }
 
 export async function createManualAssignment(
