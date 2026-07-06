@@ -34,7 +34,7 @@ flowchart TD
   C --> E{"ログイン中?"}
   D --> E
   E -- "未ログイン" --> F["ローカルのWebClass最終取得時刻を表示<br/>DB/Googleは触らない（IndexedDBが一次ストア）"]
-  E -- "ログイン中" --> G["初回のみ: ローカル課題をDBへ移行<br/>通知設定をDBから取得"]
+  E -- "ログイン中" --> G["初回のみ: ローカル課題をDBへ移行<br/>毎回: 通知設定をDBから取得"]
   G --> H["段2: GET /api/assignments<br/>（DB読み・トークン不要・速い）"]
   H --> I["一覧更新 + キャッシュ全置換 + 最終取得時刻"]
   I --> J{"段3の5分<br/>スロットル?"}
@@ -69,7 +69,7 @@ sequenceDiagram
   C->>IDB: ① キャッシュ取得
   IDB-->>C: 課題（あれば）
   C-->>U: ② 段1で即描画
-  C->>IDB: ③ ローカルのWebClass最終取得時刻を読む
+  C->>C: ③ WebClass最終取得時刻を読む（localStorage）
   C-->>U: ④ 表示確定（ローディング解除）
 ```
 1. IndexedDB から課題を取得。
@@ -89,7 +89,7 @@ sequenceDiagram
   participant DB as DB
   participant G as Google
   C->>IDB: ① キャッシュ取得 → 段1即描画
-  C->>API: ② 初回のみ ローカル課題をDBへ移行 / 通知設定をDBから取得
+  C->>API: ② 初回のみ:ローカル課題をDBへ移行 / 毎回:通知設定をDBから取得
   C->>API: ③ 段2: GET /api/assignments
   API->>DB: 課題読取（userIdでスコープ, 非表示コース除外）
   DB-->>API: 課題 + classroom/webclass最終取得時刻
@@ -101,7 +101,7 @@ sequenceDiagram
   C->>IDB: ⑥ キャッシュ全置換・表示更新
 ```
 1. キャッシュを即描画（段1）。
-2. 初回ログイン時だけ、ローカル専用課題(`wc-`/`manual-`)を DB へ引き上げ、通知設定を DB から取り込む。
+2. 初回ログイン時だけローカル専用課題(`wc-`/`manual-`)を DB へ引き上げる（`db-migrated` フラグで一度きり）。通知設定は**毎回** DB から取り込む（サーバーが真実）。
 3. 段2で DB を読む（**トークン不要・速い・堅牢**）。ここで表示がほぼ確定。
 4. キャッシュを DB 内容で全置換。
 5. 段3で Google 同期（5分スロットル、裏で非同期）。
@@ -144,7 +144,7 @@ flowchart TD
   A["APIで認証(auth)呼び出し"] --> B{"expiresAt<br/>まだ有効?"}
   B -- "有効（1時間以内）" --> C["そのままaccessToken使用"]
   B -- "失効" --> D{"refresh_tokenある?"}
-  D -- "なし" --> E["古いトークンのまま<br/>→ Google 401 → sync_failed<br/>（今は401をreauth_required扱い）"]
+  D -- "なし" --> E["古いトークンのまま<br/>→ Google 401 → reauth_required（再ログイン）"]
   D -- "あり" --> F["Googleでトークン更新"]
   F -- "成功" --> G["新access_token + expiresAt更新<br/>（透過的・体感差なし）"]
   F -- "失敗（例: 7日失効）" --> H["error=RefreshAccessTokenError<br/>→ reauth_required → 再ログインバナー"]
