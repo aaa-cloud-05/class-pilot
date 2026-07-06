@@ -63,7 +63,7 @@ export function computePendingNotifications(
 
   for (const a of assignments) {
     if (!a.dueDate) continue;
-    if (a.submissionState === "submitted" || a.submissionState === "returned") continue;
+    if (a.submissionState === "submitted" || a.submissionState === "unknown") continue;
     if (ctx.mutedCourses.includes(a.courseId)) continue;
     if (ctx.mutedAssignments.includes(a.id)) continue;
 

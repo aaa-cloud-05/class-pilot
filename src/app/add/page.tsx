@@ -177,7 +177,6 @@ export default function AddAssignmentPage() {
           >
             <option value="not_submitted">未提出</option>
             <option value="submitted">提出済み</option>
-            <option value="returned">返却済み</option>
           </select>
         </div>
 

@@ -42,7 +42,7 @@ export async function checkAndNotify(): Promise<number> {
 
   for (const assignment of assignments) {
     if (!assignment.dueDate) continue;
-    if (assignment.submissionState === "submitted") continue;
+    if (assignment.submissionState === "submitted" || assignment.submissionState === "unknown") continue;
     if (settings.mutedCourses.includes(assignment.courseId)) continue;
     if (settings.mutedAssignments.includes(assignment.id)) continue;
 

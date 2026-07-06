@@ -17,7 +17,8 @@ interface AssignmentCardProps {
 export function AssignmentCard({ assignment, muted, onToggleMute, onEdit, onDelete }: AssignmentCardProps) {
   const a = assignment;
   const overdue = a.dueDate && isPast(a.dueDate) && a.submissionState === "not_submitted";
-  const submitted = a.submissionState === "submitted" || a.submissionState === "returned";
+  const submitted = a.submissionState === "submitted";
+  const unknown = a.submissionState === "unknown";
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -52,7 +53,7 @@ export function AssignmentCard({ assignment, muted, onToggleMute, onEdit, onDele
             )}
           </div>
           <div className="flex-shrink-0 mt-1 flex items-center gap-1.5">
-            {onToggleMute && !submitted && (
+            {onToggleMute && !submitted && !unknown && (
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -90,6 +91,10 @@ export function AssignmentCard({ assignment, muted, onToggleMute, onEdit, onDele
             {submitted ? (
               <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                 提出済
+              </span>
+            ) : unknown ? (
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                不明
               </span>
             ) : overdue ? (
               <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full">

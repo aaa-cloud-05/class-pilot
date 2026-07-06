@@ -61,15 +61,17 @@ function parseDeadline(s: string): Date | null {
 }
 
 function mapStatus(status: string, deadline: string): { state: SubmissionState; isLate: boolean } {
-  if (status === "回答済み" || status === "合格") {
+  // 回答済み / 合格 / 不合格 = 提出済（提出はしている）
+  if (status === "回答済み" || status === "合格" || status === "不合格") {
     return { state: "submitted", isLate: false };
   }
-  if (status === "不合格") {
-    return { state: "returned", isLate: false };
+  // 未回答 = 未提出（締切超過なら isLate）
+  if (status === "未回答") {
+    const due = parseDeadline(deadline);
+    return { state: "not_submitted", isLate: due ? due.getTime() < Date.now() : false };
   }
-  const due = parseDeadline(deadline);
-  const isLate = due ? due.getTime() < Date.now() : false;
-  return { state: "not_submitted", isLate };
+  // "-" やその他の未知の状態 = 不明（提出有無を判断しない）
+  return { state: "unknown", isLate: false };
 }
 
 export function transformWebClassTasks(raw: unknown): Assignment[] {
@@ -99,7 +101,7 @@ export function transformWebClassTasks(raw: unknown): Assignment[] {
   });
 }
 
-const VALID_STATES: SubmissionState[] = ["not_submitted", "submitted", "late", "returned"];
+const VALID_STATES: SubmissionState[] = ["not_submitted", "submitted", "unknown"];
 
 /**
  * サーバが受け取る「変換済み課題配列」を再検証する（クライアントを信頼しない境界）。
