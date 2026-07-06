@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     const total = assignments.length;
     const submitted = assignments.filter(
-      (a) => a.submissionState === "submitted" || a.submissionState === "returned"
+      (a) => a.submissionState === "submitted"
     ).length;
     const late = assignments.filter((a) => a.isLate).length;
     const rate = total > 0 ? Math.round((submitted / total) * 100) : 0;
@@ -23,7 +23,7 @@ export default function DashboardPage() {
     );
     const thisWeekTotal = thisWeek.length;
     const thisWeekSubmitted = thisWeek.filter(
-      (a) => a.submissionState === "submitted" || a.submissionState === "returned"
+      (a) => a.submissionState === "submitted"
     ).length;
 
     // Course breakdown
@@ -43,7 +43,7 @@ export default function DashboardPage() {
     const submittedSet = new Set<string>();
     for (const a of assignments) {
       if (
-        (a.submissionState === "submitted" || a.submissionState === "returned") &&
+        (a.submissionState === "submitted") &&
         a.dueDate
       ) {
         submittedSet.add(a.dueDate.toDateString());

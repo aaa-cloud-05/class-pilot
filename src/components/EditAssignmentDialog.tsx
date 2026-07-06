@@ -90,7 +90,7 @@ export function EditAssignmentDialog({ assignment, onSave, onClose }: EditAssign
             >
               <option value="not_submitted">未提出</option>
               <option value="submitted">提出済</option>
-              <option value="returned">返却済</option>
+              <option value="unknown">不明</option>
             </select>
           </div>
 

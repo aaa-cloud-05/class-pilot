@@ -55,7 +55,8 @@ export interface Course {
   link: string;
 }
 
-export type SubmissionState = "not_submitted" | "submitted" | "returned" | "late";
+// アプリの提出状態は3つ。返却済・遅延提出は「提出済」に含める（遅れは isLate で表す）。
+export type SubmissionState = "not_submitted" | "submitted" | "unknown";
 
 export interface Assignment {
   id: string;

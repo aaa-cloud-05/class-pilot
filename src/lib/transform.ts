@@ -40,17 +40,14 @@ function parseDueDate(work: RawCourseWork): Date | null {
 }
 
 function deriveSubmissionState(sub?: RawStudentSubmission): { state: SubmissionState; isLate: boolean } {
-  if (!sub || sub.state === "NEW" || sub.state === "CREATED") {
+  if (!sub || sub.state === "NEW" || sub.state === "CREATED" || sub.state === "RECLAIMED_BY_STUDENT") {
     return { state: "not_submitted", isLate: false };
   }
-  // Google は late=false のとき late を省略する→ sub.late が undefined になり、
-  // isLate=undefined は保存されず(Prismaがundefinedを無視)、再同期で毎回差分になる。
-  // 必ず boolean に正規化する(docs/classroom-sync-flow.md §4)。
-  if (sub.state === "RETURNED") {
-    return { state: "returned", isLate: sub.late ?? false };
-  }
-  if (sub.state === "TURNED_IN") {
-    return { state: sub.late ? "late" : "submitted", isLate: sub.late ?? false };
+  // TURNED_IN(提出) も RETURNED(返却) も「提出済」に統一。遅延提出も提出済（遅れは isLate）。
+  // Google は late=false のとき late を省略するため boolean 正規化必須
+  // (docs/classroom-sync-flow.md §4)。
+  if (sub.state === "TURNED_IN" || sub.state === "RETURNED") {
+    return { state: "submitted", isLate: sub.late ?? false };
   }
   return { state: "not_submitted", isLate: false };
 }

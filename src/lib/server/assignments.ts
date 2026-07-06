@@ -219,7 +219,7 @@ export async function syncWebClassAssignments(
 }
 
 // ---- 入力バリデーション（手動追加/編集の非信頼入力対策）----
-export const SUBMISSION_STATES = ["not_submitted", "submitted", "late", "returned"] as const;
+export const SUBMISSION_STATES = ["not_submitted", "submitted", "unknown"] as const;
 const INPUT_LIMITS = { courseName: 200, title: 500, description: 5000, courseColor: 20, link: 2000 };
 
 function clampStr(v: unknown, max: number): string {
