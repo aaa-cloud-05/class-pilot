@@ -6,8 +6,12 @@ import { StatsCard } from "@/components/StatsCard";
 import { SubmissionChart } from "@/components/SubmissionChart";
 import { useMemo } from "react";
 import { isThisWeek } from "date-fns";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 export default function DashboardPage() {
+  const { status } = useSession();
+  const loggedIn = status === "authenticated";
   const { assignments, loading } = useAssignments();
 
   const stats = useMemo(() => {
@@ -75,7 +79,19 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col min-h-screen pb-20">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-5 pt-12 pb-4">
-        <h1 className="text-2xl font-bold tracking-tight">振り返り</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">振り返り</h1>
+          {/* アカウント（暫定的にここへ移設。設定へ） */}
+          <Link
+            href={loggedIn ? "/settings" : "/login"}
+            className={`p-2 ${loggedIn ? "text-blue-500" : "text-gray-300"}`}
+            title={loggedIn ? "アカウント（Google ログイン中）" : "ログイン"}
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2a5 5 0 110 10 5 5 0 010-10zm0 12c5.523 0 10 2.239 10 5v1H2v-1c0-2.761 4.477-5 10-5z" />
+            </svg>
+          </Link>
+        </div>
       </header>
 
       <main className="flex-1 px-5 py-4">
