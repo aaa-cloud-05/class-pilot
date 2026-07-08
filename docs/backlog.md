@@ -4,7 +4,9 @@
 
 ## 公開までの外部ブロッカー（コード以外・機能が成立しない）
 - [ ] **A1. Resend 独自ドメイン認証**：現状 `onboarding@resend.dev` は所有者本人にしか届かない＝メール通知が実ユーザーに未成立。DNS(SPF/DKIM)設定後、`src/lib/server/email.ts` の `from` を独自ドメインへ。
-- [ ] **A2. Google OAuth 同意画面を本番公開**：Testing のままだと他人がログイン不可＋refresh_token 7日失効。プライバシー/ホームページURL（`/privacy` 済）を登録し公開。Classroom は機密スコープ（未審査は警告画面＋100人上限）。
+- [x] **A2. Google OAuth 本番公開**：**完了済み**（2026-07 確認）。User type=External・公開ステータス=本番環境。Google の検証センターは「機密/制限付きスコープをリクエストしていないため検証は不要」と表示＝**審査不要・「確認されていません」警告も出ない**。Testing ではないので **refresh_token 7日失効も無い**（以前の同期切れは P2024/isLate/古いセッションが原因で解消済み）。
+  - 残タスク（任意）：同意画面のブランディングにホームページ/`/privacy`/`/terms` のURL登録（独自ドメイン取得後）。
+  - 注意：コードは `classroom.*.readonly`（最小権限）を要求。Console 登録側に読み書き `classroom.coursework.me` が入っている場合は **Console を `.readonly` に合わせる**（コードを書き込み権限へ広げない）。
 
 ## 法務・ポジショニング（非公式・第三者製品）
 - [x] 🔴 **非提携の明示**：「Google LLC・日本データパシフィック株式会社（WebClass提供元）とは無関係の非公式ツール」をポリシー/ログインに明記（済。大学名は非公開）。
