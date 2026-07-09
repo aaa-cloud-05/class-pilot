@@ -1,12 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type CSSProperties } from "react"
 import { cn } from "@/lib/utils"
+
+// r=6 の円周。各セグメントは角度(rotate)で開始位置を決め、dashoffsetアニメで時計回りに描く。
+const R = 6
+const C = 2 * Math.PI * R
+const DURATION = 620 // ぐるっと一周ぶんの総時間(ms)
 
 /**
  * 数値の分数 + 極小3セグメントのドーナツ（提出/未提出/超過）。
- * 数値はドーナツの外。凡例なし。ホバー/タップで内訳を小さく表示。
- * 色は抑制的（提出＝foreground、未提出＝薄グレー、超過＝赤の小セグメント）。
+ * 数値はドーナツの外。凡例なし。ホバー/タップで内訳。
+ * 提出＝緑、未提出＝薄グレー、超過＝赤の小セグメント。マウント時に「ぐるっと」描画。
  */
 export function CompletionMeter({
   submitted,
@@ -23,12 +28,21 @@ export function CompletionMeter({
 }) {
   const [open, setOpen] = useState(false)
 
-  const r = 6
-  const C = 2 * Math.PI * r
   const denom = total || 1
-  const doneLen = (submitted / denom) * C
-  const pendLen = (pending / denom) * C
-  const overLen = (overdue / denom) * C
+  const segs = [
+    { key: "done", color: "var(--lamp-green)", frac: submitted / denom },
+    { key: "pending", color: "var(--muted-foreground)", opacity: 0.35, frac: pending / denom },
+    { key: "overdue", color: "var(--lamp-red)", frac: overdue / denom },
+  ]
+
+  // 各セグメントの開始位置(累積)を計算
+  let acc = 0
+  const arcs = segs.map((s) => {
+    const start = acc
+    acc += s.frac
+    const len = s.frac * C
+    return { ...s, startFrac: start, len }
+  })
 
   return (
     <div
@@ -46,44 +60,30 @@ export function CompletionMeter({
           {submitted} / {total}
         </span>
         <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden>
-          <g transform="rotate(-90 8 8)">
-            <circle cx="8" cy="8" r={r} fill="none" stroke="var(--track)" strokeWidth="3" />
-            {total > 0 && (
-              <>
+          <circle cx="8" cy="8" r={R} fill="none" stroke="var(--track)" strokeWidth="3" />
+          {total > 0 &&
+            arcs.map((a) =>
+              a.len <= 0 ? null : (
                 <circle
+                  key={a.key}
                   cx="8"
                   cy="8"
-                  r={r}
+                  r={R}
                   fill="none"
-                  stroke="var(--foreground)"
+                  stroke={a.color}
+                  strokeOpacity={a.opacity ?? 1}
                   strokeWidth="3"
-                  strokeDasharray={`${doneLen} ${C}`}
-                  strokeDashoffset={0}
+                  strokeDasharray={`${a.len} ${C}`}
+                  transform={`rotate(${-90 + a.startFrac * 360} 8 8)`}
+                  style={
+                    {
+                      "--sl": `${a.len}`,
+                      animation: `donut-sweep ${DURATION}ms cubic-bezier(0.22,1,0.36,1) ${Math.round(a.startFrac * DURATION)}ms both`,
+                    } as CSSProperties
+                  }
                 />
-                <circle
-                  cx="8"
-                  cy="8"
-                  r={r}
-                  fill="none"
-                  stroke="var(--muted-foreground)"
-                  strokeOpacity="0.35"
-                  strokeWidth="3"
-                  strokeDasharray={`${pendLen} ${C}`}
-                  strokeDashoffset={-doneLen}
-                />
-                <circle
-                  cx="8"
-                  cy="8"
-                  r={r}
-                  fill="none"
-                  stroke="var(--lamp-red)"
-                  strokeWidth="3"
-                  strokeDasharray={`${overLen} ${C}`}
-                  strokeDashoffset={-(doneLen + pendLen)}
-                />
-              </>
+              ),
             )}
-          </g>
         </svg>
       </button>
 

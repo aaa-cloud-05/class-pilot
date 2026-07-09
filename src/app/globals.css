@@ -9,6 +9,7 @@
   --color-lamp-amber: var(--lamp-amber);
   --color-lamp-red: var(--lamp-red);
   --color-lamp-muted: var(--lamp-muted);
+  --color-accent-blue: var(--accent-blue);
   --color-block: var(--block);
   --color-block-strong: var(--block-strong);
   --color-track: var(--track);
@@ -95,6 +96,7 @@
   --block: oklch(0.9 0.006 250);
   --block-strong: oklch(0.32 0.01 255);
   --track: oklch(0.94 0.004 250);
+  --accent-blue: oklch(0.62 0.18 253);
 }
 
 .dark {
@@ -137,6 +139,7 @@
   --block: oklch(0.34 0.008 255);
   --block-strong: oklch(0.72 0.01 250);
   --track: oklch(0.28 0.006 255);
+  --accent-blue: oklch(0.7 0.16 253);
 }
 
 @layer utilities {
@@ -151,6 +154,28 @@
   }
   .animate-lamp-pulse {
     animation: lamp-pulse 2.4s ease-in-out infinite;
+  }
+
+  /* ドーナツの「ぐるっと」描画スイープ（各セグメントを順に時計回りで描く） */
+  @keyframes donut-sweep {
+    from {
+      stroke-dashoffset: var(--sl, 0);
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* 週バーの登場（下から立ち上がる。月→日の順は per-bar の animation-delay で表現） */
+  @keyframes bar-rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scaleY(0.2);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scaleY(1);
+    }
   }
 }
 

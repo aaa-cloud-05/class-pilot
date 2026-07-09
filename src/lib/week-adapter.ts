@@ -13,6 +13,14 @@ import type {
   WeekModel,
 } from "@/lib/dashboard-data"
 
+// バーの積み順（下=提出済 → 上=未提出/超過）。段階フェッチで並びがブレないよう固定。
+const STACK_RANK: Record<TaskStatus, number> = {
+  submitted: 0,
+  optional: 1,
+  pending: 2,
+  "not-submitted": 3,
+}
+
 /** 3状態(＋締切)→ 4トーンの表示ステータス。赤＝締切超過(現在時刻を過ぎた)の未提出のみ。 */
 function statusFor(a: Assignment, now: Date): TaskStatus {
   if (a.submissionState === "submitted") return "submitted"
@@ -65,6 +73,7 @@ export function buildWeek(
     const date = addDays(monday, i)
     const blocks = tasks
       .filter((t) => t.dayIndex === i)
+      .sort((a, b) => STACK_RANK[a.status] - STACK_RANK[b.status])
       .map((t) => ({ id: t.id, status: t.status }))
     return {
       index: i,
@@ -103,7 +112,7 @@ export function buildWeek(
 }
 
 function freshnessOf(date: Date | null, base: Date): SyncFreshness {
-  if (!date) return "stale"
+  if (!date) return "unknown"
   const age = base.getTime() - date.getTime()
   if (age < 6 * 60 * 60 * 1000) return "fresh"
   if (age < 24 * 60 * 60 * 1000) return "aging"
@@ -123,7 +132,7 @@ function classroomSource(
   base: Date,
 ): SyncSource {
   if (!loggedIn) {
-    return { id: "classroom", label: "Classroom", freshness: "stale", detail: "Classroom · 未ログイン" }
+    return { id: "classroom", label: "Classroom", freshness: "unknown", detail: "Classroom · 未ログイン" }
   }
   if (syncError === "reauth_required") {
     return { id: "classroom", label: "Classroom", freshness: "aging", detail: "Classroom · 要再ログイン" }

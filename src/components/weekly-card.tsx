@@ -57,6 +57,7 @@ export function WeeklyCard({
           <span className="text-[13px] font-medium text-card-foreground">{subtitle}</span>
         </div>
         <CompletionMeter
+          key={week.rangeLabel}
           submitted={week.doneTasks}
           pending={pending}
           overdue={week.overdueCount}
@@ -65,10 +66,10 @@ export function WeeklyCard({
         />
       </div>
 
-      {/* graph area */}
+      {/* graph area（key=表示週 で週送り時にバー登場アニメを再生） */}
       <div className="relative h-40">
         {/* day columns */}
-        <div className="relative flex h-full items-end justify-between gap-1.5">
+        <div key={week.rangeLabel} className="relative flex h-full items-end justify-between gap-1.5">
           {week.days.map((day) => {
             const isSelected = day.index === selectedDay
             return (
@@ -93,11 +94,8 @@ export function WeeklyCard({
                       style={{
                         height: 12,
                         backgroundColor: BLOCK_COLOR[b.status],
-                        opacity: mounted ? 1 : 0,
-                        transform: mounted ? "translateY(0) scaleY(1)" : "translateY(6px) scaleY(0.2)",
                         transformOrigin: "bottom",
-                        transition: "opacity 260ms ease-out, transform 320ms cubic-bezier(0.22,1,0.36,1)",
-                        transitionDelay: `${day.index * 90 + bi * 45}ms`,
+                        animation: `bar-rise 340ms cubic-bezier(0.22,1,0.36,1) ${day.index * 90 + bi * 45}ms both`,
                       }}
                     />
                   ))}

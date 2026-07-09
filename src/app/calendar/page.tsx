@@ -3,6 +3,7 @@
 import { useAssignments } from "@/hooks/useAssignments";
 import { CalendarGrid } from "@/components/CalendarGrid";
 import { NavBar } from "@/components/NavBar";
+import { AppHeader } from "@/components/app-header";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { EditAssignmentDialog } from "@/components/EditAssignmentDialog";
 import { useSession } from "next-auth/react";
@@ -86,11 +87,9 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-5 pt-12 pb-4">
-        <h1 className="text-2xl font-bold tracking-tight">カレンダー</h1>
-      </header>
+      <AppHeader />
 
-      <main className="flex-1 px-4 py-4">
+      <main className="mx-auto w-full max-w-md flex-1 px-4 py-4">
         {loading && assignments.length === 0 ? (
           <p className="text-center text-gray-400 text-sm py-12">読み込み中…</p>
         ) : (
