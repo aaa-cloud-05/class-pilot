@@ -87,7 +87,7 @@ function RowActions({ task, actions }: { task: Task; actions: TaskActions }) {
   )
 }
 
-function TaskRow({ task, actions }: { task: Task; actions: TaskActions }) {
+function TaskRow({ task, actions, showDate }: { task: Task; actions: TaskActions; showDate?: boolean }) {
   const tone = toneForStatus(task.status)
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40">
@@ -99,7 +99,7 @@ function TaskRow({ task, actions }: { task: Task; actions: TaskActions }) {
         <p className="truncate text-[11.5px] leading-tight text-muted-foreground">{task.subject}</p>
       </div>
       <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-        {task.deadline.split(" · ")[1] ?? task.deadline}
+        {showDate ? task.deadline : (task.deadline.split(" · ")[1] ?? task.deadline)}
       </span>
       <RowActions task={task} actions={actions} />
     </div>
@@ -114,8 +114,10 @@ export function TaskTable({
   dense,
   controls,
   meter,
+  meterKey,
   onPrev,
   onNext,
+  showDate,
 }: {
   title: string
   tasks: Task[]
@@ -124,8 +126,10 @@ export function TaskTable({
   dense?: boolean
   controls?: React.ReactNode
   meter?: SectionMeter
+  meterKey?: string
   onPrev?: () => void
   onNext?: () => void
+  showDate?: boolean
 }) {
   return (
     <section className="rounded-2xl border border-border bg-card shadow-sm">
@@ -149,6 +153,7 @@ export function TaskTable({
           {controls}
           {meter ? (
             <CompletionMeter
+              key={meterKey}
               submitted={meter.submitted}
               pending={meter.pending}
               overdue={meter.overdue}
@@ -166,7 +171,7 @@ export function TaskTable({
           <ul className="divide-y divide-border">
             {tasks.map((t) => (
               <li key={t.id}>
-                <TaskRow task={t} actions={actions} />
+                <TaskRow task={t} actions={actions} showDate={showDate} />
               </li>
             ))}
           </ul>

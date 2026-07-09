@@ -1,12 +1,13 @@
 import type { SyncFreshness, TaskStatus } from "@/lib/dashboard-data"
 
-export type LampTone = "green" | "amber" | "red" | "muted"
+export type LampTone = "green" | "amber" | "red" | "muted" | "blue"
 
 export const TONE_COLOR: Record<LampTone, string> = {
   green: "var(--lamp-green)",
   amber: "var(--lamp-amber)",
   red: "var(--lamp-red)",
   muted: "var(--lamp-muted)",
+  blue: "var(--accent-blue)",
 }
 
 export function toneForStatus(status: TaskStatus): LampTone {
@@ -30,6 +31,8 @@ export function toneForFreshness(freshness: SyncFreshness): LampTone {
       return "amber"
     case "stale":
       return "red"
+    case "unknown":
+      return "muted"
   }
 }
 

@@ -15,7 +15,7 @@ export type Task = {
   dayIndex: number
 }
 
-export type SyncFreshness = "fresh" | "aging" | "stale"
+export type SyncFreshness = "fresh" | "aging" | "stale" | "unknown"
 
 export type SyncSource = {
   id: string

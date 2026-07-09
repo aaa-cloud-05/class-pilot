@@ -9,7 +9,7 @@ import {
   upsertCache,
   removeCache,
 } from "@/lib/cache";
-import { getNotificationSettings, saveNotificationSettings } from "@/lib/notification-store";
+import { saveNotificationSettings } from "@/lib/notification-store";
 import { getLocalWebclassSyncedAt } from "@/lib/sync-meta";
 import type { Assignment } from "@/lib/types";
 
@@ -33,10 +33,14 @@ let lastSyncTime = 0;
 
 function sortByDueDate(list: Assignment[]): Assignment[] {
   return [...list].sort((a, b) => {
-    if (!a.dueDate && !b.dueDate) return 0;
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    return a.dueDate.getTime() - b.dueDate.getTime();
+    // 締切なしは末尾。締切は昇順。
+    const ad = a.dueDate ? a.dueDate.getTime() : Infinity;
+    const bd = b.dueDate ? b.dueDate.getTime() : Infinity;
+    if (ad !== bd) return ad - bd;
+    // 同一締切（締切なし同士を含む）は id で決定的に並べる。
+    // これがないとキャッシュ(IndexedDB)とDB(API)で元配列順が異なり、
+    // ステージ2の読込時に同点タスクの表示順が入れ替わってしまう。
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
 }
 

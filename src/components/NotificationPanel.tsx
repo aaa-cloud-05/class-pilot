@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { Lamp } from "@/components/lamp";
 import {
   getNotificationHistory,
   getUnreadCount,
@@ -37,6 +38,8 @@ export function NotificationPanel({ open, onClose, onUnreadChange }: Notificatio
   }, [onUnreadChange]);
 
   useEffect(() => {
+    // 開いたときに履歴をIndexedDBから非同期取得（setStateはawait後＝同期ではない）
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) load();
   }, [open, load]);
 
@@ -54,17 +57,17 @@ export function NotificationPanel({ open, onClose, onUnreadChange }: Notificatio
 
   return (
     <div className="fixed inset-0 z-50" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30" />
+      <div className="absolute inset-0 bg-foreground/20" />
       <div
-        className="absolute top-0 left-0 right-0 max-h-[70vh] bg-white rounded-b-2xl shadow-xl overflow-hidden flex flex-col"
+        className="absolute inset-x-0 top-0 mx-auto flex max-h-[70vh] w-full max-w-md flex-col overflow-hidden rounded-b-2xl border-b border-border bg-background shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 pt-[env(safe-area-inset-top)] pb-3 border-b border-gray-100">
-          <h2 className="text-lg font-bold pt-12">通知</h2>
+        <div className="flex items-center justify-between border-b border-border px-5 pb-3 pt-[max(env(safe-area-inset-top),3rem)]">
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">通知</h2>
           {records.some((r) => !r.read) && (
             <button
               onClick={handleReadAll}
-              className="text-xs text-blue-500 font-medium pt-12"
+              className="text-[12px] font-medium text-accent-blue outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
             >
               すべて既読
             </button>
@@ -73,36 +76,41 @@ export function NotificationPanel({ open, onClose, onUnreadChange }: Notificatio
 
         <div className="flex-1 overflow-y-auto">
           {records.length === 0 ? (
-            <p className="text-center text-gray-400 text-sm py-12">
-              通知はありません
-            </p>
+            <p className="py-12 text-center text-[13px] text-muted-foreground">通知はありません</p>
           ) : (
-            records.map((record) => (
-              <button
-                key={record.id}
-                onClick={() => !record.read && handleRead(record.id)}
-                className="w-full text-left flex items-start gap-3 px-5 py-4 border-b border-gray-50 active:bg-gray-50 transition"
-              >
-                <div className="mt-1.5 shrink-0">
-                  {!record.read ? (
-                    <span className="block w-2 h-2 rounded-full bg-blue-500" />
-                  ) : (
-                    <span className="block w-2 h-2" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${record.read ? "text-gray-400" : "text-gray-900"}`}>
-                    {record.title}
-                  </p>
-                  <p className={`text-xs mt-0.5 ${record.read ? "text-gray-300" : "text-gray-500"}`}>
-                    {record.body}
-                  </p>
-                  <p className="text-[10px] text-gray-300 mt-1">
-                    {timeAgo(record.sentAt)}
-                  </p>
-                </div>
-              </button>
-            ))
+            <ul className="divide-y divide-border">
+              {records.map((record) => (
+                <li key={record.id}>
+                  <button
+                    onClick={() => !record.read && handleRead(record.id)}
+                    className="flex w-full items-start gap-3 px-5 py-3.5 text-left transition-colors hover:bg-muted/40"
+                  >
+                    <span className="mt-1.5 flex w-2 shrink-0 justify-center">
+                      {!record.read ? <Lamp tone="blue" size="sm" /> : <span className="block h-2 w-2" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`text-[13.5px] font-medium leading-tight ${
+                          record.read ? "text-muted-foreground" : "text-foreground"
+                        }`}
+                      >
+                        {record.title}
+                      </p>
+                      <p
+                        className={`mt-0.5 text-[11.5px] leading-snug ${
+                          record.read ? "text-muted-foreground/70" : "text-muted-foreground"
+                        }`}
+                      >
+                        {record.body}
+                      </p>
+                      <p className="mt-1 font-mono text-[10px] text-muted-foreground/70">
+                        {timeAgo(record.sentAt)}
+                      </p>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>
