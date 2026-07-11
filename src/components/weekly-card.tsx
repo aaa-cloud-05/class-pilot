@@ -2,59 +2,50 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { TaskStatus, WeekModel } from "@/lib/dashboard-data"
-import { ProgressRace } from "@/components/progress-race"
 import { CompletionMeter } from "@/components/completion-meter"
 import { cn } from "@/lib/utils"
 
+// グラフの状態色はリスト/ランプと同一系統に統一（緑=提出 / 橙=未提出 / 赤=超過 / グレー=不明）
 const BLOCK_COLOR: Record<TaskStatus, string> = {
-  submitted: "var(--block-strong)",
-  pending: "var(--block)",
+  submitted: "var(--lamp-green)",
+  pending: "var(--lamp-amber)",
   "not-submitted": "var(--lamp-red)",
-  optional: "color-mix(in oklch, var(--block) 55%, transparent)",
+  optional: "var(--lamp-muted)",
 }
 
 const CHEVRON =
   "flex items-center justify-center rounded p-0.5 text-muted-foreground/50 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
 
+/** 週カレンダー本体（カード枠は親が持つ）。上部＝日付＋週送り＋完了メーター、下＝棒グラフ。 */
 export function WeeklyCard({
   week,
-  subtitle,
   selectedDay,
   onSelectDay,
   onPrevWeek,
   onNextWeek,
-  mounted,
 }: {
   week: WeekModel
-  subtitle: string
   selectedDay: number
   onSelectDay: (index: number) => void
   onPrevWeek: () => void
   onNextWeek: () => void
-  mounted: boolean
 }) {
   const pending = Math.max(0, week.totalTasks - week.doneTasks - week.overdueCount)
 
   return (
-    <section
-      aria-label="週間"
-      className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm"
-    >
-      {/* header row inside card */}
-      <div className="mb-4 flex items-start justify-between">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-0.5">
-            <button type="button" onClick={onPrevWeek} aria-label="前の週" className={CHEVRON}>
-              <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-            </button>
-            <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground tabular-nums">
-              {week.rangeLabel}
-            </span>
-            <button type="button" onClick={onNextWeek} aria-label="次の週" className={CHEVRON}>
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-            </button>
-          </div>
-          <span className="text-[13px] font-medium text-card-foreground">{subtitle}</span>
+    <div>
+      {/* header row */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-0.5">
+          <button type="button" onClick={onPrevWeek} aria-label="前の週" className={CHEVRON}>
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+          </button>
+          <span className="font-mono text-[12.5px] uppercase tracking-wider text-muted-foreground tabular-nums">
+            {week.rangeLabel}
+          </span>
+          <button type="button" onClick={onNextWeek} aria-label="次の週" className={CHEVRON}>
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </button>
         </div>
         <CompletionMeter
           key={week.rangeLabel}
@@ -62,13 +53,11 @@ export function WeeklyCard({
           pending={pending}
           overdue={week.overdueCount}
           total={week.totalTasks}
-          className="mt-0.5"
         />
       </div>
 
       {/* graph area（key=表示週 で週送り時にバー登場アニメを再生） */}
       <div className="relative h-40">
-        {/* day columns */}
         <div key={week.rangeLabel} className="relative flex h-full items-end justify-between gap-1.5">
           {week.days.map((day) => {
             const isSelected = day.index === selectedDay
@@ -92,7 +81,7 @@ export function WeeklyCard({
                       key={b.id}
                       className="w-full rounded-[3px]"
                       style={{
-                        height: 12,
+                        height: 20,
                         backgroundColor: BLOCK_COLOR[b.status],
                         transformOrigin: "bottom",
                         animation: `bar-rise 340ms cubic-bezier(0.22,1,0.36,1) ${day.index * 90 + bi * 45}ms both`,
@@ -119,10 +108,6 @@ export function WeeklyCard({
           })}
         </div>
       </div>
-
-      <div className="mt-4 border-t border-border pt-4">
-        <ProgressRace week={week} mounted={mounted} />
-      </div>
-    </section>
+    </div>
   )
 }

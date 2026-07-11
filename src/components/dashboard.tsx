@@ -104,8 +104,6 @@ export function Dashboard() {
             ? `${-weekDiff}週前`
             : `${weekDiff}週後`
 
-  const [mounted, setMounted] = useState(false)
-
   // section controls
   const [daySort, setDaySort] = useState<SortMode>("time")
   const [weekSort, setWeekSort] = useState<WeekSort>("date")
@@ -115,11 +113,6 @@ export function Dashboard() {
   const [editing, setEditing] = useState<Assignment | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setMounted(true))
-    return () => cancelAnimationFrame(id)
-  }, [])
 
   useEffect(() => {
     getNotificationSettings().then((s) => setMutedIds(s.mutedAssignments))
@@ -199,24 +192,11 @@ export function Dashboard() {
   )
   const dayTasks = useMemo(() => sortTasks(dayAll, daySort), [dayAll, daySort])
 
-  // 選択日の完了メーター（scopeで隠さず全件から集計）
-  const dayMeter = useMemo(() => {
-    const submitted = dayAll.filter((t) => t.status === "submitted").length
-    const overdue = dayAll.filter((t) => t.status === "not-submitted").length
-    return { submitted, overdue, pending: dayAll.length - submitted - overdue, total: dayAll.length }
-  }, [dayAll])
-
   // 今週のすべての課題（週カードの表示週と連動）
   const weekListTasks = useMemo(
     () => sortWeekTasks(tasks.filter((t) => t.dayIndex >= 0), weekSort),
     [tasks, weekSort],
   )
-  const weekMeter = {
-    submitted: week.doneTasks,
-    overdue: week.overdueCount,
-    pending: Math.max(0, week.totalTasks - week.doneTasks - week.overdueCount),
-    total: week.totalTasks,
-  }
 
   const dayTitle = isSameDay(selectedDate, now)
     ? "今日"
@@ -273,79 +253,76 @@ export function Dashboard() {
         }
       />
 
-      <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pb-24 pt-4">
+      <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pb-24 pt-4">
         {syncError === "reauth_required" && (
-        <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2 text-[12.5px] text-foreground">
-          <span>Google 連携の有効期限が切れています。再ログインで更新できます。</span>
-          <Link href="/login" className="shrink-0 font-medium underline">
-            再ログイン
-          </Link>
+          <div className="flex items-center justify-between gap-2 px-1 text-[12.5px]">
+            <span className="text-destructive">Google 連携の期限が切れています。再ログインで更新できます。</span>
+            <Link href="/login" className="shrink-0 font-medium text-destructive underline">
+              再ログイン
+            </Link>
+          </div>
+        )}
+
+        <AiInsight message={insightState.message} variant={insightState.variant} />
+
+        <NotificationBanner />
+
+        {/* 週カレンダー＋「今日」を1つのカードに */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <WeeklyCard
+            week={week}
+            selectedDay={selectedIndex}
+            onSelectDay={(i) => setSelectedDate(addDays(weekMonday, i))}
+            onPrevWeek={() => shiftDays(-7)}
+            onNextWeek={() => shiftDays(7)}
+          />
+
+          <div className="mt-5">
+            <TaskTable
+              title={dayTitle}
+              tasks={dayTasks}
+              actions={actions}
+              emptyLabel="この日の課題はありません。"
+              controls={
+                <IconCycleToggle
+                  ariaPrefix="並び替え"
+                  options={sortOptions}
+                  value={daySort}
+                  onChange={setDaySort}
+                />
+              }
+            />
+          </div>
         </div>
-      )}
 
-      <NotificationBanner />
-
-      <AiInsight message={insightState.message} variant={insightState.variant} />
-
-      <WeeklyCard
-        week={week}
-        subtitle={weekSubtitle}
-        selectedDay={selectedIndex}
-        onSelectDay={(i) => setSelectedDate(addDays(weekMonday, i))}
-        onPrevWeek={() => shiftDays(-7)}
-        onNextWeek={() => shiftDays(7)}
-        mounted={mounted}
-      />
-
-      <TaskTable
-        title={dayTitle}
-        tasks={dayTasks}
-        actions={actions}
-        meter={dayMeter}
-        meterKey={selectedDate.toDateString()}
-        onPrev={() => shiftDays(-1)}
-        onNext={() => shiftDays(1)}
-        emptyLabel="この日の課題はありません。"
-        controls={
-          <IconCycleToggle
-            ariaPrefix="並び替え"
-            options={sortOptions}
-            value={daySort}
-            onChange={setDaySort}
-          />
-        }
-      />
-
-      <TaskTable
-        title={weekSubtitle}
-        tasks={weekListTasks}
-        actions={actions}
-        meter={weekMeter}
-        meterKey={week.rangeLabel}
-        showDate
-        dense
-        onPrev={() => shiftDays(-7)}
-        onNext={() => shiftDays(7)}
-        emptyLabel="この週の課題はありません。"
-        controls={
-          <IconCycleToggle
-            ariaPrefix="並び替え"
-            options={weekSortOptions}
-            value={weekSort}
-            onChange={setWeekSort}
-          />
-        }
-      />
-
-      <EditorialCard />
-
-      {editing && (
-        <EditAssignmentDialog
-          assignment={editing}
-          onSave={handleSaveEdit}
-          onClose={() => setEditing(null)}
+        <TaskTable
+          title={weekSubtitle}
+          tasks={weekListTasks}
+          actions={actions}
+          showDate
+          dense
+          onPrev={() => shiftDays(-7)}
+          onNext={() => shiftDays(7)}
+          emptyLabel="この週の課題はありません。"
+          controls={
+            <IconCycleToggle
+              ariaPrefix="並び替え"
+              options={weekSortOptions}
+              value={weekSort}
+              onChange={setWeekSort}
+            />
+          }
         />
-      )}
+
+        <EditorialCard />
+
+        {editing && (
+          <EditAssignmentDialog
+            assignment={editing}
+            onSave={handleSaveEdit}
+            onClose={() => setEditing(null)}
+          />
+        )}
       </main>
 
       <NotificationPanel
