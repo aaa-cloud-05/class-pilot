@@ -91,7 +91,7 @@ export default function CalendarPage() {
 
       <main className="mx-auto w-full max-w-md flex-1 px-4 py-4">
         {loading && assignments.length === 0 ? (
-          <p className="text-center text-gray-400 text-sm py-12">読み込み中…</p>
+          <p className="py-12 text-center text-sm text-muted-foreground">読み込み中…</p>
         ) : (
           <CalendarGrid assignments={assignments} />
         )}
@@ -99,14 +99,14 @@ export default function CalendarPage() {
         {/* 全件一覧（グループ表示） */}
         {assignments.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3 px-1">
+            <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               すべての課題
             </h2>
             {grouped.map(({ label, items }) => (
               <section key={label} className="mb-6">
                 <h3
-                  className={`text-xs font-semibold uppercase tracking-wider mb-2 ${
-                    label === "締切超過" ? "text-red-500" : "text-gray-400"
+                  className={`mb-2 text-xs font-semibold uppercase tracking-wider ${
+                    label === "締切超過" ? "text-destructive" : "text-muted-foreground"
                   }`}
                 >
                   {label}

@@ -90,7 +90,7 @@ function RowActions({ task, actions }: { task: Task; actions: TaskActions }) {
 function TaskRow({ task, actions, showDate }: { task: Task; actions: TaskActions; showDate?: boolean }) {
   const tone = toneForStatus(task.status)
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40">
+    <div className="flex items-center gap-3 rounded-md px-1 py-2.5 transition-colors hover:bg-muted/40">
       <div className="flex w-4 shrink-0 justify-center" title={STATUS_LABEL[task.status]}>
         <Lamp tone={tone} size="sm" pulse={task.status === "pending"} />
       </div>
@@ -132,8 +132,8 @@ export function TaskTable({
   showDate?: boolean
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card shadow-sm">
-      <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+    <section>
+      <div className="flex items-center justify-between gap-2 px-1 pb-1.5">
         <div className="flex shrink-0 items-center gap-0.5">
           {onPrev && (
             <button type="button" onClick={onPrev} aria-label="前の日" className={NAV_CHEVRON}>
@@ -164,19 +164,19 @@ export function TaskTable({
           )}
         </div>
       </div>
-      <div className="border-t border-border">
-        {tasks.length === 0 ? (
-          <p className="px-3 py-6 text-center text-[12.5px] text-muted-foreground">{emptyLabel}</p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {tasks.map((t) => (
-              <li key={t.id}>
-                <TaskRow task={t} actions={actions} showDate={showDate} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {tasks.length === 0 ? (
+        <p className="px-1 py-6 text-center text-[12.5px] text-muted-foreground">
+          {emptyLabel}
+        </p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {tasks.map((t) => (
+            <li key={t.id}>
+              <TaskRow task={t} actions={actions} showDate={showDate} />
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

@@ -5,6 +5,10 @@ import { relativeDeadline, formatDate, formatTime } from "@/lib/date-utils";
 import { isSafeHttpUrl } from "@/lib/webclass";
 import { isPast } from "date-fns";
 import { useState } from "react";
+import { MoreVertical, Bell, BellOff } from "lucide-react";
+import { Lamp } from "@/components/lamp";
+import type { LampTone } from "@/lib/lamp";
+import { cn } from "@/lib/utils";
 
 interface AssignmentCardProps {
   assignment: Assignment;
@@ -21,38 +25,45 @@ export function AssignmentCard({ assignment, muted, onToggleMute, onEdit, onDele
   const unknown = a.submissionState === "unknown";
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const tone: LampTone = submitted ? "green" : unknown ? "muted" : overdue ? "red" : "amber";
+  const toneLabel = submitted ? "提出済" : unknown ? "不明" : overdue ? "締切超過" : "未提出";
+  const href = isSafeHttpUrl(a.link) ? a.link : undefined;
+
   return (
     <div className="relative">
       <a
-        href={isSafeHttpUrl(a.link) ? a.link : undefined}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={`block rounded-2xl border p-4 transition active:scale-[0.98] ${
+        className={cn(
+          "block rounded-2xl border p-4 transition active:scale-[0.98]",
           overdue
-            ? "border-red-200 bg-red-50/50"
+            ? "border-destructive/30 bg-destructive/5"
             : submitted
-            ? "border-gray-100 bg-gray-50/50 opacity-60"
-            : "border-gray-200 bg-white"
-        }`}
+              ? "border-border bg-card opacity-60"
+              : "border-border bg-card",
+        )}
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center gap-2">
               <span
-                className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                className="inline-block h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: a.courseColor }}
               />
-              <span className="text-xs text-gray-500 truncate">{a.courseName}</span>
+              <span className="truncate text-[11.5px] text-muted-foreground">{a.courseName}</span>
             </div>
-            <h3 className="text-sm font-semibold text-gray-900 leading-snug">{a.title}</h3>
+            <h3 className="text-[13.5px] font-medium leading-snug text-foreground">{a.title}</h3>
             {a.dueDate && (
-              <p className={`text-xs mt-1 ${overdue ? "text-red-500" : "text-gray-400"}`}>
-                {formatDate(a.dueDate)} {formatTime(a.dueDate)}
+              <p className={cn("mt-1 text-[11px]", overdue ? "text-destructive" : "text-muted-foreground")}>
+                <span className="font-mono tabular-nums">
+                  {formatDate(a.dueDate)} {formatTime(a.dueDate)}
+                </span>
                 <span className="ml-2">{relativeDeadline(a.dueDate)}</span>
               </p>
             )}
           </div>
-          <div className="flex-shrink-0 mt-1 flex items-center gap-1.5">
+          <div className="mt-0.5 flex shrink-0 items-center gap-1">
             {onToggleMute && !submitted && !unknown && (
               <button
                 onClick={(e) => {
@@ -60,16 +71,10 @@ export function AssignmentCard({ assignment, muted, onToggleMute, onEdit, onDele
                   e.stopPropagation();
                   onToggleMute(a.id);
                 }}
-                className="p-1 rounded text-gray-300 hover:text-gray-500"
+                className="rounded p-1 text-muted-foreground/60 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 title={muted ? "通知ミュート解除" : "通知をミュート"}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                  {muted ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.143 17.082a24.248 24.248 0 003.844.148m-3.844-.148a23.856 23.856 0 01-5.455-1.31 8.964 8.964 0 002.3-5.542m3.155 6.852a3 3 0 005.667 1.97m1.965-2.277L21 21m-4.225-4.225a23.9 23.9 0 003.225-1.36 8.964 8.964 0 00-1.4-6.914m-1.825 8.274a23.856 23.856 0 01-5.455-1.31M3.124 7.5A8.969 8.969 0 015.292 3m13.416 13.416l2.292-2.292" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                  )}
-                </svg>
+                {muted ? <BellOff className="h-4 w-4" aria-hidden /> : <Bell className="h-4 w-4" aria-hidden />}
               </button>
             )}
             {(onEdit || onDelete) && (
@@ -79,32 +84,15 @@ export function AssignmentCard({ assignment, muted, onToggleMute, onEdit, onDele
                   e.stopPropagation();
                   setMenuOpen(!menuOpen);
                 }}
-                className="p-1 rounded text-gray-300 hover:text-gray-500"
+                aria-label="操作"
+                className="rounded p-1 text-muted-foreground/60 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="5" r="1.5" />
-                  <circle cx="12" cy="12" r="1.5" />
-                  <circle cx="12" cy="19" r="1.5" />
-                </svg>
+                <MoreVertical className="h-4 w-4" aria-hidden />
               </button>
             )}
-            {submitted ? (
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                提出済
-              </span>
-            ) : unknown ? (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                不明
-              </span>
-            ) : overdue ? (
-              <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-                未提出
-              </span>
-            ) : (
-              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                未提出
-              </span>
-            )}
+            <span className="ml-0.5 flex w-3 justify-center" title={toneLabel}>
+              <Lamp tone={tone} size="sm" pulse={tone === "amber"} />
+            </span>
           </div>
         </div>
       </a>
@@ -112,19 +100,25 @@ export function AssignmentCard({ assignment, muted, onToggleMute, onEdit, onDele
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
-          <div className="absolute right-2 top-12 z-40 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[120px]">
+          <div className="absolute right-2 top-12 z-40 min-w-[120px] overflow-hidden rounded-xl border border-border bg-popover py-1 shadow-md">
             {onEdit && (
               <button
-                onClick={() => { setMenuOpen(false); onEdit(a.id); }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onEdit(a.id);
+                }}
+                className="w-full px-4 py-2 text-left text-[13px] text-popover-foreground transition-colors hover:bg-muted"
               >
                 編集
               </button>
             )}
             {onDelete && (
               <button
-                onClick={() => { setMenuOpen(false); onDelete(a.id); }}
-                className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onDelete(a.id);
+                }}
+                className="w-full px-4 py-2 text-left text-[13px] text-destructive transition-colors hover:bg-muted"
               >
                 削除
               </button>

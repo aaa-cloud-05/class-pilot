@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation"
 
 // ルート → ヘッダー右のパス表記
 const SEGMENT: Record<string, string> = {
-  "/": "wk",
+  "/": "home",
   "/calendar": "calendar",
   "/docs": "docs",
   "/me": "me",
@@ -16,7 +16,7 @@ const SEGMENT: Record<string, string> = {
  */
 export function AppHeader({ right }: { right?: React.ReactNode }) {
   const pathname = usePathname()
-  const seg = SEGMENT[pathname] ?? (pathname.replace(/^\//, "").split("/")[0] || "wk")
+  const seg = SEGMENT[pathname] ?? (pathname.replace(/^\//, "").split("/")[0] || "home")
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-lg">

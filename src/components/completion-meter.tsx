@@ -56,10 +56,10 @@ export function CompletionMeter({
         aria-label={`提出${submitted}・未提出${pending}・超過${overdue}（全${total}）`}
         className="flex items-center gap-1.5 rounded outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+        <span className="font-mono text-[12.5px] tabular-nums text-muted-foreground">
           {submitted} / {total}
         </span>
-        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden>
+        <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden>
           <circle cx="8" cy="8" r={R} fill="none" stroke="var(--track)" strokeWidth="3" />
           {total > 0 &&
             arcs.map((a) =>

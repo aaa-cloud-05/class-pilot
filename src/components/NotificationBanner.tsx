@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Bell } from "lucide-react";
 import { saveNotificationSettings } from "@/lib/notification-store";
 
 export function NotificationBanner() {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
 
   useEffect(() => {
-    if (typeof Notification === "undefined") {
-      setPermission("unsupported");
-    } else {
-      setPermission(Notification.permission);
-    }
+    // ブラウザAPIはSSR不可のためマウント時に読む（初期表示のみ）
+    const p = typeof Notification === "undefined" ? "unsupported" : Notification.permission;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPermission(p);
   }, []);
 
   if (permission !== "default") return null;
@@ -25,18 +25,19 @@ export function NotificationBanner() {
   }
 
   return (
-    <div className="mx-4 my-3 rounded-lg bg-blue-50 border border-blue-200 p-4">
-      <p className="text-sm font-medium text-blue-900">
-        通知を有効にして締切を見逃さない
-      </p>
-      <p className="text-xs text-blue-700 mt-1">
-        締切前にリマインダーを受け取れます
-      </p>
+    <div className="flex items-center justify-between gap-3 px-1">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Bell className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        <p className="truncate text-[13px] text-foreground">
+          通知を有効にして締切を見逃さない
+        </p>
+      </div>
       <button
         onClick={handleEnable}
-        className="mt-2 px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+        className="shrink-0 text-[12px] font-medium outline-none transition-opacity hover:opacity-80 focus-visible:underline"
+        style={{ color: "var(--accent-blue)" }}
       >
-        通知を有効にする
+        オンにする
       </button>
     </div>
   );
