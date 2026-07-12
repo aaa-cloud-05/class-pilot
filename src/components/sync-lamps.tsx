@@ -22,7 +22,7 @@ function SyncLamp({ source }: { source: SyncSource }) {
         onClick={() => setOpen((v) => !v)}
         className="flex items-center justify-center rounded-full p-1.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <Lamp tone={tone} size="md" pulse />
+        <Lamp tone={tone} size="lg" pulse />
       </button>
       <div
         role="tooltip"

@@ -1,6 +1,6 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
+import { RefreshCw, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
@@ -55,26 +55,11 @@ export function RefreshControl({
       aria-label="同期を更新"
       className={cn(BTN, "text-muted-foreground/70 hover:text-foreground disabled:opacity-100")}
     >
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
+      <RefreshCw
+        className={cn("h-[17px] w-[17px]", busy && "animate-spin")}
+        strokeWidth={1.8}
         aria-hidden
-        className={cn(busy && "animate-spin")}
-        style={{ transformOrigin: "center" }}
-      >
-        <circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none" />
-        <path d="M12 3.5v3.2" />
-        <path d="M12 17.3v3.2" />
-        <path d="M3.5 12h3.2" />
-        <path d="M17.3 12h3.2" />
-        <path d="M6.2 6.2l2.2 2.2" opacity="0.6" />
-        <path d="M15.6 15.6l2.2 2.2" opacity="0.6" />
-      </svg>
+      />
     </button>
   )
 }

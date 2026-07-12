@@ -1,22 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { MoreVertical, ChevronLeft, ChevronRight } from "lucide-react"
+import { MoreVertical } from "lucide-react"
 import { Lamp } from "@/components/lamp"
-import { CompletionMeter } from "@/components/completion-meter"
 import { STATUS_LABEL, toneForStatus } from "@/lib/lamp"
 import type { Task } from "@/lib/dashboard-data"
 import { cn } from "@/lib/utils"
-
-export interface SectionMeter {
-  submitted: number
-  pending: number
-  overdue: number
-  total: number
-}
-
-const NAV_CHEVRON =
-  "flex items-center justify-center rounded p-0.5 text-muted-foreground/50 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
 
 export interface TaskActions {
   loggedIn: boolean
@@ -106,77 +95,28 @@ function TaskRow({ task, actions, showDate }: { task: Task; actions: TaskActions
   )
 }
 
+/** リスト本体のみ（見出しは各セクション側で組む）。 */
 export function TaskTable({
-  title,
   tasks,
   actions,
   emptyLabel = "ここには何もありません。",
-  dense,
-  controls,
-  meter,
-  meterKey,
-  onPrev,
-  onNext,
   showDate,
 }: {
-  title: string
   tasks: Task[]
   actions: TaskActions
   emptyLabel?: string
-  dense?: boolean
-  controls?: React.ReactNode
-  meter?: SectionMeter
-  meterKey?: string
-  onPrev?: () => void
-  onNext?: () => void
   showDate?: boolean
 }) {
+  if (tasks.length === 0) {
+    return <p className="px-1 py-6 text-center text-[12.5px] text-muted-foreground">{emptyLabel}</p>
+  }
   return (
-    <section>
-      <div className="flex items-center justify-between gap-2 px-1 pb-1.5">
-        <div className="flex shrink-0 items-center gap-0.5">
-          {onPrev && (
-            <button type="button" onClick={onPrev} aria-label="前の日" className={NAV_CHEVRON}>
-              <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-            </button>
-          )}
-          <h2 className={cn("font-medium text-card-foreground", dense ? "text-[12.5px]" : "text-[13px]")}>
-            {title}
-          </h2>
-          {onNext && (
-            <button type="button" onClick={onNext} aria-label="次の日" className={NAV_CHEVRON}>
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-            </button>
-          )}
-        </div>
-        <div className="flex min-w-0 items-center gap-2.5">
-          {controls}
-          {meter ? (
-            <CompletionMeter
-              key={meterKey}
-              submitted={meter.submitted}
-              pending={meter.pending}
-              overdue={meter.overdue}
-              total={meter.total}
-            />
-          ) : (
-            <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{tasks.length}</span>
-          )}
-        </div>
-      </div>
-      {tasks.length === 0 ? (
-        <p className="px-1 py-6 text-center text-[12.5px] text-muted-foreground">
-          {emptyLabel}
-        </p>
-      ) : (
-        <ul className="divide-y divide-border">
-          {tasks.map((t) => (
-            <li key={t.id}>
-              <TaskRow task={t} actions={actions} showDate={showDate} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <ul className="divide-y divide-border">
+      {tasks.map((t) => (
+        <li key={t.id}>
+          <TaskRow task={t} actions={actions} showDate={showDate} />
+        </li>
+      ))}
+    </ul>
   )
 }

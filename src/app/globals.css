@@ -177,6 +177,19 @@
       transform: translateY(0) scaleY(1);
     }
   }
+
+  /* 月カレンダーのドット登場（1日目から順に。per-cell の animation-delay で表現） */
+  @keyframes dot-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
 }
 
 @layer base {

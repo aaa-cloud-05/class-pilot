@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { TaskStatus, WeekModel } from "@/lib/dashboard-data"
 import { CompletionMeter } from "@/components/completion-meter"
@@ -23,12 +24,14 @@ export function WeeklyCard({
   onSelectDay,
   onPrevWeek,
   onNextWeek,
+  toggle,
 }: {
   week: WeekModel
   selectedDay: number
   onSelectDay: (index: number) => void
   onPrevWeek: () => void
   onNextWeek: () => void
+  toggle?: ReactNode
 }) {
   const pending = Math.max(0, week.totalTasks - week.doneTasks - week.overdueCount)
 
@@ -47,13 +50,16 @@ export function WeeklyCard({
             <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
         </div>
-        <CompletionMeter
-          key={week.rangeLabel}
-          submitted={week.doneTasks}
-          pending={pending}
-          overdue={week.overdueCount}
-          total={week.totalTasks}
-        />
+        <div className="flex items-center gap-1.5">
+          <CompletionMeter
+            key={week.rangeLabel}
+            submitted={week.doneTasks}
+            pending={pending}
+            overdue={week.overdueCount}
+            total={week.totalTasks}
+          />
+          {toggle}
+        </div>
       </div>
 
       {/* graph area（key=表示週 で週送り時にバー登場アニメを再生） */}
