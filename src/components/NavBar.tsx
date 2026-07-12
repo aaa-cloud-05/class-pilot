@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, BookOpen, User } from "lucide-react";
+import { Home, BookOpen, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/", label: "ホーム", Icon: Home },
-  { href: "/calendar", label: "カレンダー", Icon: Calendar },
   { href: "/docs", label: "ガイド", Icon: BookOpen },
   { href: "/me", label: "アカウント", Icon: User },
 ];
