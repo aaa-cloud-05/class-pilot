@@ -18,7 +18,7 @@ import { EditorialCard } from "@/components/editorial-card"
 import { RefreshControl } from "@/components/quiet-controls"
 import { NotificationBanner } from "@/components/NotificationBanner"
 import { NotificationPanel } from "@/components/NotificationPanel"
-import { EditAssignmentDialog } from "@/components/EditAssignmentDialog"
+import { AssignmentDetailCard } from "@/components/AssignmentDetailCard"
 import { buildWeek, buildSyncSources, weekInsight } from "@/lib/week-adapter"
 import type { Task } from "@/lib/dashboard-data"
 import type { Assignment } from "@/lib/types"
@@ -157,9 +157,9 @@ export function Dashboard() {
   const [weekSort, setWeekSort] = useState<WeekSort>("date")
   const [allSort, setAllSort] = useState<WeekSort>("date")
 
-  // notifications / edit
+  // notifications / detail
   const [mutedIds, setMutedIds] = useState<string[]>([])
-  const [editing, setEditing] = useState<Assignment | null>(null)
+  const [viewing, setViewing] = useState<Assignment | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -177,14 +177,7 @@ export function Dashboard() {
     setMutedIds(muted)
   }, [])
 
-  const handleEdit = useCallback(
-    (id: string) => {
-      const a = assignments.find((x) => x.id === id)
-      if (a) setEditing(a)
-    },
-    [assignments],
-  )
-
+  // カード内インライン編集の保存。失敗時は throw してカードを編集状態のまま残す。
   const handleSaveEdit = useCallback(
     async (id: string, data: Record<string, unknown>) => {
       const res = await fetch(`/api/assignments/${encodeURIComponent(id)}`, {
@@ -195,17 +188,28 @@ export function Dashboard() {
       if (!res.ok) {
         const body = await res.text().catch(() => "")
         console.error("[EDIT]", res.status, body)
-        alert("保存に失敗しました")
-        return
+        throw new Error("save_failed")
       }
       const { assignment } = await res.json()
       await applyEdit({
         ...assignment,
         dueDate: assignment.dueDate ? new Date(assignment.dueDate) : null,
       })
-      setEditing(null)
     },
     [applyEdit],
+  )
+
+  // ランプからの提出状況変更：楽観的更新（即反映→サーバ確定/失敗時ロールバック）。
+  const handleSetSubmission = useCallback(
+    (current: Assignment, submissionState: Assignment["submissionState"]) => {
+      if (current.submissionState === submissionState) return
+      applyEdit({ ...current, submissionState }) // 楽観的に即反映
+      handleSaveEdit(current.id, { submissionState }).catch(() => {
+        applyEdit(current) // 失敗したら元に戻す
+        alert("変更に失敗しました")
+      })
+    },
+    [applyEdit, handleSaveEdit],
   )
 
   const handleDelete = useCallback(
@@ -223,12 +227,26 @@ export function Dashboard() {
     [removeAssignment],
   )
 
+  // id→Assignment（詳細カード表示・期限有無の分類に使用）。並び順は assignments の決定的順を踏襲。
+  const assignmentById = useMemo(() => {
+    const m = new Map<string, Assignment>()
+    for (const a of assignments) m.set(a.id, a)
+    return m
+  }, [assignments])
+
+  // 行タップ＝詳細カードを開く（編集/開く/通知/削除はカード側で操作）。
+  // ランプタップ＝提出状況を直接変更（ログイン時のみ）。
   const actions: TaskActions = {
-    loggedIn,
-    mutedIds,
-    onEdit: loggedIn ? handleEdit : undefined,
-    onDelete: loggedIn ? handleDelete : undefined,
-    onToggleMute: toggleMute,
+    onView: (id) => {
+      const a = assignmentById.get(id)
+      if (a) setViewing(a)
+    },
+    onSetSubmission: loggedIn
+      ? (id, submissionState) => {
+          const current = assignmentById.get(id)
+          if (current) handleSetSubmission(current, submissionState)
+        }
+      : undefined,
   }
 
   // 週送り・日送りの共通ハンドラ（重複回避）
@@ -246,13 +264,6 @@ export function Dashboard() {
     () => sortWeekTasks(tasks.filter((t) => t.dayIndex >= 0), weekSort),
     [tasks, weekSort],
   )
-
-  // id→Assignment（期限の有無で分類するため）。並び順は assignments の決定的順を踏襲。
-  const assignmentById = useMemo(() => {
-    const m = new Map<string, Assignment>()
-    for (const a of assignments) m.set(a.id, a)
-    return m
-  }, [assignments])
 
   // 期限なし かつ 未提出
   const noDueTasks = useMemo(
@@ -443,11 +454,19 @@ export function Dashboard() {
 
         <EditorialCard />
 
-        {editing && (
-          <EditAssignmentDialog
-            assignment={editing}
+        {viewing && (
+          <AssignmentDetailCard
+            key={viewing.id}
+            assignment={viewing}
+            loggedIn={loggedIn}
+            muted={mutedIds.includes(viewing.id)}
             onSave={handleSaveEdit}
-            onClose={() => setEditing(null)}
+            onToggleMute={toggleMute}
+            onDelete={(id) => {
+              setViewing(null)
+              handleDelete(id)
+            }}
+            onClose={() => setViewing(null)}
           />
         )}
       </main>
