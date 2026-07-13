@@ -190,6 +190,18 @@
     }
   }
 
+  /* ランプ状態ピッカーが中心からシュッと飛び出す（到達点は --dx/--dy） */
+  @keyframes lamp-fly {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.3);
+    }
+    to {
+      opacity: 1;
+      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1);
+    }
+  }
+
 }
 
 @layer base {
