@@ -76,6 +76,7 @@ export function WeeklyCard({
                 aria-label={`${day.dateNum}日 ・ 課題${day.blocks.length}件`}
                 className={cn(
                   "group relative flex h-full flex-1 flex-col items-center justify-end gap-1 rounded-lg px-0.5 pb-6 pt-2 outline-none transition-colors",
+                  day.isToday && "bg-muted/40", // 今日の列は背景を少し濃く
                   isSelected ? "bg-muted/70" : "hover:bg-muted/40",
                   "focus-visible:ring-2 focus-visible:ring-ring",
                 )}
@@ -101,7 +102,7 @@ export function WeeklyCard({
                   className={cn(
                     "absolute bottom-1 font-mono text-[11px] tabular-nums transition-colors",
                     day.isToday
-                      ? "font-semibold text-foreground"
+                      ? "font-semibold text-accent-blue"
                       : isSelected
                         ? "text-card-foreground"
                         : "text-muted-foreground",

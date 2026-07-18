@@ -9,6 +9,7 @@ import {
   eachDayOfInterval,
   isSameMonth,
   isSameDay,
+  isSameWeek,
   isToday,
   isPast,
   addMonths,
@@ -128,6 +129,7 @@ export function MonthGrid({
           const inMonth = isSameMonth(day, currentMonth)
           const today = isToday(day)
           const selected = isSameDay(day, selectedDate)
+          const inCurrentWeek = isSameWeek(day, new Date(), { weekStartsOn: 1 })
 
           return (
             <button
@@ -137,6 +139,7 @@ export function MonthGrid({
               aria-pressed={selected}
               className={cn(
                 "flex flex-col items-center rounded-lg py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                inCurrentWeek && "bg-muted/40", // 今週の行は背景を灰色に
                 selected ? "bg-muted" : "hover:bg-muted/50",
                 !inMonth && "opacity-30",
               )}
@@ -144,7 +147,7 @@ export function MonthGrid({
               <span
                 className={cn(
                   "flex h-7 w-7 items-center justify-center rounded-full font-mono text-[13px] tabular-nums text-foreground",
-                  today && "font-semibold",
+                  today && "font-semibold text-accent-blue", // 今日は青字
                 )}
               >
                 {format(day, "d")}

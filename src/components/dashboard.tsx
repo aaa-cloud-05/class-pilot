@@ -123,9 +123,29 @@ export function Dashboard() {
     syncError,
   } = useAssignments()
 
-  const [now] = useState(() => new Date())
+  // 「今日」の基準時刻。SSR/静的化で古い日付が焼き付く・タブを開いたまま日付をまたぐと
+  // 今日の位置がずれるため、クライアントで最新化し、深夜またぎとフォーカス時に更新する。
+  const [now, setNow] = useState(() => new Date())
   // 選択中の日付（週カード・今日セクションの唯一の基準）。既定は今日。
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date())
+
+  useEffect(() => {
+    // マウント後にクライアントの現在時刻へ確定（既定選択日も今日に揃える）
+    const fresh = new Date()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(fresh)
+    setSelectedDate((d) => (isSameDay(d, fresh) ? d : fresh))
+    const onFocus = () => setNow(new Date())
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [])
+  useEffect(() => {
+    // 次のローカル深夜に再セット（now が変わるたび次の深夜を張り直す）
+    const n = new Date()
+    const nextMidnight = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5)
+    const t = setTimeout(() => setNow(new Date()), nextMidnight.getTime() - n.getTime())
+    return () => clearTimeout(t)
+  }, [now])
 
   const weekMonday = useMemo(() => startOfWeek(selectedDate, { weekStartsOn: 1 }), [selectedDate])
   const selectedIndex = (selectedDate.getDay() + 6) % 7
