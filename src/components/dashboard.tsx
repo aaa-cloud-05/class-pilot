@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { startOfWeek, addDays, isSameDay, format, differenceInCalendarWeeks } from "date-fns"
 import { ja } from "date-fns/locale"
-import { Bell, User, Square, RectangleHorizontal, ChartNoAxesGantt, ChevronRight } from "lucide-react"
+import { Bell, User, Maximize2, Minimize2, ChartNoAxesGantt, ChevronRight } from "lucide-react"
 
 import { useAssignments } from "@/hooks/useAssignments"
 import { AppHeader } from "@/components/app-header"
@@ -128,12 +128,15 @@ export function Dashboard() {
   const [now, setNow] = useState(() => new Date())
   // 選択中の日付（週カード・今日セクションの唯一の基準）。既定は今日。
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date())
+  // クライアントでマウント済みか。SSR時点の（サーバTZの）今日を焼き付けないためのゲート。
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     // マウント後にクライアントの現在時刻へ確定（既定選択日も今日に揃える）
     const fresh = new Date()
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setNow(fresh)
+    setMounted(true)
     setSelectedDate((d) => (isSameDay(d, fresh) ? d : fresh))
     const onFocus = () => setNow(new Date())
     window.addEventListener("focus", onFocus)
@@ -149,6 +152,15 @@ export function Dashboard() {
 
   const weekMonday = useMemo(() => startOfWeek(selectedDate, { weekStartsOn: 1 }), [selectedDate])
   const selectedIndex = (selectedDate.getDay() + 6) % 7
+
+  // 今日の列インデックス（表示週内にあれば0..6、なければ-1）。
+  // マウント後のみ有効化（SSR時点のサーバTZの今日を焼き付けない）。now は
+  // マウント時/深夜またぎ/フォーカスでクライアント現在時刻に更新される。
+  const todayIndex = useMemo(() => {
+    if (!mounted) return -1
+    for (let i = 0; i < 7; i++) if (isSameDay(addDays(weekMonday, i), now)) return i
+    return -1
+  }, [mounted, weekMonday, now])
 
   const weekDiff = differenceInCalendarWeeks(selectedDate, now, { weekStartsOn: 1 })
   const weekSubtitle =
@@ -380,6 +392,7 @@ export function Dashboard() {
               <WeeklyCard
                 week={week}
                 selectedDay={selectedIndex}
+                todayIndex={todayIndex}
                 onSelectDay={(i) => setSelectedDate(addDays(weekMonday, i))}
                 onPrevWeek={() => shiftDays(-7)}
                 onNextWeek={() => shiftDays(7)}
@@ -390,7 +403,7 @@ export function Dashboard() {
                     aria-label="月表示に切替"
                     className="flex items-center justify-center rounded-md p-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <Square className="h-4 w-4 animate-in zoom-in-50 fade-in-0 duration-300" aria-hidden />
+                    <Maximize2 className="h-4 w-4 animate-in zoom-in-50 fade-in-0 duration-300" aria-hidden />
                   </button>
                 }
               />
@@ -406,7 +419,7 @@ export function Dashboard() {
                     aria-label="週表示に切替"
                     className="flex items-center justify-center rounded-md p-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <RectangleHorizontal className="h-4 w-4 animate-in zoom-in-50 fade-in-0 duration-300" aria-hidden />
+                    <Minimize2 className="h-4 w-4 animate-in zoom-in-50 fade-in-0 duration-300" aria-hidden />
                   </button>
                 }
               />

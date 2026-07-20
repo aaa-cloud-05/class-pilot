@@ -139,15 +139,15 @@ export function MonthGrid({
               aria-pressed={selected}
               className={cn(
                 "flex flex-col items-center rounded-lg py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                inCurrentWeek && "bg-muted/40", // 今週の行は背景を灰色に
-                selected ? "bg-muted" : "hover:bg-muted/50",
+                inCurrentWeek && "bg-muted/60", // 今週の行は背景を灰色に
+                selected ? "bg-muted" : !inCurrentWeek && "hover:bg-muted/50",
                 !inMonth && "opacity-30",
               )}
             >
               <span
                 className={cn(
                   "flex h-7 w-7 items-center justify-center rounded-full font-mono text-[13px] tabular-nums text-foreground",
-                  today && "font-semibold text-accent-blue", // 今日は青字
+                  today && "font-bold text-accent-blue", // 今日は青字（太字）
                 )}
               >
                 {format(day, "d")}
