@@ -12,6 +12,7 @@ import {
 } from "@/lib/notification-store";
 import { sendTestNotification } from "@/lib/notification-scheduler";
 import { clearAllClientData } from "@/lib/debug-clear";
+import { getWebclassUrl, setWebclassUrl } from "@/lib/webclass-url";
 
 const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
   { value: "relaxed", label: "余裕派", desc: "締切24時間前に1回" },
@@ -34,13 +35,26 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [webclassInput, setWebclassInput] = useState("");
+  const [webclassMsg, setWebclassMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     getNotificationSettings().then(setSettings);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNotifPermission(
       typeof Notification !== "undefined" ? Notification.permission : "unsupported"
     );
+    setWebclassInput(getWebclassUrl() ?? "");
   }, []);
+
+  function saveWebclass() {
+    const ok = setWebclassUrl(webclassInput);
+    setWebclassMsg(
+      ok
+        ? { ok: true, text: webclassInput.trim() ? "保存しました" : "クリアしました" }
+        : { ok: false, text: "http(s) の URL を入力してください" }
+    );
+  }
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -341,6 +355,39 @@ export default function SettingsPage() {
             </div>
           </section>
         )}
+
+        {/* WebClass 連携 */}
+        <section className="pt-4 border-t border-gray-100">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">WebClass の URL</h2>
+          <p className="text-xs text-gray-500 mb-2">
+            ヘッダーの同期ランプをタップして WebClass を開けるようにします。所属校の WebClass
+            ログインページの URL を入力してください（この端末に保存されます）。
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              inputMode="url"
+              value={webclassInput}
+              onChange={(e) => {
+                setWebclassInput(e.target.value);
+                setWebclassMsg(null);
+              }}
+              placeholder="https://…/webclass/"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={saveWebclass}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium active:bg-blue-700"
+            >
+              保存
+            </button>
+          </div>
+          {webclassMsg && (
+            <p className={`mt-1 text-xs ${webclassMsg.ok ? "text-green-600" : "text-red-500"}`}>
+              {webclassMsg.text}
+            </p>
+          )}
+        </section>
 
         {/* アカウント */}
         <section className="pt-4 border-t border-gray-100">

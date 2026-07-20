@@ -28,7 +28,7 @@ const SATELLITES: { state: SubmissionState; tone: LampTone; label: string; angle
   { state: "unknown", tone: "muted", label: "不明", angle: -120 },
 ]
 
-const RADIUS = 30
+const RADIUS = 26
 
 function offsetOf(angleDeg: number) {
   const r = (angleDeg * Math.PI) / 180
@@ -74,7 +74,11 @@ function LampControl({ task, onSetSubmission }: { task: Task; onSetSubmission?: 
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
+          <div
+            className="fixed inset-0 z-40 bg-black/10"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
           <div className="absolute left-1/2 top-1/2 z-50">
             {SATELLITES.map((o, i) => {
               const { dx, dy } = offsetOf(o.angle)
@@ -99,11 +103,12 @@ function LampControl({ task, onSetSubmission }: { task: Task; onSetSubmission?: 
                     aria-label={o.label}
                     title={o.label}
                     className={cn(
-                      "flex h-7 w-7 items-center justify-center rounded-full border border-border bg-popover shadow-md outline-none transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring",
-                      isCurrent && "ring-2 ring-ring",
+                      // 当たり判定はランプそのもの（余分な余白なし）
+                      "flex items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      isCurrent && "ring-1 ring-foreground/30",
                     )}
                   >
-                    <Lamp tone={o.tone} size="md" glow={false} />
+                    <Lamp tone={o.tone} size="lg" pulse />
                   </button>
                 </div>
               )

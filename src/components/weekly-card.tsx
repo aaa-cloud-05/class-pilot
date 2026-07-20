@@ -21,6 +21,7 @@ const CHEVRON =
 export function WeeklyCard({
   week,
   selectedDay,
+  todayIndex,
   onSelectDay,
   onPrevWeek,
   onNextWeek,
@@ -28,6 +29,8 @@ export function WeeklyCard({
 }: {
   week: WeekModel
   selectedDay: number
+  /** 今日の列（表示週内なら0..6、なければ-1）。クライアントのライブ時計で判定した値。 */
+  todayIndex: number
   onSelectDay: (index: number) => void
   onPrevWeek: () => void
   onNextWeek: () => void
@@ -67,6 +70,7 @@ export function WeeklyCard({
         <div key={week.rangeLabel} className="relative flex h-full items-end justify-between gap-1.5">
           {week.days.map((day) => {
             const isSelected = day.index === selectedDay
+            const isToday = day.index === todayIndex
             return (
               <button
                 key={day.index}
@@ -76,8 +80,9 @@ export function WeeklyCard({
                 aria-label={`${day.dateNum}日 ・ 課題${day.blocks.length}件`}
                 className={cn(
                   "group relative flex h-full flex-1 flex-col items-center justify-end gap-1 rounded-lg px-0.5 pb-6 pt-2 outline-none transition-colors",
-                  day.isToday && "bg-muted/40", // 今日の列は背景を少し濃く
-                  isSelected ? "bg-muted/70" : "hover:bg-muted/40",
+                  isSelected && "bg-muted/60", // 選択列
+                  isToday && "bg-muted", // 今日の列は最も濃く（選択と重なっても今日を優先）
+                  !isToday && !isSelected && "hover:bg-muted/40",
                   "focus-visible:ring-2 focus-visible:ring-ring",
                 )}
               >
@@ -101,8 +106,8 @@ export function WeeklyCard({
                 <span
                   className={cn(
                     "absolute bottom-1 font-mono text-[11px] tabular-nums transition-colors",
-                    day.isToday
-                      ? "font-semibold text-accent-blue"
+                    isToday
+                      ? "font-bold text-accent-blue"
                       : isSelected
                         ? "text-card-foreground"
                         : "text-muted-foreground",

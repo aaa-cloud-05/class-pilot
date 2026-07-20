@@ -190,6 +190,17 @@
     }
   }
 
+  /* 同期ランプのラベルをキラッと（光の帯が横切る。残り時間は右外で待機） */
+  @keyframes chip-shine {
+    0% {
+      transform: translateX(-2.5rem) skewX(-12deg);
+    }
+    25%,
+    100% {
+      transform: translateX(11rem) skewX(-12deg);
+    }
+  }
+
   /* ランプ状態ピッカーが中心からシュッと飛び出す（到達点は --dx/--dy） */
   @keyframes lamp-fly {
     from {
