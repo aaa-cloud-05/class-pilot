@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -61,9 +61,11 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("default");
   const [emailEnabled, setEmailEnabled] = useState(false);
+  const [emailLoaded, setEmailLoaded] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [hiddenCourses, setHiddenCourses] = useState<string[]>([]);
   const [allCourses, setAllCourses] = useState<{ id: string; name: string }[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -87,7 +89,8 @@ export default function SettingsPage() {
       .then((data) => {
         setEmailEnabled(data.settings?.emailEnabled ?? false);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setEmailLoaded(true));
     // 非表示コースも含めた全コースを取得（再追跡できるようにするため）
     fetch("/api/courses")
       .then((r) => r.json())
@@ -95,7 +98,8 @@ export default function SettingsPage() {
         setAllCourses(data.courses ?? []);
         setHiddenCourses(data.hiddenCourses ?? []);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setCoursesLoading(false));
   }, [loggedIn]);
 
   async function updateSettings(patch: Partial<Omit<NotificationSettings, "id">>) {
@@ -153,6 +157,50 @@ export default function SettingsPage() {
   const courses = Array.from(
     new Map(assignments.map((a) => [a.courseId, { id: a.courseId, name: a.courseName }])).values()
   );
+
+  // コース管理＋コース通知の統合リスト。allCourses(=追跡対象/非表示含む) と課題由来コースの和集合。
+  // trackable=Classroomコース(=非表示切替が意味を持つ)。
+  const courseList = useMemo(() => {
+    const trackableIds = new Set(allCourses.map((c) => c.id));
+    const map = new Map<string, string>();
+    for (const c of allCourses) map.set(c.id, c.name);
+    for (const a of assignments) if (!map.has(a.courseId)) map.set(a.courseId, a.courseName);
+    return Array.from(map, ([id, name]) => ({ id, name, trackable: trackableIds.has(id) }));
+  }, [allCourses, assignments]);
+
+  // 追跡/非表示の切替。非表示にしたら通知も自動でOFF（ミュートに追加）。
+  async function toggleTracking(id: string) {
+    if (!settings) return;
+    const hidden = hiddenCourses.includes(id);
+    const nextHidden = hidden ? hiddenCourses.filter((x) => x !== id) : [...hiddenCourses, id];
+    setHiddenCourses(nextHidden);
+    await saveNotificationSettings({ hiddenCourses: nextHidden });
+    const body: Record<string, unknown> = { hiddenCourses: nextHidden };
+    if (!hidden) {
+      const nextMuted = settings.mutedCourses.includes(id)
+        ? settings.mutedCourses
+        : [...settings.mutedCourses, id];
+      body.mutedCourses = nextMuted;
+      await saveNotificationSettings({ mutedCourses: nextMuted });
+      setSettings((s) => (s ? { ...s, mutedCourses: nextMuted } : s));
+    }
+    fetch("/api/notifications/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).catch(() => {});
+    if (hidden) refresh(); // 再追跡時に再取得
+  }
+
+  // コース通知 ON/OFF（ミュート切替）。非表示コースは操作不可。
+  function toggleCourseMute(id: string) {
+    if (!settings || hiddenCourses.includes(id)) return;
+    const muted = settings.mutedCourses.includes(id);
+    const mutedCourses = muted
+      ? settings.mutedCourses.filter((x) => x !== id)
+      : [...settings.mutedCourses, id];
+    updateSettings({ mutedCourses });
+  }
 
   const mutedAssignmentList = assignments.filter(
     (a) => settings?.mutedAssignments.includes(a.id)
@@ -219,7 +267,11 @@ export default function SettingsPage() {
                   {session?.user?.email ?? ""} に締切通知を送信
                 </p>
               </div>
-              <Toggle on={emailEnabled} onClick={toggleEmailNotification} disabled={emailLoading} />
+              {emailLoaded ? (
+                <Toggle on={emailEnabled} onClick={toggleEmailNotification} disabled={emailLoading} />
+              ) : (
+                <div className="h-6 w-11 shrink-0 animate-pulse rounded-full bg-muted" />
+              )}
             </div>
           </section>
         )}
@@ -258,78 +310,87 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {/* コース管理 */}
-        {loggedIn && allCourses.length > 0 && (
+        {/* コース（追跡/非表示 と 通知ON/OFF を統合） */}
+        {loggedIn && (
           <section>
-            <h2 className={`mb-1 ${SECTION_TITLE}`}>コース管理</h2>
-            <p className={`mb-2 ${HINT}`}>
-              非表示にしたコースの課題は取り込まれません。「非表示」をタップすると再び追跡します。
-            </p>
-            <div className="space-y-1">
-              {allCourses.map((course) => {
-                const hidden = hiddenCourses.includes(course.id);
-                return (
-                  <div key={course.id} className="flex items-center justify-between gap-2 rounded-lg px-1 py-1.5">
-                    <span
-                      className={cn(
-                        "flex-1 truncate text-[13px]",
-                        hidden ? "text-muted-foreground" : "text-foreground",
-                      )}
-                    >
-                      {course.name}
-                    </span>
-                    <button
-                      onClick={async () => {
-                        const next = hidden
-                          ? hiddenCourses.filter((id) => id !== course.id)
-                          : [...hiddenCourses, course.id];
-                        setHiddenCourses(next);
-                        await fetch("/api/notifications/settings", {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ hiddenCourses: next }),
-                        });
-                        await saveNotificationSettings({ hiddenCourses: next });
-                        if (hidden) refresh();
-                      }}
-                      className={cn(
-                        PILL,
-                        hidden ? "bg-muted text-muted-foreground" : "border border-border text-foreground hover:bg-muted",
-                      )}
-                    >
-                      {hidden ? "非表示" : "追跡中"}
-                    </button>
-                  </div>
-                );
-              })}
+            <div className="mb-1 flex items-baseline justify-between gap-2">
+              <h2 className={SECTION_TITLE}>コース</h2>
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span className="w-16 text-center">追跡</span>
+                <span className="w-11 text-center">通知</span>
+              </div>
             </div>
+            <p className={`mb-2 ${HINT}`}>
+              非表示にしたコースの課題は取り込まれず、通知も自動でOFFになります。
+            </p>
+            {coursesLoading ? (
+              <div className="space-y-1">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center gap-2 px-1 py-1.5">
+                    <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
+                    <div className="h-6 w-16 animate-pulse rounded-md bg-muted" />
+                    <div className="h-6 w-11 animate-pulse rounded-full bg-muted" />
+                  </div>
+                ))}
+              </div>
+            ) : courseList.length === 0 ? (
+              <p className={HINT}>コースがありません。</p>
+            ) : (
+              <div className="space-y-1">
+                {courseList.map((course) => {
+                  const hidden = hiddenCourses.includes(course.id);
+                  const notifOn =
+                    settings.enabled && !hidden && !settings.mutedCourses.includes(course.id);
+                  return (
+                    <div key={course.id} className="flex items-center gap-2 px-1 py-1.5">
+                      <span
+                        className={cn(
+                          "flex-1 truncate text-[13px]",
+                          hidden ? "text-muted-foreground" : "text-foreground",
+                        )}
+                      >
+                        {course.name}
+                      </span>
+                      {course.trackable ? (
+                        <button
+                          onClick={() => toggleTracking(course.id)}
+                          className={cn(
+                            PILL,
+                            "w-16 text-center",
+                            hidden
+                              ? "bg-muted text-muted-foreground"
+                              : "border border-border text-foreground hover:bg-muted",
+                          )}
+                        >
+                          {hidden ? "非表示" : "追跡中"}
+                        </button>
+                      ) : (
+                        <span className="w-16" aria-hidden />
+                      )}
+                      <Toggle
+                        on={notifOn}
+                        onClick={() => toggleCourseMute(course.id)}
+                        disabled={hidden || !settings.enabled}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 
-        {/* コースごとのミュート */}
-        {settings.enabled && courses.length > 0 && (
+        {/* 未ログイン時はコース通知(ミュート)のみ */}
+        {!loggedIn && settings.enabled && courses.length > 0 && (
           <section>
             <h2 className={`mb-2 ${SECTION_TITLE}`}>コース通知</h2>
             <div className="space-y-1">
               {courses.map((course) => {
                 const muted = settings.mutedCourses.includes(course.id);
                 return (
-                  <div key={course.id} className="flex items-center justify-between gap-2 rounded-lg px-1 py-1.5">
+                  <div key={course.id} className="flex items-center justify-between gap-2 px-1 py-1.5">
                     <span className="flex-1 truncate text-[13px] text-foreground">{course.name}</span>
-                    <button
-                      onClick={() => {
-                        const mutedCourses = muted
-                          ? settings.mutedCourses.filter((id) => id !== course.id)
-                          : [...settings.mutedCourses, course.id];
-                        updateSettings({ mutedCourses });
-                      }}
-                      className={cn(
-                        PILL,
-                        muted ? "bg-muted text-muted-foreground" : "border border-border text-foreground hover:bg-muted",
-                      )}
-                    >
-                      {muted ? "ミュート中" : "ON"}
-                    </button>
+                    <Toggle on={!muted} onClick={() => toggleCourseMute(course.id)} />
                   </div>
                 );
               })}
