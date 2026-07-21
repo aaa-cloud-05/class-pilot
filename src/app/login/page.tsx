@@ -14,12 +14,12 @@ export default function LoginPage() {
   }, [status, router]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-6">
-      <div className="text-center max-w-sm">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">
+    <main className="flex min-h-screen flex-col items-center justify-center px-6">
+      <div className="w-full max-w-sm text-center">
+        <h1 className="mb-2 text-[26px] font-bold tracking-tight text-foreground">
           課題を、見逃さない。
         </h1>
-        <p className="text-gray-500 mb-10 text-sm">
+        <p className="mb-10 text-[13px] leading-relaxed text-muted-foreground">
           Google Classroom の課題を自動取得して
           <br />
           カレンダーと振り返りで管理
@@ -28,9 +28,9 @@ export default function LoginPage() {
         <button
           onClick={() => signIn("google", { callbackUrl: "/" })}
           disabled={status === "loading"}
-          className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition disabled:opacity-50 shadow-sm"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background px-6 py-3 text-sm font-medium text-foreground shadow-sm outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
               fill="#4285F4"
@@ -51,22 +51,20 @@ export default function LoginPage() {
           Google でログイン
         </button>
 
-        <p className="text-xs text-gray-400 mt-6">
-          課題データは読み取り専用で取得します
-        </p>
+        <p className="mt-6 text-[11px] text-muted-foreground">課題データは読み取り専用で取得します</p>
 
-        <p className="text-xs text-gray-400 mt-8">
+        <p className="mt-8 text-[11px] leading-relaxed text-muted-foreground">
           ログインすると
-          <Link href="/terms" className="text-blue-500 underline">利用規約</Link>
+          <Link href="/terms" className="text-accent-blue underline">利用規約</Link>
           と
-          <Link href="/privacy" className="text-blue-500 underline">プライバシーポリシー</Link>
+          <Link href="/privacy" className="text-accent-blue underline">プライバシーポリシー</Link>
           に同意したものとみなされます
         </p>
 
-        <p className="text-xs text-gray-400 mt-4">
+        <p className="mt-4 text-[11px] text-muted-foreground">
           本アプリは Google・WebClass とは関係のない非公式ツールです
         </p>
       </div>
-    </div>
+    </main>
   );
 }
