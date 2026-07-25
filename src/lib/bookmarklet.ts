@@ -1,0 +1,5 @@
+// WebClass の「課題実施状況一覧」から課題を抽出し /import#<JSON> を開くブックマークレット。
+// /import と /docs/webclass の両方で使うため、生成ロジックをここに集約する。
+export function buildBookmarkletCode(origin: string): string {
+  return `javascript:void((function(){var d=document,f=d.getElementById('ip-iframe');if(f){try{d=f.contentDocument||f.contentWindow.document}catch(e){}}var app=d.getElementById('app');if(!app){alert('課題実施状況一覧ページで実行してください');return}var ts=[];d.querySelectorAll('.bg-blue-100').forEach(function(h){var a=h.querySelector('a.font-semibold');if(!a)return;var nm=a.textContent.trim().replace(/^\\d{4}\\s*/,'');var url=a.href;var nx=h.nextElementSibling;if(!nx)return;nx.querySelectorAll('tbody tr').forEach(function(r){var td=r.querySelectorAll('td');if(td.length<5)return;ts.push({c:nm,u:url,t:td[0].textContent.trim(),d:(r.querySelector('[data-test="締切"] span')||{}).textContent||'',st:(r.querySelector('[data-test="状態"] span')||{}).textContent||''})})});if(!ts.length){alert('課題が見つかりません');return}var u='${origin}/import#'+encodeURIComponent(JSON.stringify(ts));var w=window.open(u);if(!w)window.location.href=u})())`;
+}
