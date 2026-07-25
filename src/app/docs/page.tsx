@@ -100,7 +100,7 @@ export default function DocsHubPage() {
       { n: 1, title: "Google Classroom 連携", desc: "ログインするだけで、Classroom の課題を自動で取り込み。", cta: "ログインする", href: "/login", done: done.login },
       { n: 2, title: "WebClass の初期設定", desc: "ブックマークに登録しましょう。以降は2タップで。", cta: "手順を見る", href: "/docs/webclass", done: done.webclass },
       { n: 3, title: "メール通知をオン", desc: "あなたのメールに締め切り通知を届けます。", cta: "通知を設定", href: "/settings", done: done.notif },
-      { n: 4, title: "オリジナルタスクを追加", desc: "その他の課題も追加できます。", cta: "追加してみる", href: "/add", done: false, optional: true },
+      { n: 4, title: "オリジナルタスクを追加", desc: "その他の課題も追加できます。", cta: "追加してみる", href: "/new", done: false, optional: true },
     ],
     [done.login, done.webclass, done.notif],
   );

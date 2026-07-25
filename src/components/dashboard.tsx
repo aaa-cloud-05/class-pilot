@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { startOfWeek, addDays, isSameDay, format, differenceInCalendarWeeks } from "date-fns"
 import { ja } from "date-fns/locale"
-import { Bell, User, Maximize2, Minimize2, ChartNoAxesGantt, ChevronRight } from "lucide-react"
+import { Maximize2, Minimize2, ChartNoAxesGantt, ChevronRight } from "lucide-react"
 
 import { useAssignments } from "@/hooks/useAssignments"
 import { AppHeader } from "@/components/app-header"
@@ -17,7 +17,6 @@ import { TaskTable, type TaskActions } from "@/components/task-table"
 import { EditorialCard } from "@/components/editorial-card"
 import { RefreshControl } from "@/components/quiet-controls"
 import { NotificationBanner } from "@/components/NotificationBanner"
-import { NotificationPanel } from "@/components/NotificationPanel"
 import { AssignmentDetailCard } from "@/components/AssignmentDetailCard"
 import { buildWeek, buildSyncSources, weekInsight } from "@/lib/week-adapter"
 import type { Task } from "@/lib/dashboard-data"
@@ -26,7 +25,6 @@ import { cn } from "@/lib/utils"
 import {
   getNotificationSettings,
   saveNotificationSettings,
-  getUnreadCount,
 } from "@/lib/notification-store"
 
 type SortMode = "time" | "status"
@@ -192,12 +190,9 @@ export function Dashboard() {
   // notifications / detail
   const [mutedIds, setMutedIds] = useState<string[]>([])
   const [viewing, setViewing] = useState<Assignment | null>(null)
-  const [panelOpen, setPanelOpen] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     getNotificationSettings().then((s) => setMutedIds(s.mutedAssignments))
-    getUnreadCount().then(setUnreadCount)
   }, [])
 
   const toggleMute = useCallback(async (id: string) => {
@@ -345,28 +340,6 @@ export function Dashboard() {
             <SyncLamps sources={sources} />
             <span className="mx-0.5 h-4 w-px bg-border" aria-hidden />
             <RefreshControl busy={loading} onRefresh={refresh} />
-            <button
-              type="button"
-              onClick={() => setPanelOpen(true)}
-              aria-label={unreadCount > 0 ? `通知（未読${unreadCount}件）` : "通知"}
-              className="relative flex items-center justify-center rounded-full p-1.5 text-muted-foreground/70 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Bell className="h-[17px] w-[17px]" aria-hidden />
-              {unreadCount > 0 && (
-                <span
-                  className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full ring-2 ring-background"
-                  style={{ backgroundColor: "var(--lamp-red)" }}
-                  aria-hidden
-                />
-              )}
-            </button>
-            <Link
-              href={loggedIn ? "/settings" : "/login"}
-              aria-label={loggedIn ? "アカウント" : "ログイン"}
-              className="flex items-center justify-center rounded-full p-1.5 text-muted-foreground/70 outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <User className="h-[17px] w-[17px]" aria-hidden />
-            </Link>
           </>
         }
       />
@@ -503,12 +476,6 @@ export function Dashboard() {
           />
         )}
       </main>
-
-      <NotificationPanel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        onUnreadChange={setUnreadCount}
-      />
     </>
   )
 }

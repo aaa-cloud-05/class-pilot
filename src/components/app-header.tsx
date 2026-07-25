@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 // ルート → ヘッダー右のパス表記
@@ -21,7 +22,13 @@ export function AppHeader({ right }: { right?: React.ReactNode }) {
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex w-full max-w-md items-center justify-between gap-2 px-4 pb-3 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[17px] font-semibold tracking-tight text-foreground">Class Pilot</span>
+          <Link
+            href="/"
+            aria-label="ホームへ"
+            className="rounded-md text-[17px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Class Pilot
+          </Link>
           <span className="font-mono text-[12px] text-muted-foreground">/{seg}</span>
         </div>
         {right && <div className="flex items-center gap-1">{right}</div>}

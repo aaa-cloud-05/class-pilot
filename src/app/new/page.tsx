@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ChevronLeft } from "lucide-react";
 import { upsertCache } from "@/lib/cache";
 import { COURSE_COLORS } from "@/lib/types";
 import type { Assignment, SubmissionState } from "@/lib/types";
 import { AppHeader } from "@/components/app-header";
+import { NavBar } from "@/components/NavBar";
 import { cn } from "@/lib/utils";
 
 const INPUT =
@@ -83,19 +83,7 @@ export default function AddAssignmentPage() {
 
   return (
     <>
-      <AppHeader
-        right={
-          <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label="戻る"
-            className="flex items-center gap-0.5 rounded-md px-1.5 py-1 text-[12.5px] text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <ChevronLeft className="h-4 w-4" aria-hidden />
-            戻る
-          </button>
-        }
-      />
+      <AppHeader />
 
       <main className="mx-auto w-full max-w-md px-4 pb-24 pt-4">
         <h1 className="mb-4 px-1 text-[15px] font-semibold text-foreground">課題を追加</h1>
@@ -185,6 +173,8 @@ export default function AddAssignmentPage() {
           </button>
         </form>
       </main>
+
+      <NavBar />
     </>
   );
 }
