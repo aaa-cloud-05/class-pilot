@@ -1,4 +1,4 @@
-const CACHE_NAME = "classpilot-v2";
+const CACHE_NAME = "classmino-v1";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(

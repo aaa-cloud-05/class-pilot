@@ -8,9 +8,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  *
  * 既定の `onboarding@resend.dev` は **Resend アカウント所有者にしか配信されない**共有ドメインで、
  * 実ユーザーにはメールが届かない。独自ドメインを Resend で認証（SPF/DKIM）したうえで
- * `RESEND_FROM="Class Pilot <noreply@mail.example.com>"` を設定すること。
+ * `RESEND_FROM="Classmino <noreply@mail.classmino.com>"` を設定すること。
  */
-const FROM = process.env.RESEND_FROM ?? "Class Pilot <onboarding@resend.dev>";
+const FROM = process.env.RESEND_FROM ?? "Classmino <onboarding@resend.dev>";
 
 /** 返信先。未設定なら Resend 既定（= FROM）に返信されるので、公開連絡先を入れておく。 */
 const REPLY_TO = process.env.RESEND_REPLY_TO;
@@ -77,7 +77,7 @@ export async function sendDeadlineEmail({
           ${linkHtml}
         </div>
         <p style="margin:16px 0 0;font-size:12px;color:#999;">
-          Class Pilot からの通知です。
+          Classmino からの通知です。
           <a href="${settingsUrl}" style="color:#999;text-decoration:underline;">通知設定を変更・停止する</a>
         </p>
       </div>

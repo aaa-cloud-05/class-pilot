@@ -27,7 +27,7 @@ export function AppHeader({ right }: { right?: React.ReactNode }) {
             aria-label="ホームへ"
             className="rounded-md text-[17px] font-semibold tracking-tight text-foreground outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
           >
-            Class Pilot
+            Classmino
           </Link>
           <span className="font-mono text-[12px] text-muted-foreground">/{seg}</span>
         </div>

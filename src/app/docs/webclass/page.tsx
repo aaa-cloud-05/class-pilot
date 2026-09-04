@@ -20,7 +20,7 @@ const TABS: { value: Browser; label: string }[] = [
 const CODE_EXPLAIN = [
   "いま開いている WebClass の「課題実施状況一覧」ページ（枠内の表示も含む）を読みます。",
   "各授業の行から「課題名・締切・提出状態・課題ページのリンク」だけを取り出します。",
-  "取り出した一覧をまとめて、Class Pilot の取り込みページを開いて渡します。",
+  "取り出した一覧をまとめて、Classmino の取り込みページを開いて渡します。",
   "送るのは課題の情報だけ。パスワードやログイン情報（Cookie）には触れません。",
 ];
 
@@ -96,7 +96,7 @@ export default function WebclassGuidePage() {
           </div>
           <p className="text-[12.5px] leading-relaxed text-muted-foreground">
             いま開いている WebClass の「課題実施状況一覧」ページから、
-            <strong className="text-foreground">課題の名前・締切・状態だけ</strong>を読み取って Class Pilot に渡します。
+            <strong className="text-foreground">課題の名前・締切・状態だけ</strong>を読み取って Classmino に渡します。
             パスワードやログイン情報には<strong className="text-foreground">触れません</strong>。あなたの操作でだけ動き、勝手に送信することもありません。
           </p>
         </section>

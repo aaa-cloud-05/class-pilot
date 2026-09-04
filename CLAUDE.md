@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# Class Pilot — プロジェクト指針
+# Classmino — プロジェクト指針
 
 Google Classroom + WebClass の課題を集約し、締切をメール/ブラウザで通知する学生向け PWA
 （某大学向け、個人開発、一般公開予定）。Next.js 16 + NextAuth v5 + Prisma/Supabase + Vercel。

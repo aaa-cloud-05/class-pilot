@@ -1,4 +1,4 @@
-# Class Pilot — 場面別データフロー図鑑
+# Classmino — 場面別データフロー図鑑
 
 構成の正本は `docs/architecture.md`。本書はその「図解・場面別」版で、ログイン状態・ソース
 （WebClass / Classroom）・各種タイミング（5分・1時間・レート）まで含めて正確に追える。
