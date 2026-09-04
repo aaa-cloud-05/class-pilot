@@ -3,7 +3,11 @@
 //
 // 旧版は「課題実施状況一覧」の DOM を読んでいたため、(1) 学生が普段開かないページまで
 // 移動する必要があり、(2) WebClass の CSS 更新で無言で壊れた。現在は API を直接叩くので
-// **WebClass のどのページで実行してもよい**。仕様は docs/webclass-api.md を参照。
+// **WebClass のどのページで実行してもよい**（ポップアップウィンドウ内でも動く）。
+// ただし WebClass のページであることが前提で、他サイトで実行するとベースURLを解決できない。
+// 以前はその場合 location.origin+'/webclass/' にフォールバックしていたため、アプリ内などで
+// 誤実行すると「HTTP 404」という分かりにくいエラーになった。今は実行前に検出して案内する。
+// 仕様は docs/webclass-api.md を参照。
 //
 // WebClass サーバへの配慮:
 // - fetch のキャッシュを無効化しない。ブラウザが If-Modified-Since を自動で付けるので、
@@ -24,11 +28,15 @@ export function buildBookmarkletCode(origin: string): string {
   try{
     var scripts=[].slice.call(document.scripts).map(function(s){return s.src}).filter(Boolean);
     var hit=scripts.filter(function(s){return /\\/js\\/webclass\\.js/.test(s)})[0];
-    var BASE=hit?hit.replace(/js\\/webclass\\.js.*$/,''):location.origin+'/webclass/';
+    var path=location.pathname.match(/^(.*\\/webclass\\/)/);
+    var BASE=hit?hit.replace(/js\\/webclass\\.js.*$/,''):(path?location.origin+path[1]:'');
+    if(!BASE){alert('WebClass のページで実行してください。\\n（いま開いているのは WebClass ではありません）');return}
     var API=BASE+'ip_mods.php/plugin/score_summary_table';
     var getJson=async function(u){
       var r=await fetch(u,{credentials:'same-origin'});
+      if(r.status===401||r.status===403)throw new Error('WebClass のログインが切れています');
       if(!r.ok)throw new Error('HTTP '+r.status);
+      if((r.headers.get('content-type')||'').indexOf('json')<0)throw new Error('WebClass のログインが切れています');
       return await r.json();
     };
     var courses=await getJson(API+'/courses');
