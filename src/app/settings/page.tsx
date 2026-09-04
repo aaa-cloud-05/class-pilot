@@ -507,7 +507,7 @@ export default function SettingsPage() {
               <strong className="text-foreground">任意です</strong>。iPhone では使えないので、その場合はブックマークレットのままで問題ありません。
             </p>
 
-            <ol className={`mb-3 list-decimal space-y-1.5 pl-4 ${HINT}`}>
+            <ol className={`mb-3 list-decimal space-y-2 pl-4 ${HINT}`}>
               <li>
                 ブラウザに{" "}
                 <a
@@ -521,8 +521,31 @@ export default function SettingsPage() {
                 を入れる（Chrome ウェブストアから追加）
               </li>
               <li>
-                下の<strong className="text-foreground">「スクリプトを入れる」</strong>を押す
-                → Tampermonkey のインストール画面が開くので「インストール」
+                <strong className="text-foreground">「スクリプトを入れる」</strong>を押す。
+                Tampermonkey のインストール画面が開いたら「インストール」。
+                <div className="mt-1.5 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                  <p className="mb-1 font-medium text-foreground">開かない場合（よくあります）</p>
+                  <ol className="list-decimal space-y-0.5 pl-4">
+                    <li>下の「コードをコピー」を押す</li>
+                    <li>
+                      ツールバーの Tampermonkey アイコン →{" "}
+                      <strong className="text-foreground">「新規スクリプトを作成…」</strong>
+                      （アイコンが見えないときはパズルのマークの中）
+                    </li>
+                    <li>
+                      エディタが開くので <strong className="text-foreground">Ctrl+A</strong> で全選択して消し、
+                      コピーしたコードを貼り付ける
+                    </li>
+                    <li>
+                      <strong className="text-foreground">Ctrl+S</strong> で保存
+                    </li>
+                  </ol>
+                  <p className="mt-1.5">
+                    それでも動かないときは、Chrome の <code className="font-mono">chrome://extensions</code> で
+                    <strong className="text-foreground">デベロッパーモードをオン</strong>にしてください。
+                    最近の Chrome では、これが無いと Tampermonkey が正しく動きません。
+                  </p>
+                </div>
               </li>
               <li>下でトークンを発行してコピーし、WebClass を開いたときに聞かれたら貼り付ける</li>
             </ol>

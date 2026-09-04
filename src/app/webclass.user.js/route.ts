@@ -16,9 +16,10 @@ export function GET() {
 
   return new Response(code, {
     headers: {
-      // text/javascript だとブラウザが実行/表示してしまうことがあるため、
-      // ユーザースクリプトの慣例どおり明示する
-      "Content-Type": "application/javascript; charset=utf-8",
+      // GreasyFork や GitHub raw と同じく text/plain で返す。
+      // Tampermonkey の検出は URL の .user.js を見ているが、横取りされなかった場合でも
+      // ブラウザがダウンロードせずそのまま表示するので、コピーして手動で入れられる。
+      "Content-Type": "text/plain; charset=utf-8",
       // 更新チェックが毎回サーバに届くようにする（内容は毎回生成される）
       "Cache-Control": "no-store",
     },
