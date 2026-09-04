@@ -92,13 +92,36 @@ WebClass 取り込み・手動追加もすべて IndexedDB に直接保存され
 
 ## データフロー④ WebClass 取り込み（ブックマークレット）
 
+**WebClass の内部 JSON API を直接呼ぶ**（旧: 課題実施状況一覧の DOM 解析）。
+API 仕様・調査経緯・負荷対策は [webclass-api.md](./webclass-api.md)。
+
 ```
-WebClass ダッシュボードでブックマークレット実行
-   → 抽出データを /import#<JSON> として開く
-   → transformWebClassTasks() で正規化
+WebClass の任意のページでブックマークレット実行   ★どのページでもよい
+   → GET  {BASE}/ip_mods.php/plugin/score_summary_table/courses
+   → 年度が2年以上前のコースを除外
+   → GET  .../contents?group_id=<id>   コースごとに直列・250ms間隔
+        ・fetch のキャッシュを無効化しない = If-Modified-Since が自動で付き、
+          変化が無ければ 304（ボディ無し）で返る
+        ・contents_kind==="Question" / 非表示でない / end_date あり / 締切が180日以内
+        ・提出判定は scores[0].answer_datetime の有無だけを見て、氏名・学籍番号・点数は捨てる
+   → /import#<JSON> を開く（URLが長すぎる場合は締切の古い順に間引く）
+   → transformWebClassPayload() で正規化
    ├─ ログイン中: POST /api/import/webclass（hiddenフィルタ→DB upsert）→ replaceCache → ホームへ
    └─ 未ログイン: cacheWebClassAssignments()（IndexedDB の wc- を置換）→ ホームへ
 ```
+
+識別子は API の安定した ID に基づく。
+
+| | 旧 | 現在 |
+|---|---|---|
+| 課題ID (`externalId`) | コース名+課題名+締切のhash | `wc-<contents_id>` |
+| DBキー (`sourceKey`) | `webclass:<コース名>::<課題名>` | `webclass:wc-<contents_id>` |
+| コースID | コース名のhash | `wc-<group_id>` |
+| 提出状態 | 「状態」列の文字列判定（`unknown` あり） | `answer_datetime` の有無（`unknown` なし） |
+| リンク | コースのトップ | 課題ページへの直リンク |
+
+締切や課題名が変わっても同じ課題として追えるので、通知履歴の重複防止キーが安定する。
+旧キーの行は取り込み時に引き当てて新キーへ載せ替える（削除しないので編集内容は残る）。
 
 ## データフロー⑤ コースの表示/非表示（追跡管理）
 
@@ -171,6 +194,8 @@ src/lib/db.ts                        IndexedDB スキーマ（DB名 classroom-re
 src/lib/server/assignments.ts        DB アクセス（getUserAssignments/sync/edit/softDelete/getUserCourses）
 src/lib/classroom-api.ts             Google Classroom API（fetchAllData は hidden をスキップ）
 src/lib/transform.ts                 Google生データ → Assignment 変換
+src/lib/bookmarklet.ts               WebClass API を叩くブックマークレットの生成
+src/lib/webclass.ts                  WebClassペイロード → Assignment 変換・再検証
 src/lib/notification-store.ts        IndexedDB の通知設定/履歴
 src/lib/notification-scheduler.ts    クライアント通知（checkAndNotify）
 src/lib/server/notify.ts             メール通知の実体（cron と 同期/取り込み の両方から呼ぶ）

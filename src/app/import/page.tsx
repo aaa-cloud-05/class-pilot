@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Check, ChevronLeft } from "lucide-react";
-import { transformWebClassTasks, type WebClassRawTask } from "@/lib/webclass";
+import { transformWebClassPayload } from "@/lib/webclass";
 import { cacheWebClassAssignments, replaceCache } from "@/lib/cache";
 import { setLocalWebclassSyncedAt } from "@/lib/sync-meta";
 import { AppHeader } from "@/components/app-header";
@@ -28,8 +28,14 @@ export default function ImportPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStatus("importing");
     try {
-      const raw: WebClassRawTask[] = JSON.parse(decodeURIComponent(hash));
-      const assignments = transformWebClassTasks(raw);
+      const payload = JSON.parse(decodeURIComponent(hash));
+      // 旧ブックマークレット(DOM解析版)は配列を渡してくる。黙って0件にせず作り直しを促す。
+      if (Array.isArray(payload) || payload?.v !== 2) {
+        throw new Error(
+          "ブックマークレットが古い形式です。はじめかたガイドの WebClass の手順から作り直してください。",
+        );
+      }
+      const assignments = transformWebClassPayload(payload);
 
       const finish = (n: number) => {
         setCount(n);
