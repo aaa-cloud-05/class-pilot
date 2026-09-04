@@ -138,8 +138,8 @@ export function buildUserscriptCode(origin: string): string {
 // @namespace    ${origin}
 // @version      1.0.0
 // @description  WebClass を開くと、締切のある課題を Classmino へ自動で取り込みます
-// @match        https://webclass.*/*
 // @match        https://*/webclass/*
+// @include      /^https?:\\/\\/webclass\\.[^\\/]+\\//
 // @run-at       document-idle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
