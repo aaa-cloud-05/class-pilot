@@ -503,28 +503,49 @@ export default function SettingsPage() {
             <h2 className={`mb-1 ${SECTION_TITLE}`}>WebClass 自動同期（PC）</h2>
             <p className={`mb-3 ${HINT}`}>
               Tampermonkey を入れておくと、WebClass を開くだけで自動的に取り込まれます。
-              ブックマークレットを押す必要がなくなります（iPhone では使えないため、その場合はブックマークレットのままで大丈夫です）。
+              ブックマークレットを押す必要がなくなります。
+              <strong className="text-foreground">任意です</strong>。iPhone では使えないので、その場合はブックマークレットのままで問題ありません。
             </p>
 
-            <ol className={`mb-3 list-decimal space-y-1 pl-4 ${HINT}`}>
-              <li>ブラウザに Tampermonkey を入れる</li>
-              <li>下の「スクリプトをコピー」→ Tampermonkey の「新規スクリプトを作成」に貼り付けて保存</li>
+            <ol className={`mb-3 list-decimal space-y-1.5 pl-4 ${HINT}`}>
+              <li>
+                ブラウザに{" "}
+                <a
+                  href="https://www.tampermonkey.net/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-blue underline"
+                >
+                  Tampermonkey
+                </a>{" "}
+                を入れる（Chrome ウェブストアから追加）
+              </li>
+              <li>
+                下の<strong className="text-foreground">「スクリプトを入れる」</strong>を押す
+                → Tampermonkey のインストール画面が開くので「インストール」
+              </li>
               <li>下でトークンを発行してコピーし、WebClass を開いたときに聞かれたら貼り付ける</li>
             </ol>
 
             <div className="mb-3 flex flex-wrap gap-2">
-              <button
-                onClick={() => copyText(buildUserscriptCode(window.location.origin), "script")}
+              <a
+                href="/webclass.user.js"
                 className="rounded-lg border border-border px-3 py-2 text-[13px] font-medium transition hover:bg-muted"
               >
-                {copied === "script" ? "コピーしました" : "スクリプトをコピー"}
-              </button>
+                スクリプトを入れる
+              </a>
               <button
                 onClick={issueToken}
                 disabled={tokenBusy}
                 className="rounded-lg bg-foreground px-3 py-2 text-[13px] font-medium text-background transition hover:opacity-90 disabled:opacity-50"
               >
                 {tokenBusy ? "発行中…" : tokenIssued ? "トークンを再発行" : "トークンを発行"}
+              </button>
+              <button
+                onClick={() => copyText(buildUserscriptCode(window.location.origin), "script")}
+                className={`rounded-lg px-3 py-2 text-[13px] ${HINT} transition hover:bg-muted`}
+              >
+                {copied === "script" ? "コピーしました" : "コードをコピー"}
               </button>
             </div>
 

@@ -136,8 +136,10 @@ export function buildUserscriptCode(origin: string): string {
   return `// ==UserScript==
 // @name         Classmino — WebClass 自動同期
 // @namespace    ${origin}
-// @version      1.0.0
+// @version      1.0.1
 // @description  WebClass を開くと、締切のある課題を Classmino へ自動で取り込みます
+// @updateURL    ${origin}/webclass.user.js
+// @downloadURL  ${origin}/webclass.user.js
 // @match        https://*/webclass/*
 // @include      /^https?:\\/\\/webclass\\.[^\\/]+\\//
 // @run-at       document-idle
