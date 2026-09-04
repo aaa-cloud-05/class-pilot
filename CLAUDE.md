@@ -10,6 +10,7 @@ Google Classroom + WebClass の課題を集約し、締切をメール/ブラウ
 - `docs/product-brief.md` — プロダクトの価値定義（くさび=WebClass通知・北極星・収益方針）
 - `docs/release-checklist.md` — **リリースまでの順序（ブロッカー / 直前の小物 / 出した後）**
 - `docs/domain-setup.md` — 独自ドメイン・DNS・Resend・OAuth の手順と用語
+- `docs/webclass-api.md` — **WebClass 内部 API の仕様・負荷対策・再調査手順**
 - `docs/backlog.md` — 未実装機能・セキュリティ/法務/使用量の課題（実装現況に同期済み）
 - ※ `docs/phase-plan.md` / `phase2-implementation.md` / `known-issues.md` は旧記述を含む。現行は architecture.md 参照。
 
