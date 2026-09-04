@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Copy, ShieldCheck } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { Collapsible } from "@/components/Collapsible";
-import { buildBookmarkletCode } from "@/lib/bookmarklet";
+import { buildBookmarkletCode } from "@/lib/webclass-script";
 import { cn } from "@/lib/utils";
 
 type Browser = "pc" | "safari" | "chrome";

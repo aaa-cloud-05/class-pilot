@@ -17,6 +17,7 @@ import { clearAllClientData } from "@/lib/debug-clear";
 import { getWebclassUrl, setWebclassUrl } from "@/lib/webclass-url";
 import { AppHeader } from "@/components/app-header";
 import { cn } from "@/lib/utils";
+import { buildUserscriptCode } from "@/lib/webclass-script";
 
 const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
   { value: "relaxed", label: "余裕派", desc: "締切24時間前に1回" },
@@ -71,6 +72,10 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [webclassInput, setWebclassInput] = useState("");
+  const [tokenIssued, setTokenIssued] = useState<boolean | null>(null);
+  const [tokenValue, setTokenValue] = useState("");
+  const [tokenBusy, setTokenBusy] = useState(false);
+  const [copied, setCopied] = useState<"token" | "script" | null>(null);
   const [webclassMsg, setWebclassMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
@@ -81,6 +86,15 @@ export default function SettingsPage() {
     );
     setWebclassInput(getWebclassUrl() ?? "");
   }, []);
+
+  // 発行済みかどうかだけ取得（平文トークンはサーバに残っていないので取り直せない）
+  useEffect(() => {
+    if (!loggedIn) return;
+    fetch("/api/import/token")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setTokenIssued(d ? !!d.issued : false))
+      .catch(() => setTokenIssued(false));
+  }, [loggedIn]);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -228,6 +242,32 @@ export default function SettingsPage() {
       </>
     );
   }
+
+  const issueToken = async () => {
+    if (tokenIssued && !confirm("再発行すると、いま設定済みの端末では同期が止まります。続けますか？")) return;
+    setTokenBusy(true);
+    try {
+      const res = await fetch("/api/import/token", { method: "POST" });
+      if (!res.ok) throw new Error();
+      const { token } = await res.json();
+      setTokenValue(token);
+      setTokenIssued(true);
+    } catch {
+      alert("トークンの発行に失敗しました");
+    } finally {
+      setTokenBusy(false);
+    }
+  };
+
+  const copyText = async (text: string, which: "token" | "script") => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(which);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      alert("コピーできませんでした。長押しして選択してください。");
+    }
+  };
 
   return (
     <>
@@ -456,6 +496,64 @@ export default function SettingsPage() {
             </p>
           )}
         </section>
+
+        {/* WebClass 自動同期（ユーザースクリプト） */}
+        {loggedIn && (
+          <section className="border-t border-border pt-5">
+            <h2 className={`mb-1 ${SECTION_TITLE}`}>WebClass 自動同期（PC）</h2>
+            <p className={`mb-3 ${HINT}`}>
+              Tampermonkey を入れておくと、WebClass を開くだけで自動的に取り込まれます。
+              ブックマークレットを押す必要がなくなります（iPhone では使えないため、その場合はブックマークレットのままで大丈夫です）。
+            </p>
+
+            <ol className={`mb-3 list-decimal space-y-1 pl-4 ${HINT}`}>
+              <li>ブラウザに Tampermonkey を入れる</li>
+              <li>下の「スクリプトをコピー」→ Tampermonkey の「新規スクリプトを作成」に貼り付けて保存</li>
+              <li>下でトークンを発行してコピーし、WebClass を開いたときに聞かれたら貼り付ける</li>
+            </ol>
+
+            <div className="mb-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => copyText(buildUserscriptCode(window.location.origin), "script")}
+                className="rounded-lg border border-border px-3 py-2 text-[13px] font-medium transition hover:bg-muted"
+              >
+                {copied === "script" ? "コピーしました" : "スクリプトをコピー"}
+              </button>
+              <button
+                onClick={issueToken}
+                disabled={tokenBusy}
+                className="rounded-lg bg-foreground px-3 py-2 text-[13px] font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+              >
+                {tokenBusy ? "発行中…" : tokenIssued ? "トークンを再発行" : "トークンを発行"}
+              </button>
+            </div>
+
+            {tokenValue ? (
+              <div className="rounded-lg border border-lamp-green/40 bg-lamp-green/5 p-3">
+                <p className="mb-1 text-[11.5px] font-medium text-foreground">
+                  この画面を離れると二度と表示できません。いまコピーしてください。
+                </p>
+                <div className="flex gap-2">
+                  <code className="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1.5 font-mono text-[11px]">
+                    {tokenValue}
+                  </code>
+                  <button
+                    onClick={() => copyText(tokenValue, "token")}
+                    className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium transition hover:bg-muted"
+                  >
+                    {copied === "token" ? "済" : "コピー"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              tokenIssued && (
+                <p className={HINT}>
+                  発行済みです。トークンは保存していないため再表示できません。無くした場合は再発行してください。
+                </p>
+              )
+            )}
+          </section>
+        )}
 
         {/* アカウント */}
         <section className="border-t border-border pt-5">

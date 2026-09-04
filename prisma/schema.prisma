@@ -20,6 +20,10 @@ model User {
   classroomSyncedAt DateTime?
   webclassSyncedAt  DateTime?
 
+  /// WebClass 自動同期(ユーザースクリプト)用トークンの SHA-256。
+  /// 平文は発行時に一度だけ返し、DBには保存しない(DB侵害＝トークン漏洩にしない)。
+  importTokenHash String? @unique
+
   accounts            Account[]
   sessions            Session[]
   assignments         Assignment[]

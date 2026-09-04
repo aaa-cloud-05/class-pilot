@@ -180,7 +180,8 @@ WebClass の任意のページでブックマークレット実行   ★どの�
 | `PATCH/DELETE /api/assignments/[id]` | 編集 / ソフトデリート | session.user.id |
 | `POST /api/classroom/sync` | Google同期→DB upsert→DB課題返却 | accessToken（無くてもDB返却） |
 | `GET /api/courses` | 全コース（非表示含む）+ hiddenCourses | session.user.id |
-| `POST /api/import/webclass` | WebClass取り込み→DB upsert | session.user.id |
+| `POST /api/import/webclass` | WebClass取り込み→DB upsert | session.user.id **または** 取り込みトークン |
+| `GET/POST/DELETE /api/import/token` | 自動同期用トークンの状態/発行/失効 | session.user.id |
 | `GET/PATCH /api/notifications/settings` | 通知設定の取得/更新 | session.user.id |
 | `GET /api/cron/notify` | メール通知バッチ | CRON_SECRET |
 | `/api/auth/[...nextauth]` | NextAuth | — |
@@ -194,7 +195,8 @@ src/lib/db.ts                        IndexedDB スキーマ（DB名 classroom-re
 src/lib/server/assignments.ts        DB アクセス（getUserAssignments/sync/edit/softDelete/getUserCourses）
 src/lib/classroom-api.ts             Google Classroom API（fetchAllData は hidden をスキップ）
 src/lib/transform.ts                 Google生データ → Assignment 変換
-src/lib/bookmarklet.ts               WebClass API を叩くブックマークレットの生成
+src/lib/webclass-script.ts           WebClass API を叩く収集コード（ブックマークレット/ユーザースクリプトを生成）
+src/lib/server/import-token.ts       自動同期用トークンの発行・照合（DBはハッシュのみ保持）
 src/lib/webclass.ts                  WebClassペイロード → Assignment 変換・再検証
 src/lib/notification-store.ts        IndexedDB の通知設定/履歴
 src/lib/notification-scheduler.ts    クライアント通知（checkAndNotify）
