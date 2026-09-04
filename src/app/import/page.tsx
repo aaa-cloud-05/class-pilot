@@ -45,18 +45,34 @@ export default function ImportPage() {
         setTimeout(() => router.push("/"), 1500);
       };
 
+      const fail = (e: unknown, fallback: string) => {
+        console.error("[IMPORT]", e);
+        setErrorMsg(e instanceof Error && e.message ? e.message : fallback);
+        setStatus("error");
+      };
+
       if (loggedIn) {
+        // 応答が返らないと擬似プログレスが90%で固まったまま何も分からなくなるため、
+        // 必ず打ち切って理由を出す。
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 60_000);
+
         fetch("/api/import/webclass", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ assignments }),
+          signal: ctrl.signal,
         })
-          .then((res) => {
-            if (!res.ok) throw new Error("インポートに失敗しました");
+          .then(async (res) => {
+            if (!res.ok) {
+              // サーバが返した理由をそのまま見せる（原因究明のため握りつぶさない）
+              const detail = await res.text().catch(() => "");
+              throw new Error(`インポートに失敗しました (${res.status}) ${detail.slice(0, 200)}`);
+            }
             return res.json();
           })
           .then(async ({ assignments: all }) => {
-            const parsed = all.map((a: Record<string, unknown>) => ({
+            const parsed = (all ?? []).map((a: Record<string, unknown>) => ({
               ...a,
               dueDate: a.dueDate ? new Date(a.dueDate as string) : null,
             }));
@@ -64,14 +80,21 @@ export default function ImportPage() {
             finish(assignments.length);
           })
           .catch((e) => {
-            setErrorMsg(e instanceof Error ? e.message : "インポートに失敗しました");
-            setStatus("error");
-          });
+            if (e?.name === "AbortError") {
+              fail(new Error("サーバーの応答が60秒以内に返りませんでした。時間をおいて試してください。"), "");
+            } else {
+              fail(e, "インポートに失敗しました");
+            }
+          })
+          .finally(() => clearTimeout(timer));
       } else {
-        cacheWebClassAssignments(assignments).then(() => {
-          setLocalWebclassSyncedAt(Date.now());
-          finish(assignments.length);
-        });
+        // 未ログイン(IndexedDB)側も catch が無いと同じように固まる
+        cacheWebClassAssignments(assignments)
+          .then(() => {
+            setLocalWebclassSyncedAt(Date.now());
+            finish(assignments.length);
+          })
+          .catch((e) => fail(e, "端末への保存に失敗しました"));
       }
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "データの解析に失敗しました");

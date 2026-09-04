@@ -21,6 +21,8 @@ import { after } from "next/server";
  * 自動同期は書き込めれば十分で、表示はアプリ側が自分で取り直す。
  */
 export async function POST(request: Request) {
+  // DB が遠い(実測1往復678ms)ため、どこで時間を使っているかをログに残す
+  const t0 = Date.now();
   const tokenUserId = await resolveImportToken(request);
   let userId = tokenUserId;
 
@@ -92,6 +94,8 @@ export async function POST(request: Request) {
       console.error("[IMPORT] 通知の確定に失敗:", e);
     }
   });
+
+  console.log(`[IMPORT] ${filtered.length}件 / ${Date.now() - t0}ms`);
 
   // トークン経由（自動同期）には件数だけ返す
   if (tokenUserId) {

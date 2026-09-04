@@ -47,6 +47,7 @@ export async function notifyUserByEmail(userId: string, now = new Date()): Promi
     horizonMs: HORIZON_MS,
   });
 
+  const t0 = Date.now();
   let sent = 0;
 
   for (const p of pending) {
@@ -99,5 +100,6 @@ export async function notifyUserByEmail(userId: string, now = new Date()): Promi
     }
   }
 
+  console.log(`[NOTIFY] ${userId.slice(0, 8)} 送信${sent}件 / ${Date.now() - t0}ms`);
   return sent;
 }
