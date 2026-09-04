@@ -6,6 +6,8 @@ import {
 } from "@/lib/server/assignments";
 import { sanitizeImportedAssignments } from "@/lib/webclass";
 import { checkRateLimit } from "@/lib/server/ratelimit";
+import { notifyUserByEmail } from "@/lib/server/notify";
+import { after } from "next/server";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -53,6 +55,17 @@ export async function POST(request: Request) {
   await prisma.user.update({
     where: { id: session.user.id },
     data: { webclassSyncedAt: new Date() },
+  });
+
+  // 取り込みは日中に手動で行われるため「取り込んだ時点で締切間近」が普通に起きる。
+  // cron(1日1回)を待つと当日締切の課題が無通知になるので、ここで通知を確定させる。
+  const userId = session.user.id;
+  after(async () => {
+    try {
+      await notifyUserByEmail(userId);
+    } catch (e) {
+      console.error("[IMPORT] 通知の確定に失敗:", e);
+    }
   });
 
   const all = await getUserAssignments(session.user.id, hiddenCourseIds);

@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "利用規約 | Class Pilot",
+  // ルートの title.template("%s | Class Pilot")が付くのでページ名だけでよい
+  title: "利用規約",
 };
 
 const UPDATED = "2026年7月1日";

@@ -4,18 +4,45 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { NotificationScheduler } from "@/components/NotificationScheduler";
+import { getAppUrl } from "@/lib/server/app-url";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
+const APP_URL = getAppUrl();
+const DESCRIPTION =
+  "Google Classroom と WebClass の課題を1か所にまとめ、締切前にメールとブラウザ通知でお知らせします。";
+
 export const metadata: Metadata = {
-  title: "Class Pilot",
-  description: "課題を、見逃さない。",
+  // 相対パスの OG 画像などを絶対URLに解決するための基準。未設定だとビルドが警告を出し、
+  // LINE や X で共有したときにサムネイルが出ない。
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: "Class Pilot — 課題を、見逃さない。",
+    template: "%s | Class Pilot",
+  },
+  description: DESCRIPTION,
   manifest: "/manifest.json",
+  applicationName: "Class Pilot",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Class Pilot",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Class Pilot",
+    title: "Class Pilot — 課題を、見逃さない。",
+    description: DESCRIPTION,
+    url: "/",
+    locale: "ja_JP",
+    // TODO: 1200x630 の OG 画像を用意したら /og.png に差し替える（デザイン改修の一部）
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Class Pilot" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Class Pilot — 課題を、見逃さない。",
+    description: DESCRIPTION,
   },
 };
 

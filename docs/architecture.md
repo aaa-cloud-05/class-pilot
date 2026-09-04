@@ -1,6 +1,6 @@
 # Class Pilot アーキテクチャ / データフロー
 
-最終更新: 2026-06-30
+最終更新: 2026-09-04
 
 Google Classroom + WebClass の課題管理 PWA。本ドキュメントは**データの保存場所と流れ**を中心に
 現行構成をまとめる。設計の経緯は [phase-plan.md](./phase-plan.md) / [auth-decision-log.md](./auth-decision-log.md) を参照。
@@ -121,10 +121,24 @@ WebClass ダッシュボードでブックマークレット実行
 を実行。**IndexedDB のキャッシュ課題**とローカル通知設定を突き合わせ、プリセットのタイミングで
 `Notification`/Service Worker 通知を出す。送信済みは `notification-history`（IndexedDB）で重複防止。
 
-**メール通知**（サーバ・Cron）: `vercel.json` の cron（毎日 21:00 UTC）が `GET /api/cron/notify` を叩く。
-`CRON_SECRET` で認証。各ユーザーの `refresh_token` でアクセストークンを更新し、Google から取得→
-`computePendingNotifications()` で送信対象を算出→ Resend でメール送信→ `NotificationHistory`
-（channel=email）で重複防止。
+**メール通知**（サーバ）: 送信の実体は `notifyUserByEmail(userId)`（`src/lib/server/notify.ts`）に
+集約され、**2つの経路から呼ばれる**。
+
+1. **cron**: `vercel.json` の cron（毎日 21:00 UTC = 06:00 JST）が `GET /api/cron/notify` を叩く。
+   `CRON_SECRET` で認証。対象ユーザーを5人ずつ並列処理（`maxDuration = 60`）。
+2. **同期・取り込みの直後**: `POST /api/classroom/sync` と `POST /api/import/webclass` が成功したとき、
+   `after()` でレスポンス送出後に同じ関数を呼ぶ。**cron だけでは「cron 後に取り込んだ、その日が締切の
+   課題」に通知が出ない**ため（WebClass の取り込みは日中に手動で行われる＝本製品が最も救いたいケース）。
+
+処理は DB ベース（全ソース対応・Google 再取得もトークンも不要）:
+`getUserAssignments()` → `computePendingNotifications()` → Resend で予約 or 即時送信。
+
+- **取りこぼしの扱い**: 予約時刻（締切のN時間前）が既に過去でも、締切前ならまだ間に合う。
+  予約できるタイミングが1つも無いときに限り、**締切に最も近い1件だけ**を実際の残り時間ラベルで
+  即時送信する。送らなかった取りこぼしは履歴だけ閉じ、次の同期で蒸し返さない。
+- **重複防止**: `NotificationHistory`（`userId+assignmentId+type+channel` の unique）。
+  **送信前に履歴行を作って枠を予約**し、作成できたものだけ送る。同期が同時に走っても二重送信しない。
+  送信に失敗したら予約行を消して次回リトライできるようにする。
 
 ## 設定（NotificationSetting）のデータフロー
 
@@ -159,6 +173,9 @@ src/lib/classroom-api.ts             Google Classroom API（fetchAllData は hid
 src/lib/transform.ts                 Google生データ → Assignment 変換
 src/lib/notification-store.ts        IndexedDB の通知設定/履歴
 src/lib/notification-scheduler.ts    クライアント通知（checkAndNotify）
+src/lib/server/notify.ts             メール通知の実体（cron と 同期/取り込み の両方から呼ぶ）
+src/lib/server/notification-logic.ts 送信対象の算出（予約 / 取りこぼしの追いつき）
+src/lib/server/app-url.ts            公開URL（メールの絶対リンク・metadataBase）
 src/lib/debug-clear.ts               ローカル全データ削除（デバッグ用・設定画面）
 src/auth.ts                          NextAuth 設定・トークン更新
 prisma/schema.prisma                 DB スキーマ

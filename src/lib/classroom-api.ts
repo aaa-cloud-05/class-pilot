@@ -60,7 +60,7 @@ export async function fetchAllData(
 
     const works = await fetchCourseWork(course.id, accessToken);
 
-    let submissionMap = new Map<string, RawStudentSubmission>();
+    const submissionMap = new Map<string, RawStudentSubmission>();
     try {
       const subs = await fetchSubmissions(course.id, accessToken);
       for (const s of subs) {
