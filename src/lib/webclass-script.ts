@@ -20,12 +20,12 @@ const MAX_URL = 60000;
 const THROTTLE_MS = 60 * 60 * 1000;
 
 /**
- * 収集の本体。`classminoCollect(onProgress)` を定義する。
+ * 収集の本体。`unionfetchCollect(onProgress)` を定義する。
  * 成功すると `{b, cs, t, failed}` を返し、失敗はコード付きの Error を投げる
  * （呼び出し側が alert するか黙るかを選べるようにするため）。
  */
 const COLLECT = `
-async function classminoCollect(onProgress){
+async function unionfetchCollect(onProgress){
   var scripts=[].slice.call(document.scripts).map(function(s){return s.src}).filter(Boolean);
   var hit=scripts.filter(function(s){return /\\/js\\/webclass\\.js/.test(s)})[0];
   var path=location.pathname.match(/^(.*\\/webclass\\/)/);
@@ -77,7 +77,7 @@ async function classminoCollect(onProgress){
 
 /** エラーコードを日本語にする（両方の出口で同じ文言を使う）。 */
 const MESSAGES = `
-var classminoMessage=function(code){
+var unionfetchMessage=function(code){
   if(code==='NOT_WEBCLASS')return 'WebClass のページで実行してください。\\n（いま開いているのは WebClass ではありません）';
   if(code==='NOT_LOGGED_IN')return 'WebClass のログインが切れています。ログインし直してから、もう一度実行してください。';
   if(code==='NO_COURSES')return 'コースを取得できませんでした。WebClass にログインした状態で実行してください。';
@@ -103,7 +103,7 @@ export function buildBookmarkletCode(origin: string): string {
   ${MESSAGES}
   var title=document.title;
   try{
-    var r=await classminoCollect(function(i,n){document.title='取り込み中 '+i+'/'+n});
+    var r=await unionfetchCollect(function(i,n){document.title='取り込み中 '+i+'/'+n});
     document.title=title;
     var tasks=r.t;
     var build=function(list){
@@ -118,7 +118,7 @@ export function buildBookmarkletCode(origin: string): string {
     if(!w)location.href=url;
   }catch(e){
     document.title=title;
-    alert(classminoMessage(e&&e.message?e.message:String(e)));
+    alert(unionfetchMessage(e&&e.message?e.message:String(e)));
   }
 })()`;
   return inline(src);
@@ -134,10 +134,10 @@ export function buildBookmarkletCode(origin: string): string {
 export function buildUserscriptCode(origin: string): string {
   const host = new URL(origin).host;
   return `// ==UserScript==
-// @name         Classmino — WebClass 自動同期
+// @name         UnionFetch — WebClass 自動同期
 // @namespace    ${origin}
 // @version      1.0.1
-// @description  WebClass を開くと、締切のある課題を Classmino へ自動で取り込みます
+// @description  WebClass を開くと、締切のある課題を UnionFetch へ自動で取り込みます
 // @updateURL    ${origin}/webclass.user.js
 // @downloadURL  ${origin}/webclass.user.js
 // @match        https://*/webclass/*
@@ -153,7 +153,7 @@ export function buildUserscriptCode(origin: string): string {
 /*
  * 何をするか:
  *   WebClass にログインしているあなた自身の権限で、WebClass の内部APIから
- *   「課題名・締切・提出したかどうか」だけを読み取り、Classmino へ送ります。
+ *   「課題名・締切・提出したかどうか」だけを読み取り、UnionFetch へ送ります。
  *   氏名・学籍番号・点数は読み取りません。パスワードにも触れません。
  *
  * WebClass サーバへの負担:
@@ -164,8 +164,8 @@ export function buildUserscriptCode(origin: string): string {
   "use strict";
 
   var ORIGIN = ${JSON.stringify(origin)};
-  var TOKEN_KEY = "classmino:token";
-  var LAST_KEY = "classmino:lastSync";
+  var TOKEN_KEY = "unionfetch:token";
+  var LAST_KEY = "unionfetch:lastSync";
   var THROTTLE_MS = ${THROTTLE_MS};
 
 ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
@@ -174,17 +174,17 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
     var token = force ? "" : GM_getValue(TOKEN_KEY, "");
     if (token) return token;
     token = (prompt(
-      "Classmino の取り込みトークンを貼り付けてください。\\n" +
-      "（Classmino の 設定 → WebClass 自動同期 で発行できます）"
+      "UnionFetch の取り込みトークンを貼り付けてください。\\n" +
+      "（UnionFetch の 設定 → WebClass 自動同期 で発行できます）"
     ) || "").trim();
     if (token) GM_setValue(TOKEN_KEY, token);
     return token;
   }
 
-  GM_registerMenuCommand("Classmino: トークンを設定し直す", function () {
+  GM_registerMenuCommand("UnionFetch: トークンを設定し直す", function () {
     askToken(true);
   });
-  GM_registerMenuCommand("Classmino: 今すぐ同期する", function () {
+  GM_registerMenuCommand("UnionFetch: 今すぐ同期する", function () {
     run(true);
   });
 
@@ -201,18 +201,18 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
         if (res.status === 401) {
           // トークンが失効・再発行された。保存を消して次回に入れ直してもらう。
           GM_setValue(TOKEN_KEY, "");
-          console.warn("[Classmino] トークンが無効です。メニューから入れ直してください。");
+          console.warn("[UnionFetch] トークンが無効です。メニューから入れ直してください。");
           return;
         }
         if (res.status < 200 || res.status >= 300) {
-          console.warn("[Classmino] 送信に失敗:", res.status, res.responseText);
+          console.warn("[UnionFetch] 送信に失敗:", res.status, res.responseText);
           return;
         }
         GM_setValue(LAST_KEY, String(Date.now()));
-        console.log("[Classmino] 同期しました:", res.responseText);
+        console.log("[UnionFetch] 同期しました:", res.responseText);
       },
       onerror: function (e) {
-        console.warn("[Classmino] 送信に失敗:", e);
+        console.warn("[UnionFetch] 送信に失敗:", e);
       },
     });
   }
@@ -225,13 +225,13 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
     if (!token) return;
 
     try {
-      var r = await classminoCollect(null);
+      var r = await unionfetchCollect(null);
       send({ v: 2, b: r.b, cs: r.cs, t: r.t }, token);
     } catch (e) {
       // 自動実行なので alert は出さない。手動実行(メニュー)のときだけ知らせる。
       var code = e && e.message ? e.message : String(e);
-      if (force) alert("Classmino: 取り込みに失敗しました (" + code + ")");
-      else console.log("[Classmino] スキップ:", code);
+      if (force) alert("UnionFetch: 取り込みに失敗しました (" + code + ")");
+      else console.log("[UnionFetch] スキップ:", code);
     }
   }
 

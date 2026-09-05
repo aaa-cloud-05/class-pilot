@@ -1,6 +1,6 @@
 # 認証・Classroom API 設計判断ログ
 
-Classmino における Google Classroom 連携の認証方式について、比較検討・試行錯誤・最終選定の経緯を記録する。
+UnionFetch における Google Classroom 連携の認証方式について、比較検討・試行錯誤・最終選定の経緯を記録する。
 
 ---
 

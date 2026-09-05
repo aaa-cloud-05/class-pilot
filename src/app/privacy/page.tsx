@@ -1,13 +1,13 @@
 import Link from "next/link";
 
 export const metadata = {
-  // ルートの title.template("%s | Classmino")が付くのでページ名だけでよい
+  // ルートの title.template("%s | UnionFetch")が付くのでページ名だけでよい
   title: "プライバシーポリシー",
 };
 
 const UPDATED = "2026年7月1日";
 // Cloudflare Email Routing で個人の Gmail に転送している（受信専用）
-const CONTACT = "support@classmino.com";
+const CONTACT = "support@unionfetch.com";
 
 export default function PrivacyPage() {
   return (
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         </div>
 
         <p>
-          Classmino（以下「本サービス」）は、Google Classroom および WebClass の課題を集約し、
+          UnionFetch（以下「本サービス」）は、Google Classroom および WebClass の課題を集約し、
           締切リマインダーを提供する個人開発の Web アプリケーションです。本ポリシーは、本サービスが
           取得する情報とその取り扱いについて説明します。
         </p>

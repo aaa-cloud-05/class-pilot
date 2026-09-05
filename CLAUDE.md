@@ -1,6 +1,10 @@
 @AGENTS.md
 
-# Classmino — プロジェクト指針
+# UnionFetch — プロジェクト指針
+
+> ドメインは **unionfetch.com**、アプリ名は **UnionFetch**（どちらも確定）。
+> 旧名 `Class Pilot` / `Classmino` は使わない（`docs/auth-decision-log.md` の
+> `classpilot-view.vercel.app` だけは過去の実URLの記録なので残してある）。
 
 Google Classroom + WebClass の課題を集約し、締切をメール/ブラウザで通知する学生向け PWA
 （某大学向け、個人開発、一般公開予定）。Next.js 16 + NextAuth v5 + Prisma/Supabase + Vercel。
@@ -8,7 +12,8 @@ Google Classroom + WebClass の課題を集約し、締切をメール/ブラウ
 ## 必読ドキュメント
 - `docs/architecture.md` — 現行のデータフロー/構成の**正本**（SWR3段取得・DB=真実のソース・cron等）
 - `docs/product-brief.md` — プロダクトの価値定義（くさび=WebClass通知・北極星・収益方針）
-- `docs/release-checklist.md` — **リリースまでの順序（ブロッカー / 直前の小物 / 出した後）**
+- `docs/release-checklist.md` — **まず「現在地」を読む。決定済み事項と次にやることが書いてある**
+- `docs/notification-design.md` — 通知仕様の検討結果（**提案・承認待ち**。現行のプリセット3種は仮なので作り込まない）
 - `docs/domain-setup.md` — 独自ドメイン・DNS・Resend・OAuth の手順と用語
 - `docs/webclass-api.md` — **WebClass 内部 API の仕様・負荷対策・再調査手順**
 - `docs/backlog.md` — 未実装機能・セキュリティ/法務/使用量の課題（実装現況に同期済み）

@@ -1,6 +1,6 @@
 {
-  "name": "Classmino",
-  "short_name": "Classmino",
+  "name": "UnionFetch",
+  "short_name": "UnionFetch",
   "description": "課題を、見逃さない。",
   "start_url": "/",
   "display": "standalone",

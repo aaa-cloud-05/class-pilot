@@ -1,4 +1,37 @@
-# Classmino — リリースチェックリスト
+# UnionFetch — リリースチェックリスト
+
+## 現在地（2026-09-06 時点）
+
+| 項目 | 状態 |
+|---|---|
+| **アプリ名** | **UnionFetch**（確定・置換済み） |
+| **ドメイン** | **unionfetch.com**（取得済み・確定）。`classmino.com` は使わない |
+| **通知の仕様** | [notification-design.md](./notification-design.md) の3本立てを提案済み・**承認待ち**。現行のプリセット3種は仮 |
+| Supabase | 東京(ap-northeast-1)へ移設完了（1クエリ 678ms → 53ms） |
+| WebClass 取得 | 内部 JSON API 方式。ブックマークレット＋Tampermonkey 自動同期とも動作確認済み |
+| Web Push | 実装済み・未検証（VAPID鍵は `.env.local` にある。Vercel 未設定） |
+
+### 次にやること（この順で手戻りが無い）
+
+1. **通知仕様を決める** … [notification-design.md](./notification-design.md) を読んで承認/修正。
+   現行のプリセット3種は**仮なので作り込まないこと**。
+2. **ドメイン設定** … 下の A ブロック。手順は [domain-setup.md](./domain-setup.md)
+3. リリース
+
+### 改名の影響で対応が要るもの
+
+- **取り込みトークンを再発行して Tampermonkey に貼り直す。**
+  ユーザースクリプトの保存キーが `classmino:token` → `unionfetch:token` に変わったため、
+  既存の設定は読まれない（設定 → WebClass 自動同期 で再発行）
+- Service Worker の `CACHE_NAME` が `unionfetch-v2` に変わるので、
+  既存ユーザーの古いキャッシュは activate 時に自動削除される（対応不要）
+- `/privacy` `/terms` の連絡先は `support@unionfetch.com` に更新済み。
+  **A5 の Email Routing を開通させるまでこのアドレスは死んでいる。**
+  開通前に本番公開しないこと
+
+---
+
+## リリースまでの順序
 
 最終更新: 2026-09-04
 
@@ -15,7 +48,7 @@
 - [ ] **A2. Resend でメール用サブドメイン認証（SPF/DKIM/DMARC）**
 - [ ] **A3. `RESEND_FROM` / `NEXT_PUBLIC_APP_URL` / `AUTH_URL` を本番に設定 → 再デプロイ**
 - [ ] **A4. Google OAuth のリダイレクトURI・同意画面URLを新ドメインに追加**
-- [ ] **A5. Cloudflare Email Routing で `support@classmino.com` を開通させる**
+- [ ] **A5. Cloudflare Email Routing で `support@unionfetch.com` を開通させる**
       `/privacy` と `/terms` の連絡先は既にこのアドレスに差し替え済み。
       **開通前にデプロイすると、公開している問い合わせ窓口が死ぬ。**
 - [ ] **A6. 「メール通知は準備中」の記述を消す**
@@ -37,8 +70,15 @@
 ドメイン周りが片付く前でもここだけ先に出せる。
 
 - [ ] `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` を Vercel に設定 → 再デプロイ
-      **鍵を変えると既存の購読が全部無効になる**ので、一度決めたら変えない
+      **鍵を変えると既存の購読が全部無効になる**ので、一度決めたら変えない。
+      Vercel が `NEXT_PUBLIC_` に「Keep This Value Private」と警告するが、
+      **VAPID の公開鍵はブラウザに渡らないと購読できない＝公開が前提**なので
+      「Change to Config」で進めてよい。署名に使うのは秘密鍵のほうで、
+      `VAPID_PRIVATE_KEY` は**絶対に Config にしない**。
 - [ ] 🔴 **15〜30分間隔の外部 cron を用意する**
+      ※ [notification-design.md](./notification-design.md) の3本立てを採用すると
+      **この項目は不要になる**（朝のダイジェストは時刻固定、直前救済はメールの予約送信で足りる）。
+      通知仕様が決まるまで着手しないこと。
       Vercel Hobby の cron は1日1回しか回せず、**Push は予約送信ができない**ため、
       1日1回だと「3時間前」がほぼ機能しない（シミュレーション済み）。
       cron-job.org 等から `GET /api/cron/notify` を
