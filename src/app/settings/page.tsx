@@ -17,6 +17,14 @@ import { clearAllClientData } from "@/lib/debug-clear";
 import { getWebclassUrl, setWebclassUrl } from "@/lib/webclass-url";
 import { AppHeader } from "@/components/app-header";
 import { cn } from "@/lib/utils";
+import { buildUserscriptCode } from "@/lib/webclass-script";
+import {
+  enablePush,
+  disablePush,
+  getPushSubscription,
+  isPushSupported,
+  isIosWithoutInstall,
+} from "@/lib/push-client";
 
 const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
   { value: "relaxed", label: "余裕派", desc: "締切24時間前に1回" },
@@ -71,6 +79,13 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [webclassInput, setWebclassInput] = useState("");
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushNote, setPushNote] = useState("");
+  const [tokenIssued, setTokenIssued] = useState<boolean | null>(null);
+  const [tokenValue, setTokenValue] = useState("");
+  const [tokenBusy, setTokenBusy] = useState(false);
+  const [copied, setCopied] = useState<"token" | "script" | null>(null);
   const [webclassMsg, setWebclassMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
@@ -81,6 +96,23 @@ export default function SettingsPage() {
     );
     setWebclassInput(getWebclassUrl() ?? "");
   }, []);
+
+  // この端末が購読済みかを見てトグルの初期状態にする
+  useEffect(() => {
+    if (!loggedIn) return;
+    getPushSubscription()
+      .then((sub) => setPushOn(!!sub))
+      .catch(() => setPushOn(false));
+  }, [loggedIn]);
+
+  // 発行済みかどうかだけ取得（平文トークンはサーバに残っていないので取り直せない）
+  useEffect(() => {
+    if (!loggedIn) return;
+    fetch("/api/import/token")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setTokenIssued(d ? !!d.issued : false))
+      .catch(() => setTokenIssued(false));
+  }, [loggedIn]);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -229,6 +261,59 @@ export default function SettingsPage() {
     );
   }
 
+  // 通知の許可ダイアログはユーザー操作の中でしか出せないので、必ずここから呼ぶ
+  const togglePush = async () => {
+    setPushBusy(true);
+    setPushNote("");
+    try {
+      if (pushOn) {
+        await disablePush();
+        setPushOn(false);
+        return;
+      }
+      const r = await enablePush();
+      if (r.ok) {
+        setPushOn(true);
+        return;
+      }
+      setPushNote(
+        r.reason === "denied"
+          ? "ブラウザで通知がブロックされています。アドレスバーの鍵アイコンから許可してください。"
+          : r.reason === "unsupported"
+            ? "この環境ではプッシュ通知を使えません。"
+            : "設定に失敗しました。時間をおいて試してください。",
+      );
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const issueToken = async () => {
+    if (tokenIssued && !confirm("再発行すると、いま設定済みの端末では同期が止まります。続けますか？")) return;
+    setTokenBusy(true);
+    try {
+      const res = await fetch("/api/import/token", { method: "POST" });
+      if (!res.ok) throw new Error();
+      const { token } = await res.json();
+      setTokenValue(token);
+      setTokenIssued(true);
+    } catch {
+      alert("トークンの発行に失敗しました");
+    } finally {
+      setTokenBusy(false);
+    }
+  };
+
+  const copyText = async (text: string, which: "token" | "script") => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(which);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      alert("コピーできませんでした。長押しして選択してください。");
+    }
+  };
+
   return (
     <>
       <AppHeader right={back} />
@@ -273,6 +358,31 @@ export default function SettingsPage() {
                 <div className="h-6 w-11 shrink-0 animate-pulse rounded-full bg-muted" />
               )}
             </div>
+          </section>
+        )}
+
+        {/* プッシュ通知 */}
+        {loggedIn && (
+          <section className="border-t border-border pt-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className={SECTION_TITLE}>プッシュ通知</h2>
+                <p className={HINT}>
+                  アプリを開いていなくても、この端末に締切をお知らせします。
+                </p>
+              </div>
+              <Toggle on={pushOn} onClick={togglePush} disabled={pushBusy || !isPushSupported()} />
+            </div>
+            {isIosWithoutInstall() && (
+              <p className={`mt-2 ${HINT}`}>
+                iPhone / iPad では、<strong className="text-foreground">共有 →「ホーム画面に追加」</strong>
+                をしてから、そのアイコンで開いた状態でオンにしてください。Safari のタブのままでは受け取れません。
+              </p>
+            )}
+            {!isPushSupported() && !isIosWithoutInstall() && (
+              <p className={`mt-2 ${HINT}`}>このブラウザはプッシュ通知に対応していません。</p>
+            )}
+            {pushNote && <p className="mt-2 text-[11.5px] text-destructive">{pushNote}</p>}
           </section>
         )}
 
@@ -456,6 +566,108 @@ export default function SettingsPage() {
             </p>
           )}
         </section>
+
+        {/* WebClass 自動同期（ユーザースクリプト） */}
+        {loggedIn && (
+          <section className="border-t border-border pt-5">
+            <h2 className={`mb-1 ${SECTION_TITLE}`}>WebClass 自動同期（PC）</h2>
+            <p className={`mb-3 ${HINT}`}>
+              Tampermonkey を入れておくと、WebClass を開くだけで自動的に取り込まれます。
+              ブックマークレットを押す必要がなくなります。
+              <strong className="text-foreground">任意です</strong>。iPhone では使えないので、その場合はブックマークレットのままで問題ありません。
+            </p>
+
+            <ol className={`mb-3 list-decimal space-y-2 pl-4 ${HINT}`}>
+              <li>
+                ブラウザに{" "}
+                <a
+                  href="https://www.tampermonkey.net/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-blue underline"
+                >
+                  Tampermonkey
+                </a>{" "}
+                を入れる（Chrome ウェブストアから追加）
+              </li>
+              <li>
+                <strong className="text-foreground">「スクリプトを入れる」</strong>を押す。
+                Tampermonkey のインストール画面が開いたら「インストール」。
+                <div className="mt-1.5 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                  <p className="mb-1 font-medium text-foreground">開かない場合（よくあります）</p>
+                  <ol className="list-decimal space-y-0.5 pl-4">
+                    <li>下の「コードをコピー」を押す</li>
+                    <li>
+                      ツールバーの Tampermonkey アイコン →{" "}
+                      <strong className="text-foreground">「新規スクリプトを作成…」</strong>
+                      （アイコンが見えないときはパズルのマークの中）
+                    </li>
+                    <li>
+                      エディタが開くので <strong className="text-foreground">Ctrl+A</strong> で全選択して消し、
+                      コピーしたコードを貼り付ける
+                    </li>
+                    <li>
+                      <strong className="text-foreground">Ctrl+S</strong> で保存
+                    </li>
+                  </ol>
+                  <p className="mt-1.5">
+                    それでも動かないときは、Chrome の <code className="font-mono">chrome://extensions</code> で
+                    <strong className="text-foreground">デベロッパーモードをオン</strong>にしてください。
+                    最近の Chrome では、これが無いと Tampermonkey が正しく動きません。
+                  </p>
+                </div>
+              </li>
+              <li>下でトークンを発行してコピーし、WebClass を開いたときに聞かれたら貼り付ける</li>
+            </ol>
+
+            <div className="mb-3 flex flex-wrap gap-2">
+              <a
+                href="/webclass.user.js"
+                className="rounded-lg border border-border px-3 py-2 text-[13px] font-medium transition hover:bg-muted"
+              >
+                スクリプトを入れる
+              </a>
+              <button
+                onClick={issueToken}
+                disabled={tokenBusy}
+                className="rounded-lg bg-foreground px-3 py-2 text-[13px] font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+              >
+                {tokenBusy ? "発行中…" : tokenIssued ? "トークンを再発行" : "トークンを発行"}
+              </button>
+              <button
+                onClick={() => copyText(buildUserscriptCode(window.location.origin), "script")}
+                className={`rounded-lg px-3 py-2 text-[13px] ${HINT} transition hover:bg-muted`}
+              >
+                {copied === "script" ? "コピーしました" : "コードをコピー"}
+              </button>
+            </div>
+
+            {tokenValue ? (
+              <div className="rounded-lg border border-lamp-green/40 bg-lamp-green/5 p-3">
+                <p className="mb-1 text-[11.5px] font-medium text-foreground">
+                  この画面を離れると二度と表示できません。いまコピーしてください。
+                </p>
+                <div className="flex gap-2">
+                  <code className="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1.5 font-mono text-[11px]">
+                    {tokenValue}
+                  </code>
+                  <button
+                    onClick={() => copyText(tokenValue, "token")}
+                    className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium transition hover:bg-muted"
+                  >
+                    {copied === "token" ? "済" : "コピー"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              tokenIssued && (
+                <p className={HINT}>
+                  発行済みです。トークンは保存していないため再表示できません。無くした場合は再発行してください。
+                </p>
+              )
+            )}
+          </section>
+        )}
 
         {/* アカウント */}
         <section className="border-t border-border pt-5">

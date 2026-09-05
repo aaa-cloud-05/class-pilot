@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# Class Pilot — プロジェクト指針
+# Classmino — プロジェクト指針
 
 Google Classroom + WebClass の課題を集約し、締切をメール/ブラウザで通知する学生向け PWA
 （某大学向け、個人開発、一般公開予定）。Next.js 16 + NextAuth v5 + Prisma/Supabase + Vercel。
@@ -8,7 +8,10 @@ Google Classroom + WebClass の課題を集約し、締切をメール/ブラウ
 ## 必読ドキュメント
 - `docs/architecture.md` — 現行のデータフロー/構成の**正本**（SWR3段取得・DB=真実のソース・cron等）
 - `docs/product-brief.md` — プロダクトの価値定義（くさび=WebClass通知・北極星・収益方針）
-- `docs/backlog.md` — 未実装機能・セキュリティ/法務/使用量の課題（優先度付き）
+- `docs/release-checklist.md` — **リリースまでの順序（ブロッカー / 直前の小物 / 出した後）**
+- `docs/domain-setup.md` — 独自ドメイン・DNS・Resend・OAuth の手順と用語
+- `docs/webclass-api.md` — **WebClass 内部 API の仕様・負荷対策・再調査手順**
+- `docs/backlog.md` — 未実装機能・セキュリティ/法務/使用量の課題（実装現況に同期済み）
 - ※ `docs/phase-plan.md` / `phase2-implementation.md` / `known-issues.md` は旧記述を含む。現行は architecture.md 参照。
 
 ## アーキテクチャ要点

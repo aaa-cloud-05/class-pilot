@@ -1,6 +1,6 @@
-# Class Pilot アーキテクチャ / データフロー
+# Classmino アーキテクチャ / データフロー
 
-最終更新: 2026-06-30
+最終更新: 2026-09-04
 
 Google Classroom + WebClass の課題管理 PWA。本ドキュメントは**データの保存場所と流れ**を中心に
 現行構成をまとめる。設計の経緯は [phase-plan.md](./phase-plan.md) / [auth-decision-log.md](./auth-decision-log.md) を参照。
@@ -92,13 +92,36 @@ WebClass 取り込み・手動追加もすべて IndexedDB に直接保存され
 
 ## データフロー④ WebClass 取り込み（ブックマークレット）
 
+**WebClass の内部 JSON API を直接呼ぶ**（旧: 課題実施状況一覧の DOM 解析）。
+API 仕様・調査経緯・負荷対策は [webclass-api.md](./webclass-api.md)。
+
 ```
-WebClass ダッシュボードでブックマークレット実行
-   → 抽出データを /import#<JSON> として開く
-   → transformWebClassTasks() で正規化
+WebClass の任意のページでブックマークレット実行   ★どのページでもよい
+   → GET  {BASE}/ip_mods.php/plugin/score_summary_table/courses
+   → 年度が2年以上前のコースを除外
+   → GET  .../contents?group_id=<id>   コースごとに直列・250ms間隔
+        ・fetch のキャッシュを無効化しない = If-Modified-Since が自動で付き、
+          変化が無ければ 304（ボディ無し）で返る
+        ・contents_kind==="Question" / 非表示でない / end_date あり / 締切が180日以内
+        ・提出判定は scores[0].answer_datetime の有無だけを見て、氏名・学籍番号・点数は捨てる
+   → /import#<JSON> を開く（URLが長すぎる場合は締切の古い順に間引く）
+   → transformWebClassPayload() で正規化
    ├─ ログイン中: POST /api/import/webclass（hiddenフィルタ→DB upsert）→ replaceCache → ホームへ
    └─ 未ログイン: cacheWebClassAssignments()（IndexedDB の wc- を置換）→ ホームへ
 ```
+
+識別子は API の安定した ID に基づく。
+
+| | 旧 | 現在 |
+|---|---|---|
+| 課題ID (`externalId`) | コース名+課題名+締切のhash | `wc-<contents_id>` |
+| DBキー (`sourceKey`) | `webclass:<コース名>::<課題名>` | `webclass:wc-<contents_id>` |
+| コースID | コース名のhash | `wc-<group_id>` |
+| 提出状態 | 「状態」列の文字列判定（`unknown` あり） | `answer_datetime` の有無（`unknown` なし） |
+| リンク | コースのトップ | 課題ページへの直リンク |
+
+締切や課題名が変わっても同じ課題として追えるので、通知履歴の重複防止キーが安定する。
+旧キーの行は取り込み時に引き当てて新キーへ載せ替える（削除しないので編集内容は残る）。
 
 ## データフロー⑤ コースの表示/非表示（追跡管理）
 
@@ -114,6 +137,20 @@ WebClass ダッシュボードでブックマークレット実行
 `hiddenCourses` は2か所で効く：
 - 表示: `getUserAssignments(userId, hiddenCourseIds)` が `courseId notIn hidden` で除外
 - 同期: `fetchAllData(token, hiddenCourseIds)` が非表示コースの courseWork 取得をスキップ
+  （**呼び出し回数がそのまま減る**ので、非表示は速度にも効く）
+
+### Classroom 取得の並列化
+
+`fetchAllData` は `1 + 2N` 回（N=コース数）の Google API 呼び出しを行う。
+以前は全部直列だったため、18コースで37回ぶんの往復をすべて待っていた。
+
+- コースを **5件ずつ並列**、コース内の `courseWork` と `studentSubmissions` も並列
+- **呼び出し回数は変わらない**（クォータ消費は同じ）。待ち時間だけが縮む
+- `Promise.allSettled` で**1コースの失敗が全体を巻き込まない**。保存は upsert なので、
+  取れなかったコースの課題は「更新されない」だけで消えない
+- ただし**全コース失敗は throw する**。トークン失効等の systemic な失敗を握りつぶすと、
+  中身が更新されていないのに `classroomSyncedAt` だけ新しくなり、古いデータを
+  新鮮だと偽ることになるため
 
 ## データフロー⑥ 通知
 
@@ -121,10 +158,50 @@ WebClass ダッシュボードでブックマークレット実行
 を実行。**IndexedDB のキャッシュ課題**とローカル通知設定を突き合わせ、プリセットのタイミングで
 `Notification`/Service Worker 通知を出す。送信済みは `notification-history`（IndexedDB）で重複防止。
 
-**メール通知**（サーバ・Cron）: `vercel.json` の cron（毎日 21:00 UTC）が `GET /api/cron/notify` を叩く。
-`CRON_SECRET` で認証。各ユーザーの `refresh_token` でアクセストークンを更新し、Google から取得→
-`computePendingNotifications()` で送信対象を算出→ Resend でメール送信→ `NotificationHistory`
-（channel=email）で重複防止。
+**サーバ通知（メール / Web Push）**: 送信の実体は `notifyUser(userId)`（`src/lib/server/notify.ts`）に
+集約され、**2つの経路から呼ばれる**。
+
+1. **cron**: `vercel.json` の cron（毎日 21:00 UTC = 06:00 JST）が `GET /api/cron/notify` を叩く。
+   `CRON_SECRET` で認証。対象ユーザーを5人ずつ並列処理（`maxDuration = 60`）。
+2. **同期・取り込みの直後**: `POST /api/classroom/sync` と `POST /api/import/webclass` が成功したとき、
+   `after()` でレスポンス送出後に同じ関数を呼ぶ。**cron だけでは「cron 後に取り込んだ、その日が締切の
+   課題」に通知が出ない**ため（WebClass の取り込みは日中に手動で行われる＝本製品が最も救いたいケース）。
+
+処理は DB ベース（全ソース対応・Google 再取得もトークンも不要）:
+`getUserAssignments()` → `computePendingNotifications()` → Resend で予約 or 即時送信。
+
+- **取りこぼしの扱い**: 予約時刻（締切のN時間前）が既に過去でも、締切前ならまだ間に合う。
+  予約できるタイミングが1つも無いときに限り、**締切に最も近い1件だけ**を実際の残り時間ラベルで
+  即時送信する。送らなかった取りこぼしは履歴だけ閉じ、次の同期で蒸し返さない。
+- **重複防止**: `NotificationHistory`（`userId+assignmentId+type+channel` の unique）。
+  **送信前に履歴行を作って枠を予約**し、作成できたものだけ送る。同期が同時に走っても二重送信しない。
+  送信に失敗したら予約行を消して次回リトライできるようにする。
+  チャネルが違えば別の行になるので、メールと Push は互いに邪魔しない。
+
+### チャネルの違い（予約できるかどうか）
+
+| | メール(Resend) | Web Push |
+|---|---|---|
+| 独自ドメイン | **必要**（未認証だと所有者にしか届かない） | **不要** |
+| 通数制限 | 100通/日・3,000通/月 | なし |
+| **予約送信** | **できる**（`scheduledAt` を Resend に委譲） | **できない**（送った瞬間に届く） |
+| 時刻の精度 | 正確 | **cron の実行間隔で決まる** |
+| iOS | 届く | ホーム画面に追加した PWA のみ（iOS 16.4+） |
+
+この差を `computePendingNotifications` の `canSchedule` で吸収している。
+
+- `canSchedule: true`（メール）… 未来のタイミングもいま Resend に登録する。
+  すでに予約済みなので、取りこぼしの追いつき送信は「予約が1つも無いとき」に限る
+- `canSchedule: false`（Push）… 未来のタイミングは**結果に含めず次回に持ち越す**。
+  送り時が来た分だけを即時送信する。予約されていないので、
+  「後続のタイミングが残っている」ことを理由に握り潰してはいけない（24時間前が永久に出なくなる）
+
+> ⚠️ **Push は cron の実行間隔がそのまま通知の精度になる。**
+> Vercel Hobby の cron は1日1回しか回せないため、Push だけでは
+> 「3時間前」がほぼ機能しない（実測シミュレーションで発火1回・ラベルは実残り時間）。
+> 15〜30分間隔で `GET /api/cron/notify` を叩く外部トリガー
+> （cron-job.org 等の無料サービス）を併用すること。
+> エンドポイントは `CRON_SECRET` 認証で、履歴による重複防止があるため何度叩いても安全。
 
 ## 設定（NotificationSetting）のデータフロー
 
@@ -143,8 +220,10 @@ WebClass ダッシュボードでブックマークレット実行
 | `PATCH/DELETE /api/assignments/[id]` | 編集 / ソフトデリート | session.user.id |
 | `POST /api/classroom/sync` | Google同期→DB upsert→DB課題返却 | accessToken（無くてもDB返却） |
 | `GET /api/courses` | 全コース（非表示含む）+ hiddenCourses | session.user.id |
-| `POST /api/import/webclass` | WebClass取り込み→DB upsert | session.user.id |
+| `POST /api/import/webclass` | WebClass取り込み→DB upsert | session.user.id **または** 取り込みトークン |
+| `GET/POST/DELETE /api/import/token` | 自動同期用トークンの状態/発行/失効 | session.user.id |
 | `GET/PATCH /api/notifications/settings` | 通知設定の取得/更新 | session.user.id |
+| `GET/POST/DELETE /api/notifications/push` | Push購読の確認/登録/解除 | session.user.id |
 | `GET /api/cron/notify` | メール通知バッチ | CRON_SECRET |
 | `/api/auth/[...nextauth]` | NextAuth | — |
 
@@ -157,8 +236,16 @@ src/lib/db.ts                        IndexedDB スキーマ（DB名 classroom-re
 src/lib/server/assignments.ts        DB アクセス（getUserAssignments/sync/edit/softDelete/getUserCourses）
 src/lib/classroom-api.ts             Google Classroom API（fetchAllData は hidden をスキップ）
 src/lib/transform.ts                 Google生データ → Assignment 変換
+src/lib/webclass-script.ts           WebClass API を叩く収集コード（ブックマークレット/ユーザースクリプトを生成）
+src/lib/server/import-token.ts       自動同期用トークンの発行・照合（DBはハッシュのみ保持）
+src/lib/webclass.ts                  WebClassペイロード → Assignment 変換・再検証
 src/lib/notification-store.ts        IndexedDB の通知設定/履歴
 src/lib/notification-scheduler.ts    クライアント通知（checkAndNotify）
+src/lib/server/notify.ts             通知の実体（メール/Push、cron と 同期/取り込み の両方から呼ぶ）
+src/lib/server/push.ts               Web Push 送信（期限切れ購読の掃除も）
+src/lib/push-client.ts               ブラウザ側の購読・解除
+src/lib/server/notification-logic.ts 送信対象の算出（予約 / 取りこぼしの追いつき）
+src/lib/server/app-url.ts            公開URL（メールの絶対リンク・metadataBase）
 src/lib/debug-clear.ts               ローカル全データ削除（デバッグ用・設定画面）
 src/auth.ts                          NextAuth 設定・トークン更新
 prisma/schema.prisma                 DB スキーマ

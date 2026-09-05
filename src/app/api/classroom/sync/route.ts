@@ -7,6 +7,8 @@ import {
   getUserAssignments,
 } from "@/lib/server/assignments";
 import { checkRateLimit } from "@/lib/server/ratelimit";
+import { notifyUser } from "@/lib/server/notify";
+import { after } from "next/server";
 
 /**
  * Google Classroom と同期し、最新のDB課題を返す。
@@ -58,7 +60,9 @@ export async function POST() {
     syncError = "no_access_token";
   } else {
     try {
-      const { allWork } = await fetchAllData(session.accessToken, hiddenCourseIds);
+      const t0 = Date.now();
+      const { allWork, failed } = await fetchAllData(session.accessToken, hiddenCourseIds);
+      console.log(`[CLASSROOM] 取得 ${allWork.length}件 / ${Date.now() - t0}ms` + (failed.length ? ` / 失敗${failed.length}コース` : ""));
 
       const classroomAssignments = allWork.map(({ course, work, submission }) => ({
         ...transformAssignment(course, work, submission),
@@ -80,6 +84,18 @@ export async function POST() {
       syncError =
         /API 40[13]/.test(msg) || code === "P2003" ? "reauth_required" : "sync_failed";
     }
+  }
+
+  // 同期で新しく入った課題にも、cron を待たずに通知を確定させる。
+  // レスポンスは待たせない（after = 応答を返した後に実行）。
+  if (synced) {
+    after(async () => {
+      try {
+        await notifyUser(userId);
+      } catch (e) {
+        console.error("[SYNC] 通知の確定に失敗:", e);
+      }
+    });
   }
 
   const [assignments, user] = await Promise.all([

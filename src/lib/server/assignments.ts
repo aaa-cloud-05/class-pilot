@@ -149,24 +149,52 @@ export async function syncClassroomAssignments(
   }
 }
 
+/** WebClass 課題の識別キー。a.id は "wc-<contents_id>" で、改名・締切変更でも変わらない。 */
+function webclassKey(a: Assignment): string {
+  return `webclass:${a.id}`;
+}
+
+/**
+ * 旧実装のキー。コース名と課題名から作っていたため、どちらかが変わると別課題になった。
+ * 取り込み時にこのキーで引き当てて新キーへ載せ替える（行は消さないので編集内容は残る）。
+ */
+function legacyWebclassKey(a: Assignment): string {
+  return `webclass:${a.courseName}::${a.title}`;
+}
+
 export async function syncWebClassAssignments(
   userId: string,
   assignments: Assignment[],
 ): Promise<void> {
-  const sourceKeys = assignments.map((a) => `webclass:${a.courseName}::${a.title}`);
+  const sourceKeys = [
+    ...assignments.map(webclassKey),
+    ...assignments.map(legacyWebclassKey),
+  ];
 
   const existing = await prisma.assignment.findMany({
     where: { userId, sourceKey: { in: sourceKeys } },
   });
   const byKey = new Map(existing.map((e) => [e.sourceKey!, e]));
+  const adopted = new Set<string>(); // 1行を2件の課題が奪い合わないようにする
 
   const creates: Prisma.AssignmentCreateManyInput[] = [];
   const updates: Prisma.PrismaPromise<unknown>[] = [];
   const changedFields = new Set<string>();
 
   for (const a of assignments) {
-    const sourceKey = `webclass:${a.courseName}::${a.title}`;
-    const ex = byKey.get(sourceKey);
+    const sourceKey = webclassKey(a);
+    let ex = byKey.get(sourceKey);
+
+    // 新キーが無ければ旧キーの行を探して引き継ぐ（重複行を作らないため）
+    let migrating = false;
+    if (!ex) {
+      const legacy = byKey.get(legacyWebclassKey(a));
+      if (legacy && !adopted.has(legacy.id)) {
+        ex = legacy;
+        migrating = true;
+        adopted.add(legacy.id);
+      }
+    }
 
     if (ex) {
       if (ex.deletedAt) continue;
@@ -175,12 +203,20 @@ export async function syncWebClassAssignments(
       // 変更なしなら UPDATE を発行しないため、再取り込みは一瞬で終わる。
       const data: Record<string, unknown> = {};
       const edited = ex.editedFields;
+      if (migrating) {
+        // 旧キー行の載せ替え。externalId はクライアントに id として返るため一緒に更新する。
+        data.sourceKey = sourceKey;
+        data.externalId = a.id;
+        data.courseId = a.courseId;
+      }
       if (!edited.includes("courseColor") && ex.courseColor !== a.courseColor) data.courseColor = a.courseColor;
       if (!edited.includes("dueDate") && !sameDate(ex.dueDate, a.dueDate)) data.dueDate = a.dueDate;
       if (!edited.includes("link") && ex.link !== (a.link ?? "")) data.link = a.link ?? "";
       if (!edited.includes("submissionState") && ex.submissionState !== a.submissionState) data.submissionState = a.submissionState;
       if (!edited.includes("isLate") && ex.isLate !== !!a.isLate) data.isLate = !!a.isLate;
-      if (!edited.includes("grade") && (ex.grade ?? null) !== (a.grade ?? null)) data.grade = a.grade ?? null;
+      // 課題名・コース名は contents_id で追えるようになったので、変更に追随できる
+      if (!edited.includes("title") && ex.title !== a.title) data.title = a.title;
+      if (!edited.includes("courseName") && ex.courseName !== a.courseName) data.courseName = a.courseName;
 
       if (Object.keys(data).length > 0) {
         Object.keys(data).forEach((k) => changedFields.add(k));
@@ -200,7 +236,6 @@ export async function syncWebClassAssignments(
         link: a.link,
         submissionState: a.submissionState,
         isLate: a.isLate,
-        grade: a.grade ?? null,
       });
     }
   }

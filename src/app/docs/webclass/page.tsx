@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Copy, ShieldCheck } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { Collapsible } from "@/components/Collapsible";
-import { buildBookmarkletCode } from "@/lib/bookmarklet";
+import { buildBookmarkletCode } from "@/lib/webclass-script";
 import { cn } from "@/lib/utils";
 
 type Browser = "pc" | "safari" | "chrome";
@@ -18,10 +18,10 @@ const TABS: { value: Browser; label: string }[] = [
 
 // コードが何をしているかを、専門用語すくなめで説明する。
 const CODE_EXPLAIN = [
-  "いま開いている WebClass の「課題実施状況一覧」ページ（枠内の表示も含む）を読みます。",
-  "各授業の行から「課題名・締切・提出状態・課題ページのリンク」だけを取り出します。",
-  "取り出した一覧をまとめて、Class Pilot の取り込みページを開いて渡します。",
-  "送るのは課題の情報だけ。パスワードやログイン情報（Cookie）には触れません。",
+  "WebClass にログインしている状態を使って、WebClass 自身が持っている課題一覧を読み取ります。",
+  "各授業から「課題名・締切・提出したかどうか・課題ページのリンク」だけを取り出します。",
+  "取り出した一覧をまとめて、Classmino の取り込みページを開いて渡します。",
+  "送るのは課題の情報だけ。パスワードやログイン情報（Cookie）には触れません。氏名・学籍番号・点数は読み取りません。",
 ];
 
 const STEPS: Record<Browser, string[]> = {
@@ -30,21 +30,21 @@ const STEPS: Record<Browser, string[]> = {
     "ブックマークバーに任意のページをブックマークします（Ctrl / ⌘ + D）。",
     "そのブックマークを右クリック →「編集」を開きます。",
     "URL 欄を、コピーしたコードに貼り替えて保存します。名前は「WebClassを取り込む」など分かりやすいものに。",
-    "WebClass の「課題実施状況一覧」を開き「すべて表示」にしてから、ブックマークバーの項目をクリックします。",
+    "WebClass を開いた状態で（どのページでも構いません）、ブックマークバーの項目をクリックします。",
   ],
   safari: [
     "上のコードをコピーします。",
     "適当なページを「お気に入り／ブックマーク」に追加します。",
     "そのブックマークを編集します（Mac: サイドバーで右クリック →「アドレスを編集」／ iPhone: ブックマーク一覧 →「編集」→ 該当項目）。",
     "アドレス（URL）欄を、コピーしたコードに貼り替えて保存します。名前は「WebClassを取り込む」など分かりやすいものに。",
-    "WebClass の「課題実施状況一覧」を開き「すべて表示」にしてから、作ったブックマークを開きます。",
+    "WebClass を開いた状態で（どのページでも構いません）、作ったブックマークを開きます。",
   ],
   chrome: [
     "上のコードをコピーします。",
     "任意のページを☆（ブックマーク）に追加します。",
     "ブックマークを編集します（ブックマークバーで右クリック →「編集」、またはブックマークマネージャから）。",
     "URL 欄を、コピーしたコードに貼り替えて保存します。名前は自由です。",
-    "WebClass の「課題実施状況一覧」を開き「すべて表示」にしてから、作ったブックマークを開きます。",
+    "WebClass を開いた状態で（どのページでも構いません）、作ったブックマークを開きます。",
   ],
 };
 
@@ -95,9 +95,12 @@ export default function WebclassGuidePage() {
             <h2 className="text-[13px] font-semibold text-foreground">このボタンは何をするの？</h2>
           </div>
           <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-            いま開いている WebClass の「課題実施状況一覧」ページから、
-            <strong className="text-foreground">課題の名前・締切・状態だけ</strong>を読み取って Class Pilot に渡します。
-            パスワードやログイン情報には<strong className="text-foreground">触れません</strong>。あなたの操作でだけ動き、勝手に送信することもありません。
+            WebClass にログインしているあなた自身の権限で、
+            <strong className="text-foreground">課題の名前・締切・提出したかどうかだけ</strong>を読み取って Classmino に渡します。
+            氏名・学籍番号・点数は読み取りません。パスワードやログイン情報にも<strong className="text-foreground">触れません</strong>。
+            あなたの操作でだけ動き、勝手に送信することもありません。
+            <br />
+            WebClass のどのページで実行しても構いません。締切のある課題のうち、直近半年ぶんを取り込みます。
           </p>
         </section>
 

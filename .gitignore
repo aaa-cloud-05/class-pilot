@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# WebClass の生キャプチャ（セッションCookie・本名・学籍番号・得点を含むため絶対にコミットしない）
+/docs/row/

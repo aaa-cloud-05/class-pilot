@@ -1,11 +1,13 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "プライバシーポリシー | Class Pilot",
+  // ルートの title.template("%s | Classmino")が付くのでページ名だけでよい
+  title: "プライバシーポリシー",
 };
 
 const UPDATED = "2026年7月1日";
-const CONTACT = "f.ord10.5k@gmail.com";
+// Cloudflare Email Routing で個人の Gmail に転送している（受信専用）
+const CONTACT = "support@classmino.com";
 
 export default function PrivacyPage() {
   return (
@@ -21,7 +23,7 @@ export default function PrivacyPage() {
         </div>
 
         <p>
-          Class Pilot（以下「本サービス」）は、Google Classroom および WebClass の課題を集約し、
+          Classmino（以下「本サービス」）は、Google Classroom および WebClass の課題を集約し、
           締切リマインダーを提供する個人開発の Web アプリケーションです。本ポリシーは、本サービスが
           取得する情報とその取り扱いについて説明します。
         </p>

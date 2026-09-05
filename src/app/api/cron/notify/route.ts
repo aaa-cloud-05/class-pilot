@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/server/prisma";
-import { getUserAssignments } from "@/lib/server/assignments";
-import { computePendingNotifications } from "@/lib/server/notification-logic";
-import { sendDeadlineEmail } from "@/lib/server/email";
-import type { NotificationPreset } from "@/lib/notification-store";
+import { notifyUser } from "@/lib/server/notify";
 
-const HORIZON_MS = 30 * 60 * 60 * 1000; // 30 hours
+// メール送信はユーザー数に比例して伸びるため、既定(10秒)では足りなくなる。
+export const maxDuration = 60;
+
+/** 同時に処理するユーザー数。Supabase の接続を食い潰さない範囲で並列化する。 */
+const CONCURRENCY = 5;
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -13,86 +14,39 @@ export async function GET(request: Request) {
   }
 
   const now = new Date();
-  const results: { userId: string; sent: number; error?: string }[] = [];
-
-  const usersWithEmail = await prisma.notificationSetting.findMany({
-    where: { emailEnabled: true, enabled: true },
-    include: {
-      user: { select: { email: true } },
+  // メールが有効、または端末をプッシュ購読しているユーザー。
+  // 以前は emailEnabled だけで絞っていたため、プッシュのみ有効な人が対象外になっていた。
+  const targets = await prisma.notificationSetting.findMany({
+    where: {
+      enabled: true,
+      OR: [
+        { emailEnabled: true },
+        { user: { pushSubscriptions: { some: {} } } },
+      ],
     },
+    select: { userId: true },
   });
 
-  for (const ns of usersWithEmail) {
-    const email = ns.user.email;
-    if (!email) {
-      results.push({ userId: ns.userId, sent: 0, error: "no_email" });
-      continue;
-    }
+  const results: { userId: string; email: number; push: number; error?: string }[] = [];
 
-    try {
-      // DB(全ソース: Classroom/WebClass/手動)から取得。Google再取得・トークン不要。
-      const assignments = await getUserAssignments(
-        ns.userId,
-        new Set(ns.hiddenCourses),
-      );
-
-      const existingHistory = await prisma.notificationHistory.findMany({
-        where: { userId: ns.userId, channel: "email" },
-        select: { assignmentId: true, type: true },
-      });
-      const alreadySentKeys = new Set(
-        existingHistory.map((h) => `${h.assignmentId}:${h.type}:email`)
-      );
-
-      const pending = computePendingNotifications(assignments, {
-        preset: ns.preset as NotificationPreset,
-        mutedCourses: ns.mutedCourses,
-        mutedAssignments: ns.mutedAssignments,
-        alreadySentKeys,
-        now,
-        horizonMs: HORIZON_MS,
-      });
-
-      for (const p of pending) {
-        await sendDeadlineEmail({
-          to: email,
-          assignmentTitle: p.assignmentTitle,
-          courseName: p.courseName,
-          timeLabel: p.label,
-          dueDate: p.dueDate,
-          link: p.link,
-          scheduledAt: p.scheduledAt,
-        });
-
-        await prisma.notificationHistory.upsert({
-          where: {
-            userId_assignmentId_type_channel: {
-              userId: ns.userId,
-              assignmentId: p.assignmentId,
-              type: p.type,
-              channel: "email",
-            },
-          },
-          create: {
-            userId: ns.userId,
-            assignmentId: p.assignmentId,
-            type: p.type,
-            channel: "email",
-            title: `締切まで${p.label}`,
-            body: `「${p.assignmentTitle}」（${p.courseName}）`,
-          },
-          update: {},
+  for (let i = 0; i < targets.length; i += CONCURRENCY) {
+    const chunk = targets.slice(i, i + CONCURRENCY);
+    const settled = await Promise.allSettled(
+      chunk.map((t) => notifyUser(t.userId, now)),
+    );
+    settled.forEach((r, idx) => {
+      const userId = chunk[idx].userId;
+      if (r.status === "fulfilled") {
+        results.push({ userId, email: r.value.email, push: r.value.push });
+      } else {
+        results.push({
+          userId,
+          email: 0,
+          push: 0,
+          error: r.reason instanceof Error ? r.reason.message : "unknown",
         });
       }
-
-      results.push({ userId: ns.userId, sent: pending.length });
-    } catch (e) {
-      results.push({
-        userId: ns.userId,
-        sent: 0,
-        error: e instanceof Error ? e.message : "unknown",
-      });
-    }
+    });
   }
 
   return Response.json({ ok: true, processed: results.length, results });

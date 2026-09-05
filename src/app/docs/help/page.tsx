@@ -10,7 +10,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: "ブックマークレットが動かない",
     a: (
       <>
-        WebClass の「課題実施状況一覧」ページで実行しているか確認してください。別のページでは動きません。手順は{" "}
+        WebClass にログインした状態で実行しているか確認してください（ページはどこでも構いません）。ログインが切れていると取得できません。手順は{" "}
         <Link href="/docs/webclass" className="text-accent-blue underline">
           WebClass 連携
         </Link>
@@ -22,7 +22,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: "課題が表示されない・少ない",
     a: (
       <>
-        WebClass では「すべて表示」を選んでから実行してください。Classroom は1コース最大100件までの取得です。設定で<strong className="text-foreground">非表示</strong>にしたコースは出ません（設定 → コースで確認）。
+        WebClass から取り込むのは<strong className="text-foreground">締切のある課題の、直近半年ぶん</strong>です。締切が設定されていない教材や、2年以上前の年度のコースは対象外です。Classroom は1コース最大100件までの取得です。設定で<strong className="text-foreground">非表示</strong>にしたコースは出ません（設定 → コースで確認）。
       </>
     ),
   },
