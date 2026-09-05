@@ -18,6 +18,13 @@ import { getWebclassUrl, setWebclassUrl } from "@/lib/webclass-url";
 import { AppHeader } from "@/components/app-header";
 import { cn } from "@/lib/utils";
 import { buildUserscriptCode } from "@/lib/webclass-script";
+import {
+  enablePush,
+  disablePush,
+  getPushSubscription,
+  isPushSupported,
+  isIosWithoutInstall,
+} from "@/lib/push-client";
 
 const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
   { value: "relaxed", label: "余裕派", desc: "締切24時間前に1回" },
@@ -72,6 +79,9 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [webclassInput, setWebclassInput] = useState("");
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushNote, setPushNote] = useState("");
   const [tokenIssued, setTokenIssued] = useState<boolean | null>(null);
   const [tokenValue, setTokenValue] = useState("");
   const [tokenBusy, setTokenBusy] = useState(false);
@@ -86,6 +96,14 @@ export default function SettingsPage() {
     );
     setWebclassInput(getWebclassUrl() ?? "");
   }, []);
+
+  // この端末が購読済みかを見てトグルの初期状態にする
+  useEffect(() => {
+    if (!loggedIn) return;
+    getPushSubscription()
+      .then((sub) => setPushOn(!!sub))
+      .catch(() => setPushOn(false));
+  }, [loggedIn]);
 
   // 発行済みかどうかだけ取得（平文トークンはサーバに残っていないので取り直せない）
   useEffect(() => {
@@ -243,6 +261,33 @@ export default function SettingsPage() {
     );
   }
 
+  // 通知の許可ダイアログはユーザー操作の中でしか出せないので、必ずここから呼ぶ
+  const togglePush = async () => {
+    setPushBusy(true);
+    setPushNote("");
+    try {
+      if (pushOn) {
+        await disablePush();
+        setPushOn(false);
+        return;
+      }
+      const r = await enablePush();
+      if (r.ok) {
+        setPushOn(true);
+        return;
+      }
+      setPushNote(
+        r.reason === "denied"
+          ? "ブラウザで通知がブロックされています。アドレスバーの鍵アイコンから許可してください。"
+          : r.reason === "unsupported"
+            ? "この環境ではプッシュ通知を使えません。"
+            : "設定に失敗しました。時間をおいて試してください。",
+      );
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
   const issueToken = async () => {
     if (tokenIssued && !confirm("再発行すると、いま設定済みの端末では同期が止まります。続けますか？")) return;
     setTokenBusy(true);
@@ -313,6 +358,31 @@ export default function SettingsPage() {
                 <div className="h-6 w-11 shrink-0 animate-pulse rounded-full bg-muted" />
               )}
             </div>
+          </section>
+        )}
+
+        {/* プッシュ通知 */}
+        {loggedIn && (
+          <section className="border-t border-border pt-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className={SECTION_TITLE}>プッシュ通知</h2>
+                <p className={HINT}>
+                  アプリを開いていなくても、この端末に締切をお知らせします。
+                </p>
+              </div>
+              <Toggle on={pushOn} onClick={togglePush} disabled={pushBusy || !isPushSupported()} />
+            </div>
+            {isIosWithoutInstall() && (
+              <p className={`mt-2 ${HINT}`}>
+                iPhone / iPad では、<strong className="text-foreground">共有 →「ホーム画面に追加」</strong>
+                をしてから、そのアイコンで開いた状態でオンにしてください。Safari のタブのままでは受け取れません。
+              </p>
+            )}
+            {!isPushSupported() && !isIosWithoutInstall() && (
+              <p className={`mt-2 ${HINT}`}>このブラウザはプッシュ通知に対応していません。</p>
+            )}
+            {pushNote && <p className="mt-2 text-[11.5px] text-destructive">{pushNote}</p>}
           </section>
         )}
 

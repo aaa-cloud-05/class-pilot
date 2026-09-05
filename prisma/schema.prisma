@@ -29,6 +29,7 @@ model User {
   assignments         Assignment[]
   notificationSetting NotificationSetting?
   notificationHistory NotificationHistory[]
+  pushSubscriptions   PushSubscription[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,4 +138,24 @@ model NotificationHistory {
 
   @@unique([userId, assignmentId, type, channel])
   @@index([userId, read])
+}
+
+/// Web Push の購読。1ユーザーが複数端末を持ちうるので User:1 - N。
+/// endpoint がブラウザ側の宛先そのもので、端末ごとに一意。
+model PushSubscription {
+  id       String @id @default(cuid())
+  userId   String
+  endpoint String @unique
+  /// 暗号化用の公開鍵と認証シークレット（購読時にブラウザが発行する）
+  p256dh   String
+  auth     String
+  /// 端末の見分け用。UAは長くなりうるので保存時に切り詰める。
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

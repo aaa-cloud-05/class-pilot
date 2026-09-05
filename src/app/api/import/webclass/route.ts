@@ -7,7 +7,7 @@ import {
 import { sanitizeImportedAssignments, transformWebClassPayload } from "@/lib/webclass";
 import { checkRateLimit } from "@/lib/server/ratelimit";
 import { resolveImportToken } from "@/lib/server/import-token";
-import { notifyUserByEmail } from "@/lib/server/notify";
+import { notifyUser } from "@/lib/server/notify";
 import { after } from "next/server";
 
 /**
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
   const notifyUserId = userId;
   after(async () => {
     try {
-      await notifyUserByEmail(notifyUserId);
+      await notifyUser(notifyUserId);
     } catch (e) {
       console.error("[IMPORT] 通知の確定に失敗:", e);
     }

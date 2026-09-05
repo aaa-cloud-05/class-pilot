@@ -158,7 +158,7 @@ WebClass の任意のページでブックマークレット実行   ★どの�
 を実行。**IndexedDB のキャッシュ課題**とローカル通知設定を突き合わせ、プリセットのタイミングで
 `Notification`/Service Worker 通知を出す。送信済みは `notification-history`（IndexedDB）で重複防止。
 
-**メール通知**（サーバ）: 送信の実体は `notifyUserByEmail(userId)`（`src/lib/server/notify.ts`）に
+**サーバ通知（メール / Web Push）**: 送信の実体は `notifyUser(userId)`（`src/lib/server/notify.ts`）に
 集約され、**2つの経路から呼ばれる**。
 
 1. **cron**: `vercel.json` の cron（毎日 21:00 UTC = 06:00 JST）が `GET /api/cron/notify` を叩く。
@@ -176,6 +176,32 @@ WebClass の任意のページでブックマークレット実行   ★どの�
 - **重複防止**: `NotificationHistory`（`userId+assignmentId+type+channel` の unique）。
   **送信前に履歴行を作って枠を予約**し、作成できたものだけ送る。同期が同時に走っても二重送信しない。
   送信に失敗したら予約行を消して次回リトライできるようにする。
+  チャネルが違えば別の行になるので、メールと Push は互いに邪魔しない。
+
+### チャネルの違い（予約できるかどうか）
+
+| | メール(Resend) | Web Push |
+|---|---|---|
+| 独自ドメイン | **必要**（未認証だと所有者にしか届かない） | **不要** |
+| 通数制限 | 100通/日・3,000通/月 | なし |
+| **予約送信** | **できる**（`scheduledAt` を Resend に委譲） | **できない**（送った瞬間に届く） |
+| 時刻の精度 | 正確 | **cron の実行間隔で決まる** |
+| iOS | 届く | ホーム画面に追加した PWA のみ（iOS 16.4+） |
+
+この差を `computePendingNotifications` の `canSchedule` で吸収している。
+
+- `canSchedule: true`（メール）… 未来のタイミングもいま Resend に登録する。
+  すでに予約済みなので、取りこぼしの追いつき送信は「予約が1つも無いとき」に限る
+- `canSchedule: false`（Push）… 未来のタイミングは**結果に含めず次回に持ち越す**。
+  送り時が来た分だけを即時送信する。予約されていないので、
+  「後続のタイミングが残っている」ことを理由に握り潰してはいけない（24時間前が永久に出なくなる）
+
+> ⚠️ **Push は cron の実行間隔がそのまま通知の精度になる。**
+> Vercel Hobby の cron は1日1回しか回せないため、Push だけでは
+> 「3時間前」がほぼ機能しない（実測シミュレーションで発火1回・ラベルは実残り時間）。
+> 15〜30分間隔で `GET /api/cron/notify` を叩く外部トリガー
+> （cron-job.org 等の無料サービス）を併用すること。
+> エンドポイントは `CRON_SECRET` 認証で、履歴による重複防止があるため何度叩いても安全。
 
 ## 設定（NotificationSetting）のデータフロー
 
@@ -197,6 +223,7 @@ WebClass の任意のページでブックマークレット実行   ★どの�
 | `POST /api/import/webclass` | WebClass取り込み→DB upsert | session.user.id **または** 取り込みトークン |
 | `GET/POST/DELETE /api/import/token` | 自動同期用トークンの状態/発行/失効 | session.user.id |
 | `GET/PATCH /api/notifications/settings` | 通知設定の取得/更新 | session.user.id |
+| `GET/POST/DELETE /api/notifications/push` | Push購読の確認/登録/解除 | session.user.id |
 | `GET /api/cron/notify` | メール通知バッチ | CRON_SECRET |
 | `/api/auth/[...nextauth]` | NextAuth | — |
 
@@ -214,7 +241,9 @@ src/lib/server/import-token.ts       自動同期用トークンの発行・照�
 src/lib/webclass.ts                  WebClassペイロード → Assignment 変換・再検証
 src/lib/notification-store.ts        IndexedDB の通知設定/履歴
 src/lib/notification-scheduler.ts    クライアント通知（checkAndNotify）
-src/lib/server/notify.ts             メール通知の実体（cron と 同期/取り込み の両方から呼ぶ）
+src/lib/server/notify.ts             通知の実体（メール/Push、cron と 同期/取り込み の両方から呼ぶ）
+src/lib/server/push.ts               Web Push 送信（期限切れ購読の掃除も）
+src/lib/push-client.ts               ブラウザ側の購読・解除
 src/lib/server/notification-logic.ts 送信対象の算出（予約 / 取りこぼしの追いつき）
 src/lib/server/app-url.ts            公開URL（メールの絶対リンク・metadataBase）
 src/lib/debug-clear.ts               ローカル全データ削除（デバッグ用・設定画面）

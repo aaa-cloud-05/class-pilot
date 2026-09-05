@@ -1,4 +1,4 @@
-const CACHE_NAME = "classmino-v1";
+const CACHE_NAME = "classmino-v2";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -14,6 +14,30 @@ self.addEventListener("activate", (e) => {
     )
   );
   self.clients.claim();
+});
+
+// サーバーから Web Push が届いたときに通知を出す。
+// アプリを開いていなくても、ブラウザ/OS がこの SW を起こして実行する。
+self.addEventListener("push", (e) => {
+  let data = {};
+  try {
+    data = e.data ? e.data.json() : {};
+  } catch {
+    data = {};
+  }
+
+  const title = data.title || "締切が近づいています";
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      // 同じ課題の通知は置き換える（積み上がらないように）
+      tag: data.tag || "classmino",
+      renotify: true,
+      data: { url: data.url || "/" },
+    })
+  );
 });
 
 self.addEventListener("notificationclick", (e) => {

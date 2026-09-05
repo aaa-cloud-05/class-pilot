@@ -7,7 +7,7 @@ import {
   getUserAssignments,
 } from "@/lib/server/assignments";
 import { checkRateLimit } from "@/lib/server/ratelimit";
-import { notifyUserByEmail } from "@/lib/server/notify";
+import { notifyUser } from "@/lib/server/notify";
 import { after } from "next/server";
 
 /**
@@ -91,7 +91,7 @@ export async function POST() {
   if (synced) {
     after(async () => {
       try {
-        await notifyUserByEmail(userId);
+        await notifyUser(userId);
       } catch (e) {
         console.error("[SYNC] 通知の確定に失敗:", e);
       }

@@ -31,6 +31,21 @@
       「同期・取り込み時にも通知を確定させる」に変更。
       関連: `src/lib/server/notification-logic.ts` / `src/lib/server/notify.ts`
 
+## A'. Web Push を使う場合に必要なこと
+
+メール（A1〜A3）とは独立して機能する。**独自ドメインが不要**なので、
+ドメイン周りが片付く前でもここだけ先に出せる。
+
+- [ ] `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` を Vercel に設定 → 再デプロイ
+      **鍵を変えると既存の購読が全部無効になる**ので、一度決めたら変えない
+- [ ] 🔴 **15〜30分間隔の外部 cron を用意する**
+      Vercel Hobby の cron は1日1回しか回せず、**Push は予約送信ができない**ため、
+      1日1回だと「3時間前」がほぼ機能しない（シミュレーション済み）。
+      cron-job.org 等から `GET /api/cron/notify` を
+      `Authorization: Bearer <CRON_SECRET>` 付きで叩く。
+      重複防止があるので何度叩いても二重送信にはならない。
+- [ ] 実機で購読 → 通知が届くことを確認（iPhone は**ホーム画面に追加してから**）
+
 ## B. 出す直前の小物（各5〜15分・A の待ち時間にやる）
 
 - [x] `metadataBase` / OGP を設定（LINE・X で共有したときのカード）

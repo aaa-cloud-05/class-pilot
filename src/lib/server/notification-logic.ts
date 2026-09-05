@@ -55,6 +55,16 @@ interface NotifyContext {
   alreadySentKeys: Set<string>;
   now: Date;
   horizonMs: number;
+  /** 送信先のチャネル。重複防止キーに含める。 */
+  channel: "email" | "push";
+  /**
+   * そのチャネルが予約送信に対応しているか。
+   * - メール(Resend): true … 「3時間前に送って」と委譲できるので未来の分もいま登録する
+   * - Web Push:       false … 送った瞬間に届くので、**送り時が来た分しか出せない**。
+   *   まだ先のタイミングは結果に含めず次回の実行に回す
+   *   （つまり通知の時刻精度は cron の実行間隔で決まる）
+   */
+  canSchedule: boolean;
 }
 
 /** 残り時間を人が読める表記にする（追いつき送信の見出し用）。 */
@@ -100,7 +110,7 @@ export function computePendingNotifications(
     const upcoming: { timing: NotificationTiming; scheduledAt: Date }[] = [];
     const missed: NotificationTiming[] = [];
     for (const timing of timings) {
-      if (ctx.alreadySentKeys.has(`${a.id}:${timing.type}:email`)) continue;
+      if (ctx.alreadySentKeys.has(`${a.id}:${timing.type}:${ctx.channel}`)) continue;
       const atMs = dueMs - timing.minutes * 60 * 1000;
       if (atMs >= nowMs) upcoming.push({ timing, scheduledAt: new Date(atMs) });
       else missed.push(timing);
@@ -115,19 +125,30 @@ export function computePendingNotifications(
       link: a.link,
     };
 
-    for (const u of upcoming) {
-      pending.push({
-        ...base,
-        type: u.timing.type,
-        label: u.timing.label,
-        scheduledAt: u.scheduledAt,
-        send: true,
-      });
+    // 予約できるチャネルだけ、未来の分をいま登録する。
+    // できないチャネル(Push)では結果に含めない＝次回以降、送り時が来てから拾う。
+    if (ctx.canSchedule) {
+      for (const u of upcoming) {
+        pending.push({
+          ...base,
+          type: u.timing.type,
+          label: u.timing.label,
+          scheduledAt: u.scheduledAt,
+          send: true,
+        });
+      }
     }
 
-    // 取りこぼしの救済は「予約が1つも無いとき」に限り、締切に最も近い1件のみ
+    // 送り時を過ぎた分のうち、締切に最も近い1件だけを送る（残りは履歴を閉じる）。
+    //
+    // 「予約が1つも無いとき」に限るのは **予約できるチャネルだけ**。
+    // メールは未来の分を Resend に登録済みなので、ここで追加送信すると重複になる。
+    // Push は予約できず先送りしているだけなので、この条件を付けると
+    // 「後続のタイミングがまだ残っている」という理由で、いま送り時が来た通知
+    // （24時間前など）が永久に握り潰されてしまう。
     missed.sort((x, y) => x.minutes - y.minutes);
-    const rescue = upcoming.length === 0 ? missed[0] : undefined;
+    const canRescue = ctx.canSchedule ? upcoming.length === 0 : true;
+    const rescue = canRescue ? missed[0] : undefined;
     for (const timing of missed) {
       const isRescue = timing === rescue;
       pending.push({
