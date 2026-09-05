@@ -60,7 +60,9 @@ export async function POST() {
     syncError = "no_access_token";
   } else {
     try {
-      const { allWork } = await fetchAllData(session.accessToken, hiddenCourseIds);
+      const t0 = Date.now();
+      const { allWork, failed } = await fetchAllData(session.accessToken, hiddenCourseIds);
+      console.log(`[CLASSROOM] 取得 ${allWork.length}件 / ${Date.now() - t0}ms` + (failed.length ? ` / 失敗${failed.length}コース` : ""));
 
       const classroomAssignments = allWork.map(({ course, work, submission }) => ({
         ...transformAssignment(course, work, submission),

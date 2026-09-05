@@ -137,6 +137,20 @@ WebClass の任意のページでブックマークレット実行   ★どの�
 `hiddenCourses` は2か所で効く：
 - 表示: `getUserAssignments(userId, hiddenCourseIds)` が `courseId notIn hidden` で除外
 - 同期: `fetchAllData(token, hiddenCourseIds)` が非表示コースの courseWork 取得をスキップ
+  （**呼び出し回数がそのまま減る**ので、非表示は速度にも効く）
+
+### Classroom 取得の並列化
+
+`fetchAllData` は `1 + 2N` 回（N=コース数）の Google API 呼び出しを行う。
+以前は全部直列だったため、18コースで37回ぶんの往復をすべて待っていた。
+
+- コースを **5件ずつ並列**、コース内の `courseWork` と `studentSubmissions` も並列
+- **呼び出し回数は変わらない**（クォータ消費は同じ）。待ち時間だけが縮む
+- `Promise.allSettled` で**1コースの失敗が全体を巻き込まない**。保存は upsert なので、
+  取れなかったコースの課題は「更新されない」だけで消えない
+- ただし**全コース失敗は throw する**。トークン失効等の systemic な失敗を握りつぶすと、
+  中身が更新されていないのに `classroomSyncedAt` だけ新しくなり、古いデータを
+  新鮮だと偽ることになるため
 
 ## データフロー⑥ 通知
 
