@@ -20,7 +20,7 @@ const TABS: { value: Browser; label: string }[] = [
 const CODE_EXPLAIN = [
   "WebClass にログインしている状態を使って、WebClass 自身が持っている課題一覧を読み取ります。",
   "各授業から「課題名・締切・提出したかどうか・課題ページのリンク」だけを取り出します。",
-  "取り出した一覧をまとめて、Classmino の取り込みページを開いて渡します。",
+  "取り出した一覧をまとめて、UnionFetch の取り込みページを開いて渡します。",
   "送るのは課題の情報だけ。パスワードやログイン情報（Cookie）には触れません。氏名・学籍番号・点数は読み取りません。",
 ];
 
@@ -96,7 +96,7 @@ export default function WebclassGuidePage() {
           </div>
           <p className="text-[12.5px] leading-relaxed text-muted-foreground">
             WebClass にログインしているあなた自身の権限で、
-            <strong className="text-foreground">課題の名前・締切・提出したかどうかだけ</strong>を読み取って Classmino に渡します。
+            <strong className="text-foreground">課題の名前・締切・提出したかどうかだけ</strong>を読み取って UnionFetch に渡します。
             氏名・学籍番号・点数は読み取りません。パスワードやログイン情報にも<strong className="text-foreground">触れません</strong>。
             あなたの操作でだけ動き、勝手に送信することもありません。
             <br />

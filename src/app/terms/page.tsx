@@ -1,13 +1,13 @@
 import Link from "next/link";
 
 export const metadata = {
-  // ルートの title.template("%s | Classmino")が付くのでページ名だけでよい
+  // ルートの title.template("%s | UnionFetch")が付くのでページ名だけでよい
   title: "利用規約",
 };
 
 const UPDATED = "2026年7月1日";
 // Cloudflare Email Routing で個人の Gmail に転送している（受信専用）
-const CONTACT = "support@classmino.com";
+const CONTACT = "support@unionfetch.com";
 
 export default function TermsPage() {
   return (
@@ -23,7 +23,7 @@ export default function TermsPage() {
         </div>
 
         <p>
-          本規約は、個人開発アプリ Classmino（以下「本サービス」）の利用条件を定めるものです。
+          本規約は、個人開発アプリ UnionFetch（以下「本サービス」）の利用条件を定めるものです。
           本サービスを利用することで、本規約に同意したものとみなされます。
         </p>
 

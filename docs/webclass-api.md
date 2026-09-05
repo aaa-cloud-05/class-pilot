@@ -208,7 +208,7 @@ iOS Safari では Tampermonkey が動かないため、**ブックマークレ�
 
 ### なぜトークンが要るのか
 
-ユーザースクリプトは WebClass のページから Classmino へ送るのでクロスサイト送信になり、
+ユーザースクリプトは WebClass のページから UnionFetch へ送るのでクロスサイト送信になり、
 NextAuth のセッション Cookie は `SameSite=Lax` なので付かない。
 そのため専用の資格情報を配る。
 

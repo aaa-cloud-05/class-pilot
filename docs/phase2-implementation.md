@@ -130,7 +130,7 @@ Classroom取得時にWebClassや手動追加の課題も含めた全課題が返
 **WebClassインポート:**
 
 ```
-1. WebClassでブックマークレット実行 → Classminoにリダイレクト
+1. WebClassでブックマークレット実行 → UnionFetchにリダイレクト
 2. セッション解決を待機（loading → authenticated）
 3. POST /api/import/webclass → DBにスマート同期
 4. 返却された全課題でIndexedDBを完全リフレッシュ

@@ -192,7 +192,7 @@ export default function DocsHubPage() {
         </section>
 
         <p className="px-1 text-[11.5px] leading-relaxed text-muted-foreground">
-          Classmino は Google・WebClass とは無関係の非公式ツールです。課題は読み取り専用で取得し、パスワードは扱いません。
+          UnionFetch は Google・WebClass とは無関係の非公式ツールです。課題は読み取り専用で取得し、パスワードは扱いません。
         </p>
       </main>
       <NavBar />

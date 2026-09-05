@@ -18,30 +18,30 @@ export const metadata: Metadata = {
   // LINE や X で共有したときにサムネイルが出ない。
   metadataBase: new URL(APP_URL),
   title: {
-    default: "Classmino — 課題を、見逃さない。",
-    template: "%s | Classmino",
+    default: "UnionFetch — 課題を、見逃さない。",
+    template: "%s | UnionFetch",
   },
   description: DESCRIPTION,
   manifest: "/manifest.json",
-  applicationName: "Classmino",
+  applicationName: "UnionFetch",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Classmino",
+    title: "UnionFetch",
   },
   openGraph: {
     type: "website",
-    siteName: "Classmino",
-    title: "Classmino — 課題を、見逃さない。",
+    siteName: "UnionFetch",
+    title: "UnionFetch — 課題を、見逃さない。",
     description: DESCRIPTION,
     url: "/",
     locale: "ja_JP",
     // TODO: 1200x630 の OG 画像を用意したら /og.png に差し替える（デザイン改修の一部）
-    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Classmino" }],
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "UnionFetch" }],
   },
   twitter: {
     card: "summary",
-    title: "Classmino — 課題を、見逃さない。",
+    title: "UnionFetch — 課題を、見逃さない。",
     description: DESCRIPTION,
   },
 };

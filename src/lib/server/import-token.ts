@@ -6,7 +6,7 @@ import { prisma } from "@/lib/server/prisma";
  *
  * なぜセッション Cookie ではなくトークンなのか:
  * NextAuth のセッション Cookie は SameSite=Lax なので、WebClass のページから
- * Classmino へ投げるクロスサイトのリクエストには付かない。ユーザースクリプトは
+ * UnionFetch へ投げるクロスサイトのリクエストには付かない。ユーザースクリプトは
  * ブラウザのログイン状態に依存せずに書き込める必要があるため、専用の資格情報を配る。
  *
  * DB には **SHA-256 のハッシュだけ**を保存する。平文は発行時に一度だけ返す。

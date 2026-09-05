@@ -1,4 +1,4 @@
-const CACHE_NAME = "classmino-v2";
+const CACHE_NAME = "unionfetch-v2";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -33,7 +33,7 @@ self.addEventListener("push", (e) => {
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       // 同じ課題の通知は置き換える（積み上がらないように）
-      tag: data.tag || "classmino",
+      tag: data.tag || "unionfetch",
       renotify: true,
       data: { url: data.url || "/" },
     })
