@@ -30,7 +30,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: "通知が来ない",
     a: (
       <>
-        ①ブラウザの通知を許可 ②設定で通知が全体ON ③そのコースがミュートになっていないか、を確認してください。メール通知は現在<strong className="text-foreground">準備中</strong>です。
+        ①ブラウザの通知を許可 ②設定で通知が全体ON ③そのコースがミュートになっていないか、を確認してください。メール通知は<strong className="text-foreground">初期状態がOFF</strong>です。設定 → 通知 を全体ONにしたうえで、メール通知のトグルもONにしてください。
       </>
     ),
   },

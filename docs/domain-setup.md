@@ -233,3 +233,55 @@ nslookup -type=TXT _dmarc.mail.unionfetch.com
 | ログインで `redirect_uri_mismatch` | Console の URI と実際のURLが完全一致していない（`www` / 末尾スラッシュ） |
 | メール内リンクが localhost | `NEXT_PUBLIC_APP_URL` 未設定、または env 変更後に再デプロイしていない |
 | OGP が古いまま | 各SNSがOG情報をキャッシュしている。デバッガで再取得する |
+
+---
+
+## 8. 実際に登録した値（2026-09-06 時点・実測）
+
+DNS はすべて Cloudflare。**プロキシは全レコード「DNS のみ（グレー雲）」**。
+Cloudflare のダッシュボードに出る「Proxying is required for most security and performance
+features」は**自社機能の宣伝であって、この構成では従ってはいけない**（→ §2「なぜプロキシを OFF にするのか」）。
+バナーが売り込む DDoS 防御・キャッシュ・TLS は、すでに Vercel のエッジから受け取っている。
+
+| 用途 | Type | Name | 値 |
+|---|---|---|---|
+| Web (apex) | A | `unionfetch.com` | `216.198.79.65` / `64.29.17.65`（Vercel） |
+| Web (www) | CNAME | `www` | `a7cf8f13ed8d20aa.vercel-dns-017.com` → apex へリダイレクト |
+| 送信 DKIM | TXT | `resend._domainkey.mail` | `p=MIGfMA0GCSqGSIb3DQEB...` |
+| 送信 SPF | TXT | `send.mail` | `v=spf1 include:amazonses.com ~all` |
+| バウンス受信 | MX | `send.mail` | `feedback-smtp.ap-northeast-1.amazonses.com`（10） |
+| 送信ポリシー | TXT | `_dmarc.mail` | `v=DMARC1; p=none; rua=mailto:dmarc@unionfetch.com` |
+| 受信 (Email Routing) | MX | `unionfetch.com` | `route1/2/3.mx.cloudflare.net` |
+| 受信 SPF | TXT | `unionfetch.com` | `v=spf1 include:_spf.mx.cloudflare.net ~all` |
+| 受信ポリシー | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@unionfetch.com` |
+
+apex の MX/SPF は Cloudflare、`send.mail` の MX/SPF は Resend。**名前が違うので衝突しない**（→ §3）。
+
+Resend の API キーは **Permission = Sending access / Domain = `mail.unionfetch.com`** に絞ったものを
+本番用に作成した。このアプリは送信しかしないので、Full access にする理由が無い。
+
+### DMARC の注意（2026年5月に仕様が変わっている）
+
+**RFC 7489 は廃止され、DMARCbis が RFC 9989 / 9990 / 9991 として発行された**（Informational →
+標準化トラックに昇格）。実務に効く差分：
+
+- **`pct=` タグは廃止**。段階導入はテスト用の `t=` タグに置き換わった。古い記事にある
+  `pct=100` は書かなくてよい
+- `rf=` タグも廃止
+- 組織ドメインの判定が Public Suffix List → **DNS Tree Walk** に変更。
+  ただし `.com` 直下の `unionfetch.com` はどちらの方式でも結果が同じなので影響しない
+
+**`<domain>._report._dmarc.<destination>` の認可レコードは、この構成では不要。**
+RFC 9990 §5.2 が比較するのは**ドメイン文字列ではなく Organizational Domain** で、
+DMARC レコードの場所 `mail.unionfetch.com` も rua の宛先 `unionfetch.com` も
+組織ドメインは同じ `unionfetch.com` になるため、検証手順そのものが発動しない。
+必要になるのは、レポート先を**別の組織ドメイン**（dmarcian 等の解析サービス）に向けたとき。
+
+rua の宛先を `support@` ではなく **`dmarc@unionfetch.com`** にしてあるのは、
+集約レポート（各受信者が毎日送ってくる XML）が公開問い合わせ窓口を埋めないようにするため。
+
+`p=none` は「失敗しても受信拒否しないがレポートは送って」の意味。1〜2週間レポートを見て
+正規のメールが誤判定されていないと確認できてから `quarantine` に上げる。
+なお `@unionfetch.com` からは誰も送信しないので apex は将来 `p=reject` が本来の正解だが、
+Gmail の「送信者を追加」で `support@unionfetch.com` として返信する運用を入れるなら
+そのときに壊れるので、当面は `p=none` で揃える。

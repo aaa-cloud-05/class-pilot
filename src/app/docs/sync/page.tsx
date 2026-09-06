@@ -63,7 +63,7 @@ export default function SyncGuidePage() {
               • <strong className="text-foreground">未ログイン</strong>では手動追加のみ可能です（編集・削除・別端末との同期はログインが必要）。
             </li>
             <li>
-              • <strong className="text-foreground">メール通知は準備中</strong>です。いまはブラウザ通知をご利用ください。
+              • <strong className="text-foreground">メール通知は初期状態がOFF</strong>です。設定 → 通知 でONにすると、締切前にログイン中のメールアドレスへ届きます。
             </li>
             <li>
               • 「今日」の判定は<strong className="text-foreground">お使いの端末の時刻・タイムゾーン</strong>に従います。ずれる場合は端末の設定をご確認ください。

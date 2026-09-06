@@ -5,18 +5,19 @@
 | 項目 | 状態 |
 |---|---|
 | **アプリ名** | **UnionFetch**（確定・置換済み） |
-| **ドメイン** | **unionfetch.com**（取得済み・確定）。`classmino.com` は使わない |
-| **通知の仕様** | [notification-design.md](./notification-design.md) の3本立てを提案済み・**承認待ち**。現行のプリセット3種は仮 |
+| **ドメイン** | **unionfetch.com**。DNS / Vercel / Resend / Email Routing まで**設定完了**（2026-09-06） |
+| **通知の仕様** | **現行のプリセット3種のまま初回リリースする**と決定（2026-09-06）。[notification-design.md](./notification-design.md) の3本立ては未実装 |
 | Supabase | 東京(ap-northeast-1)へ移設完了（1クエリ 678ms → 53ms） |
 | WebClass 取得 | 内部 JSON API 方式。ブックマークレット＋Tampermonkey 自動同期とも動作確認済み |
 | Web Push | 実装済み・未検証（VAPID鍵は `.env.local` にある。Vercel 未設定） |
 
-### 次にやること（この順で手戻りが無い）
+### 次にやること
 
-1. **通知仕様を決める** … [notification-design.md](./notification-design.md) を読んで承認/修正。
-   現行のプリセット3種は**仮なので作り込まないこと**。
-2. **ドメイン設定** … 下の A ブロック。手順は [domain-setup.md](./domain-setup.md)
-3. リリース
+1. **A7 の実機確認** … 実際に届いたか（受信トレイか迷惑メールか）を見る。ここだけが残りのブロッカー
+2. **リリース** … 下の「リリース当日の手順」。友人3人に配って1週間
+3. **通知仕様の見直し** … 3本立て（[notification-design.md](./notification-design.md)）は
+   **友人3人テストで通知洪水を実際に観測してから**着手する。
+   18コース93課題だと `93件 × 3通` の構造なので、締切が重なる週に必ず出る
 
 ### 改名の影響で対応が要るもの
 
@@ -44,20 +45,26 @@
 
 ## A. ブロッカー（これが終わったら出す）
 
-- [ ] **A1. 独自ドメイン取得 → Vercel 接続** … 手順は [domain-setup.md](./domain-setup.md)
-- [ ] **A2. Resend でメール用サブドメイン認証（SPF/DKIM/DMARC）**
-- [ ] **A3. `RESEND_FROM` / `NEXT_PUBLIC_APP_URL` / `AUTH_URL` を本番に設定 → 再デプロイ**
-- [ ] **A4. Google OAuth のリダイレクトURI・同意画面URLを新ドメインに追加**
-- [ ] **A5. Cloudflare Email Routing で `support@unionfetch.com` を開通させる**
+- [x] **A1. 独自ドメイン取得 → Vercel 接続**（2026-09-06）… 手順は [domain-setup.md](./domain-setup.md)
+- [x] **A2. Resend でメール用サブドメイン認証（SPF/DKIM/DMARC）**（2026-09-06）
+      `mail.unionfetch.com` / リージョン `ap-northeast-1`。実測値は [domain-setup.md](./domain-setup.md) の §8
+- [x] **A3. `RESEND_FROM` / `NEXT_PUBLIC_APP_URL` / `AUTH_URL` を本番に設定 → 再デプロイ**（2026-09-06）
+      `AUTH_URL` は **Production 限定**。All Environments にするとプレビューの OAuth が壊れる。
+      `.env.local` には**書かない**（ローカルのログインとリンクが本番を向く）
+- [x] **A4. Google OAuth のリダイレクトURI・同意画面URLを新ドメインに追加**（2026-09-06）
+- [x] **A5. Cloudflare Email Routing で `support@unionfetch.com` を開通させる**（2026-09-06）
       `/privacy` と `/terms` の連絡先は既にこのアドレスに差し替え済み。
       **開通前にデプロイすると、公開している問い合わせ窓口が死ぬ。**
-- [ ] **A6. 「メール通知は準備中」の記述を消す**
-      `src/app/docs/help/page.tsx` と `src/app/docs/sync/page.tsx` の2箇所。
+- [x] **A6. 「メール通知は準備中」の記述を消す**（2026-09-06）
+      `src/app/docs/help/page.tsx` と `src/app/docs/sync/page.tsx` の2箇所を
+      「初期状態が OFF なので設定で ON にする」という**行動を促す文**に差し替えた。
       `emailEnabled` の初期値は false なので、消し忘れると
       「案内を読んだユーザーが誰もトグルを ON にせず、くさびが一度も発火しない」ことになる。
       `/docs` のウィザード（ステップ3「メール通知をオン」）とも矛盾している。
 - [ ] **A7. 自分以外のアドレスに通知メールが届くことを実機で確認**
-      ← A1〜A6 が本当に効いたかの唯一の合否判定
+      ← A1〜A6 が本当に効いたかの唯一の合否判定。
+      2026-09-06 に `noreply@mail.unionfetch.com` から3通（Gmail 2 / 大学メール 1）を送信し、
+      Resend は3通とも id を返した。**受信トレイに入ったかの目視確認が未了**
 - [x] **A8. 通知の取りこぼし修正**（2026-09-04 実装）
       cron が1日1回のため、予約時刻を過ぎた通知が全部捨てられていた。
       「予約できるタイミングが無ければ締切に最も近い1件を即時送信」＋
