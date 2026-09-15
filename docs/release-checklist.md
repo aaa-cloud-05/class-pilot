@@ -1,19 +1,22 @@
 # UnionFetch — リリースチェックリスト
 
-## 現在地（2026-09-06 時点）
+## 現在地（2026-09-15 時点）
 
 | 項目 | 状態 |
 |---|---|
+| **ブロッカー（A）** | **すべて完了**（2026-09-15 に A7 の受信確認が済んだ）。いつでもリリースできる |
 | **アプリ名** | **UnionFetch**（確定・置換済み） |
 | **ドメイン** | **unionfetch.com**。DNS / Vercel / Resend / Email Routing まで**設定完了**（2026-09-06） |
+| **メール通知** | `noreply@mail.unionfetch.com` から Gmail・大学メールとも**受信トレイに届く**ことを確認（2026-09-15） |
 | **通知の仕様** | **現行のプリセット3種のまま初回リリースする**と決定（2026-09-06）。[notification-design.md](./notification-design.md) の3本立ては未実装 |
 | Supabase | 東京(ap-northeast-1)へ移設完了（1クエリ 678ms → 53ms） |
 | WebClass 取得 | 内部 JSON API 方式。ブックマークレット＋Tampermonkey 自動同期とも動作確認済み |
 | Web Push | 実装済み・未検証（VAPID鍵は `.env.local` にある。Vercel 未設定） |
+| OG 画像 / アイコン | 新しいマーク（カラフルな U）と OG 画像を取り込み済み（2026-09-15）。未コミット・表示確認待ち |
 
 ### 次にやること
 
-1. **A7 の実機確認** … 実際に届いたか（受信トレイか迷惑メールか）を見る。ここだけが残りのブロッカー
+1. **B の残り**（任意・リリースは止めない）… OG 画像とアイコンの表示確認、Vercel Analytics、Upstash の本番 env 確認
 2. **リリース** … 下の「リリース当日の手順」。友人3人に配って1週間
 3. **通知仕様の見直し** … 3本立て（[notification-design.md](./notification-design.md)）は
    **友人3人テストで通知洪水を実際に観測してから**着手する。
@@ -21,20 +24,19 @@
 
 ### 改名の影響で対応が要るもの
 
-- **取り込みトークンを再発行して Tampermonkey に貼り直す。**
+- [x] **取り込みトークンを再発行して Tampermonkey に貼り直す**（2026-09-15 完了）。
   ユーザースクリプトの保存キーが `classmino:token` → `unionfetch:token` に変わったため、
   既存の設定は読まれない（設定 → WebClass 自動同期 で再発行）
 - Service Worker の `CACHE_NAME` が `unionfetch-v2` に変わるので、
   既存ユーザーの古いキャッシュは activate 時に自動削除される（対応不要）
-- `/privacy` `/terms` の連絡先は `support@unionfetch.com` に更新済み。
-  **A5 の Email Routing を開通させるまでこのアドレスは死んでいる。**
-  開通前に本番公開しないこと
+- `/privacy` `/terms` の連絡先は `support@unionfetch.com`。
+  A5 で Email Routing を開通済み（2026-09-06）なので、このアドレスは生きている
 
 ---
 
 ## リリースまでの順序
 
-最終更新: 2026-09-04
+最終更新: 2026-09-15
 
 このファイルの目的は**「出さない理由」を減らすこと**。
 やれることは無限にあるが、**リリースを止めてよい理由は下の「A. ブロッカー」だけ**と決める。
@@ -61,10 +63,10 @@
       `emailEnabled` の初期値は false なので、消し忘れると
       「案内を読んだユーザーが誰もトグルを ON にせず、くさびが一度も発火しない」ことになる。
       `/docs` のウィザード（ステップ3「メール通知をオン」）とも矛盾している。
-- [ ] **A7. 自分以外のアドレスに通知メールが届くことを実機で確認**
+- [x] **A7. 自分以外のアドレスに通知メールが届くことを実機で確認**（2026-09-15）
       ← A1〜A6 が本当に効いたかの唯一の合否判定。
       2026-09-06 に `noreply@mail.unionfetch.com` から3通（Gmail 2 / 大学メール 1）を送信し、
-      Resend は3通とも id を返した。**受信トレイに入ったかの目視確認が未了**
+      **3通とも受信トレイに届いた**（迷惑メール判定なし）ことを 2026-09-15 に目視で確認
 - [x] **A8. 通知の取りこぼし修正**（2026-09-04 実装）
       cron が1日1回のため、予約時刻を過ぎた通知が全部捨てられていた。
       「予約できるタイミングが無ければ締切に最も近い1件を即時送信」＋
@@ -100,7 +102,15 @@
 - [x] `.env.example` を実態に合わせる
 - [ ] **Vercel Analytics を入れる**（1行）。今は計測ゼロで、出した後に
       北極星指標（起動回数・3h救済数）を後追いで測れない
-- [ ] 1200×630 の OG 画像を `public/og.png` に置いて `layout.tsx` の TODO を差し替え
+- [x] OG 画像を `public/og.png`（1672×941）に置き、`layout.tsx` の OG / X カードを差し替え（2026-09-15）
+      `twitter.card` は `summary_large_image`。16:9 なので X（2:1）では上下が少し切れる。
+      **Google Classroom のロゴが入っている**点は backlog の「商標/ロゴ」を参照
+- [x] アイコンを UnionFetch のマーク（カラフルな U）に差し替え（2026-09-15）
+      元画像は `public/icons/icon-master.png`（1254px・白背景）。白背景を抜いた `icon-master-transparent.png` から
+      `icon-192.png` / `icon-512.png`（manifest・通知）と `src/app/favicon.ico`（16/32/48px）を書き出した。
+      `src/app/apple-icon.png`（180px）だけは**白背景のまま**（iOS は透過を黒で塗るため）。
+      ※ favicon.ico に埋め込む PNG は **RGBA 必須**（RGB だと Next.js が「The PNG is not in RGBA format」で落ちる）
+      ダークテーマ版は `public/icons/icon-dark-master.png` に置いてあるだけで**まだ使っていない**
 - [x] `DATABASE_URL` はプーラー（6543・pgbouncer=true）を指している（確認済み）
 - [x] 🔴 **Supabase のリージョンを東京(ap-northeast-1)へ移した**（2026-09-05）
       `ap-south-1`(ムンバイ) から移設。**1クエリ 678ms → 53ms（13倍）**、接続確立も 1765ms → 254ms。
