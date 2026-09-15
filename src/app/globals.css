@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+/* UI リデザインのモック用トークン（[data-ui] の中だけで効く）。本番化したら消す */
+@import './mock/ui-tokens.css';
 
 @custom-variant dark (&:is(.dark *));
 
