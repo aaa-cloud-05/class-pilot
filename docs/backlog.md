@@ -1,12 +1,12 @@
 # UnionFetch — バックログ（未実装機能・セキュリティ・法務・使用量）
 
-最終更新: 2026-09-04 ／ **実装の現況に同期済み**。
+最終更新: 2026-09-15 ／ **実装の現況に同期済み**。
 リリースまでの順序は [release-checklist.md](./release-checklist.md) が正。ここは在庫一覧。
 
-## 公開までの外部ブロッカー（コード以外・機能が成立しない）
-- [ ] **A1. Resend 独自ドメイン認証**：現状 `onboarding@resend.dev` は所有者本人にしか届かない＝メール通知が実ユーザーに未成立。**コード側は対応済み**（`RESEND_FROM` を設定すれば切り替わる／`RESEND_REPLY_TO`・配信停止導線も実装済み）。あとは DNS(SPF/DKIM/DMARC) の設定のみ。手順は [domain-setup.md](./domain-setup.md)。
+## 公開までの外部ブロッカー（コード以外）— すべて解消済み
+- [x] **A1. Resend 独自ドメイン認証**（2026-09-06）：`mail.unionfetch.com` で SPF/DKIM/DMARC を設定し、`RESEND_FROM` を本番に反映。`onboarding@resend.dev`（所有者本人にしか届かない）からは切り替え済み。2026-09-15 に Gmail・大学メールとも**受信トレイに届くことを確認**（release-checklist の A7）。手順と実測値は [domain-setup.md](./domain-setup.md)。
 - [x] **A2. Google OAuth 本番公開**：完了済み（2026-07 確認）。機密/制限付きスコープを使っていないため**審査不要・警告画面も出ない**。Testing ではないので refresh_token 7日失効も無い。
-  - 残タスク：同意画面のブランディングに ホームページ/`/privacy`/`/terms` の URL 登録（ドメイン取得後）。
+  - 同意画面のブランディング（ホームページ/`/privacy`/`/terms` の URL）は新ドメインで登録済み（2026-09-06）。
   - 注意：コードは `classroom.*.readonly`（最小権限）。Console 側に読み書きスコープが入っている場合は **Console を `.readonly` に合わせる**（コードを広げない）。
 
 ## 法務・ポジショニング（非公式・第三者製品）
@@ -14,6 +14,7 @@
 - [x] 🟠 **成績の非保持**：Classroom の `assignedGrade`/`maxPoints`、WebClass の最高点はいずれも**取得も保存もしていない**（`transform.ts` / `webclass.ts` で除外）。プライバシーポリシーの記載と実装が一致していることを確認済み。
   - 残：`Assignment` テーブルに未使用の `grade` / `maxPoints` カラムだけが残っている。混乱の元なので、いずれ削除してよい。
 - [ ] 🟠 商標/ロゴ：公式に見える装飾は避ける。「Sign in with Google」は Google ブランドガイド順守。アプリ名 "UnionFetch" の商標衝突を一応確認。
+  - OG 画像（`public/og.png`）に **Google Classroom のロゴアイコン**と WebClass のロゴ風の文字が入っている。非提携の注記はあるが、Google は製品ロゴの無断使用を認めていないので、広く配る前に**サービス名の文字だけに差し替える**のが安全。
 - [ ] 🟠 WebClass 規程の「定められた目的以外の利用」が唯一のやわらかい論点。CSV取込の方が更に安全。多数配布前に情報基盤へ一報が無難。
 
 ## コア機能

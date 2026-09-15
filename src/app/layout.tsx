@@ -36,13 +36,13 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/",
     locale: "ja_JP",
-    // TODO: 1200x630 の OG 画像を用意したら /og.png に差し替える（デザイン改修の一部）
-    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "UnionFetch" }],
+    images: [{ url: "/og.png", width: 1672, height: 941, alt: "UnionFetch — 課題を、見逃さない。" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "UnionFetch — 課題を、見逃さない。",
     description: DESCRIPTION,
+    images: ["/og.png"],
   },
 };
 
