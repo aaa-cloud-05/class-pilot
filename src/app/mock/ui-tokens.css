@@ -28,9 +28,10 @@
   --color-ok-soft: var(--ui-ok-soft);
   --color-scrim: var(--ui-scrim);
 
-  --radius-control: 12px;
-  --radius-card: 16px;
-  --radius-sheet: 24px;
+  /* v2（mock-v2）が上書きできるよう変数経由にする。既定値は v1 のまま */
+  --radius-control: var(--ui-radius-control, 12px);
+  --radius-card: var(--ui-radius-card, 16px);
+  --radius-sheet: var(--ui-radius-sheet, 24px);
 
   --shadow-card: var(--ui-shadow-card);
   --shadow-float: var(--ui-shadow-float);

@@ -3,6 +3,7 @@
 @import 'shadcn/tailwind.css';
 /* UI リデザインのモック用トークン（[data-ui] の中だけで効く）。本番化したら消す */
 @import './mock/ui-tokens.css';
+@import './mock-v2/ui-tokens.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -55,12 +56,11 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --font-heading: var(--font-geist-sans), 'Geist Fallback', ui-sans-serif, system-ui;
 }
 
 :root {
   color-scheme: light;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -99,6 +99,8 @@
   --block-strong: oklch(0.32 0.01 255);
   --track: oklch(0.94 0.004 250);
   --accent-blue: oklch(0.62 0.18 253);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 }
 
 .dark {
@@ -223,5 +225,8 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
