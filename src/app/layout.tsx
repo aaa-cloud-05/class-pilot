@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { SessionProvider } from "next-auth/react";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { NotificationScheduler } from "@/components/NotificationScheduler";
@@ -8,6 +8,8 @@ import { getAppUrl } from "@/lib/server/app-url";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+// ヘッダーのワードマーク専用（OG 画像のロゴ書体に寄せる）。本文には使わないので太さは1つだけ読む。
+const brandFont = Plus_Jakarta_Sans({ subsets: ["latin"], weight: "700", variable: "--font-jakarta" });
 
 const APP_URL = getAppUrl();
 const DESCRIPTION =
@@ -58,7 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`light h-full antialiased ${geistSans.variable} ${geistMono.variable}`}
+      className={`light h-full antialiased ${geistSans.variable} ${geistMono.variable} ${brandFont.variable}`}
     >
       <body className="min-h-full flex flex-col font-sans antialiased">
         <ServiceWorkerRegistrar />
