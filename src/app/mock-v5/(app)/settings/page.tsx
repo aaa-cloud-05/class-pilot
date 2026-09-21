@@ -115,9 +115,9 @@ export default function MockSettingsPage() {
           </section>
 
           <ListGroup title="ヘルプ">
-            <RowLink href="/mock-v5/help/screen" icon={Eye} label="画面の見かた" />
-            <RowLink href="/mock-v5/help/sync" icon={RefreshCw} label="同期のしくみ" />
-            <RowLink href="/mock-v5/help/safety" icon={Shield} label="安全性とよくある質問" />
+            <RowLink href="/mock-v5/settings/help/screen" icon={Eye} label="画面の見かた" />
+            <RowLink href="/mock-v5/settings/help/sync" icon={RefreshCw} label="同期のしくみ" />
+            <RowLink href="/mock-v5/settings/help/safety" icon={Shield} label="安全性とよくある質問" />
           </ListGroup>
 
           <ListGroup

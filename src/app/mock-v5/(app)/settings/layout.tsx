@@ -10,7 +10,7 @@ const NAV: { href: string; label: string; icon: typeof Bell; exact?: boolean; ma
   { href: "/mock-v5/settings/notifications", label: "通知", icon: Bell },
   { href: "/mock-v5/settings/courses", label: "コース", icon: Layers },
   { href: "/mock-v5/settings/setup", label: "セットアップ", icon: Plug },
-  { href: "/mock-v5/help/screen", label: "ヘルプ", icon: BookOpen, match: "/mock-v5/help" },
+  { href: "/mock-v5/settings/help/screen", label: "ヘルプ", icon: BookOpen, match: "/mock-v5/settings/help" },
 ]
 
 /** PC は左に設定の項目一覧を固定する2ペイン。スマホは中身だけ */

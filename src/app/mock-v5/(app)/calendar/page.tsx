@@ -1,13 +1,15 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { addMonths, addWeeks, format, isSameDay, isSameMonth, isSameWeek, startOfMonth } from "date-fns"
+import { addMonths, addWeeks, format, isSameDay, isSameMonth, isSameWeek, startOfMonth, startOfWeek } from "date-fns"
 import { ja } from "date-fns/locale"
 import { CalendarX2, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { AssignmentDetail, AssignmentList, AssignmentSheet } from "../../_components/assignment"
 import { itemsOn, MonthGrid, WeekColumns, WeekStrip, weekRangeLabel } from "../../_components/calendar-parts"
+import { Appear } from "../../_components/motion"
 import { DESKTOP_QUERY, useMediaQuery, useMock } from "../../_components/provider"
 import { MobileHeader, PageBody } from "../../_components/shell"
+import { StatusBar } from "../../_components/status-bar"
 import { Button, Card, IconButton, SectionHeader, Segmented } from "../../_components/ui"
 
 type Mode = "week" | "month"
@@ -39,6 +41,9 @@ export default function MockCalendarPage() {
     [assignments, cursor, mode],
   )
   const periodDone = periodItems.filter((a) => a.status === "submitted").length
+  const periodOverdue = periodItems.filter((a) => a.status !== "submitted" && a.due && a.due < now).length
+  // 期間が変わったら帯を作り直して、もう一度伸びるようにする
+  const periodKey = mode === "week" ? `w${format(startOfWeek(cursor, { weekStartsOn: 1 }), "yyyy-MM-dd")}` : `m${format(cursor, "yyyy-MM")}`
   const dayItems = itemsOn(selectedDay, assignments)
   const label = mode === "week" ? weekRangeLabel(cursor) : format(startOfMonth(cursor), "yyyy年 M月")
   const isCurrent = mode === "week" ? isSameWeek(cursor, now, { weekStartsOn: 1 }) : isSameMonth(cursor, now)
@@ -63,25 +68,24 @@ export default function MockCalendarPage() {
     </div>
   )
 
+  // ホームの今週と同じ帯。状態ごとの色でこの期間を全部ぶん埋める
   const progress = (
-    <div className="flex items-center gap-3 px-1">
-      <p className="shrink-0 text-[14px] font-semibold text-muted-foreground">
-        {mode === "week" ? "この週" : "この月"}{" "}
-        <span className="tabular-nums text-foreground">
-          {periodDone} / {periodItems.length}
-        </span>{" "}
-        提出済み
+    <div className="px-1">
+      <StatusBar key={periodKey} items={periodItems} now={now} />
+      <p className="mt-2 flex items-center justify-between text-[13px] text-muted-foreground">
+        <span className="tabular-nums">
+          {mode === "week" ? "この週" : "この月"} 提出済み {periodDone} / {periodItems.length}
+        </span>
+        {periodOverdue > 0 && (
+          <span className="font-medium text-destructive tabular-nums">期限切れ {periodOverdue}</span>
+        )}
       </p>
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-primary transition-[width] duration-500"
-          style={{ width: `${periodItems.length ? (periodDone / periodItems.length) * 100 : 0}%` }}
-        />
-      </div>
     </div>
   )
 
+  // 日付を選び直すたびに、その日の課題が一拍遅れて現れる
   const dayList = (
+    <Appear key={format(selectedDay, "yyyy-MM-dd")} delay={0.04}>
     <section aria-labelledby="day-title">
       <SectionHeader
         id="day-title"
@@ -97,6 +101,7 @@ export default function MockCalendarPage() {
         </Card>
       )}
     </section>
+    </Appear>
   )
 
   return (

@@ -1,7 +1,7 @@
 "use client"
 
-import { Article, Faq } from "../../../_components/article"
-import { Card } from "../../../_components/ui"
+import { Article, Faq } from "../../../../_components/article"
+import { Card } from "../../../../_components/ui"
 
 export default function SyncGuidePage() {
   return (

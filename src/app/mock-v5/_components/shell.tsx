@@ -204,7 +204,7 @@ export function SyncSheet() {
 
         <p className="px-1 pt-1 text-[13px] leading-relaxed text-muted-foreground">
           WebClass は、WebClass を開いた状態でブックマークレットを押すと取り込まれます（PC は自動同期も使えます）。{" "}
-          <Link href="/mock-v5/help/sync" onClick={close} className="font-medium text-primary hover:underline">
+          <Link href="/mock-v5/settings/help/sync" onClick={close} className="font-medium text-primary hover:underline">
             同期のしくみ
           </Link>
         </p>
@@ -324,7 +324,7 @@ export function SetupCard({ dismissible = true }: { dismissible?: boolean }) {
 const TABS = [
   { href: "/mock-v5/home", label: "ホーム", icon: House, match: ["/mock-v5/home", "/mock-v5/notifications"] },
   { href: "/mock-v5/calendar", label: "カレンダー", icon: CalendarDays, match: ["/mock-v5/calendar"] },
-  { href: "/mock-v5/settings", label: "設定", icon: Settings, match: ["/mock-v5/settings", "/mock-v5/help"] },
+  { href: "/mock-v5/settings", label: "設定", icon: Settings, match: ["/mock-v5/settings"] },
 ]
 
 function useActiveTab() {
@@ -414,7 +414,7 @@ function Sidebar() {
     { href: "/mock-v5/home", label: "ホーム", icon: House, match: ["/mock-v5/home"] },
     { href: "/mock-v5/calendar", label: "カレンダー", icon: CalendarDays, match: ["/mock-v5/calendar"] },
     { href: "/mock-v5/notifications", label: "通知", icon: Bell, match: ["/mock-v5/notifications"], badge: unread },
-    { href: "/mock-v5/settings", label: "設定", icon: Settings, match: ["/mock-v5/settings", "/mock-v5/help"] },
+    { href: "/mock-v5/settings", label: "設定", icon: Settings, match: ["/mock-v5/settings"] },
   ]
 
   return (

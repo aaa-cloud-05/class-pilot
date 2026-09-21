@@ -53,10 +53,10 @@
   --ui-signal: var(--primary);
   --ui-danger: var(--destructive);
   --ui-danger-soft: #fbedec;
-  --ui-warn: #96620a;
-  --ui-warn-soft: #fbf3e6;
-  /* グラフや点の塗りに使う黄色。ライトでもダークと同じ明るさにする */
+  /* 黄色は1色だけ。グラフ・ドット・「あと○時間」の文字まで同じ色にする（ダークと同値） */
   --ui-warn-fill: #e3b169;
+  --ui-warn: var(--ui-warn-fill);
+  --ui-warn-soft: #fbf3e6;
   --ui-ok: #157a45;
   --ui-ok-soft: #ecf6f0;
   --ui-scrim: rgb(12 13 14 / 0.32);

@@ -5,16 +5,13 @@ import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileHeader, PageBody } from "./shell"
 
-/** ガイド記事の共通レイアウト（読みやすい文字サイズ・行間） */
+/** ヘルプ記事の共通レイアウト。設定のサブページ（セットアップ・通知など）と同じ骨格にする */
 export function Article({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
   return (
     <>
       <MobileHeader variant="back" title={title} backHref="/mock-v5/settings" />
-      <PageBody desktopBack={{ href: "/mock-v5/settings", label: "設定" }}>
-        <header className="px-1 pb-5 pt-2 lg:pt-0">
-          <h1 className="text-[22px] font-bold leading-snug tracking-[-0.02em] lg:text-[26px]">{title}</h1>
-          {lead && <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{lead}</p>}
-        </header>
+      <PageBody desktopTitle={title}>
+        {lead && <p className="px-1 pb-4 pt-1 text-[15px] leading-relaxed text-muted-foreground lg:-mt-4 lg:pt-0">{lead}</p>}
         <div className="space-y-8">{children}</div>
       </PageBody>
     </>

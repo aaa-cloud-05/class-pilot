@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Article, Faq } from "../../../_components/article"
-import { Card } from "../../../_components/ui"
+import { Article, Faq } from "../../../../_components/article"
+import { Card } from "../../../../_components/ui"
 
 export default function SafetyGuidePage() {
   return (

@@ -4,9 +4,9 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform, type T
 import { useEffect } from "react"
 
 /** 動きの基準値。ここ以外でバネの数値を書かない */
-export const SPRING: Transition = { type: "spring", stiffness: 420, damping: 34, mass: 0.9 }
-export const SPRING_SOFT: Transition = { type: "spring", stiffness: 260, damping: 30 }
-export const EASE_OUT: Transition = { duration: 0.45, ease: [0.16, 1, 0.3, 1] }
+export const SPRING: Transition = { type: "spring", stiffness: 330, damping: 33, mass: 0.95 }
+export const SPRING_SOFT: Transition = { type: "spring", stiffness: 180, damping: 26 }
+export const EASE_OUT: Transition = { duration: 0.65, ease: [0.16, 1, 0.3, 1] }
 
 /** 下から少し上がって現れる。画面を開いたときの順番付けに使う */
 export function Appear({
@@ -43,7 +43,7 @@ export function CountUp({ value, className }: { value: number; className?: strin
       mv.set(value)
       return
     }
-    const controls = animate(mv, value, { duration: 0.7, ease: [0.16, 1, 0.3, 1] })
+    const controls = animate(mv, value, { duration: 1, ease: [0.16, 1, 0.3, 1] })
     return () => controls.stop()
   }, [value, mv, reduce])
 

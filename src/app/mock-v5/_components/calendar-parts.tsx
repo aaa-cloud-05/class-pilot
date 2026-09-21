@@ -12,6 +12,7 @@ import {
   startOfWeek,
 } from "date-fns"
 import { ja } from "date-fns/locale"
+import { motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import type { MockAssignment } from "../_lib/data"
 
@@ -66,11 +67,22 @@ export function weekRangeLabel(anchor: Date) {
     : `${format(start, "M月d日")}〜${format(end, "M月d日")}`
 }
 
-function Dots({ items, now }: { items: MockAssignment[]; now: Date }) {
+/** 課題は少し遅れて順に現れる。日数が多いので遅延は頭打ちにする */
+function itemDelay(dayIndex: number, itemIndex: number) {
+  return Math.min(0.18 + dayIndex * 0.012, 0.42) + itemIndex * 0.05
+}
+
+function Dots({ items, now, dayIndex = 0 }: { items: MockAssignment[]; now: Date; dayIndex?: number }) {
   return (
     <span className="flex h-1.5 items-center justify-center gap-[3px]" aria-hidden>
-      {items.slice(0, 3).map((a) => (
-        <span key={a.id} className={cn("h-1.5 w-1.5 rounded-full", DOT_BG[dotTone(a, now)])} />
+      {items.slice(0, 3).map((a, i) => (
+        <motion.span
+          key={a.id}
+          className={cn("h-1.5 w-1.5 rounded-full", DOT_BG[dotTone(a, now)])}
+          initial={{ opacity: 0, scale: 0.4 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: itemDelay(dayIndex, i), ease: [0.16, 1, 0.3, 1] }}
+        />
       ))}
       {items.length > 3 && <span className="text-[10px] font-bold leading-none text-muted-foreground">+</span>}
     </span>
@@ -115,7 +127,7 @@ export function WeekStrip({
             >
               {format(day, "d")}
             </span>
-            <Dots items={items} now={now} />
+            <Dots items={items} now={now} dayIndex={i} />
           </button>
         )
       })}
@@ -156,7 +168,7 @@ export function MonthGrid({
         ))}
       </div>
       <div className={cn("grid grid-cols-7", !compact && "gap-px overflow-hidden rounded-control bg-border")}>
-        {days.map((day) => {
+        {days.map((day, dayIndex) => {
           const items = itemsOn(day, list)
           const inMonth = isSameMonth(day, month)
           const isSel = isSameDay(day, selected)
@@ -184,7 +196,7 @@ export function MonthGrid({
                 >
                   {format(day, "d")}
                 </span>
-                <Dots items={items} now={now} />
+                <Dots items={items} now={now} dayIndex={dayIndex} />
               </button>
             )
           }
@@ -215,11 +227,14 @@ export function MonthGrid({
                 </span>
               </button>
               <div className="space-y-1">
-                {items.slice(0, 3).map((a) => (
-                  <button
+                {items.slice(0, 3).map((a, i) => (
+                  <motion.button
                     key={a.id}
                     type="button"
                     onClick={() => (onOpen ? onOpen(a) : onSelect(day))}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.55, delay: itemDelay(dayIndex, i), ease: [0.16, 1, 0.3, 1] }}
                     className={cn(
                       "flex w-full items-center gap-1.5 rounded-[6px] px-1.5 py-0.5 text-left text-[12px] font-medium outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring",
                       CHIP_TEXT[dotTone(a, now)],
@@ -229,16 +244,19 @@ export function MonthGrid({
                     <span className="truncate">
                       <span className="tabular-nums opacity-80">{format(a.due!, "HH:mm")}</span> {a.title}
                     </span>
-                  </button>
+                  </motion.button>
                 ))}
                 {items.length > 3 && (
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => onSelect(day)}
-                    className="px-1.5 text-[12px] font-semibold text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.55, delay: itemDelay(dayIndex, 3), ease: [0.16, 1, 0.3, 1] }}
+                    className="px-1.5 text-left text-[12px] font-semibold text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     ほか{items.length - 3}件
-                  </button>
+                  </motion.button>
                 )}
               </div>
             </div>
@@ -293,11 +311,14 @@ export function WeekColumns({
               </span>
             </button>
             <div className="space-y-1.5">
-              {items.map((a) => (
-                <button
+              {items.map((a, k) => (
+                <motion.button
                   key={a.id}
                   type="button"
                   onClick={() => onOpen(a)}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, delay: itemDelay(i * 3, k), ease: [0.16, 1, 0.3, 1] }}
                   className={cn(
                     "block w-full rounded-[8px] px-2 py-1.5 text-left outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring",
                     CHIP_TEXT[dotTone(a, now)],
@@ -308,7 +329,7 @@ export function WeekColumns({
                     <span className="text-[12px] font-semibold tabular-nums opacity-80">{format(a.due!, "HH:mm")}</span>
                   </span>
                   <span className="mt-0.5 line-clamp-2 text-[13px] font-medium leading-snug">{a.title}</span>
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>

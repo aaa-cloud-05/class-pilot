@@ -1,8 +1,8 @@
 "use client"
 
 import { Check, Minus } from "lucide-react"
-import { Article, Faq } from "../../../_components/article"
-import { Card } from "../../../_components/ui"
+import { Article, Faq } from "../../../../_components/article"
+import { Card } from "../../../../_components/ui"
 
 const MARKS = [
   { mark: <span className="h-5 w-5 rounded-full border-2 border-input" />, label: "未提出", desc: "タップすると提出済みになります" },
@@ -80,7 +80,8 @@ export default function ScreenGuidePage() {
         </Faq>
 
         <Faq q="リストの並び">
-          直近の未提出・今日・明日・今週・期限なしの順です。来週以降はカレンダーで確認できます。
+          「最近」は 直近の未提出・今日・明日・今週・期限なしの未提出 の順です。来週以降はカレンダーで確認できます。
+          「すべて」に切り替えると、提出済みも含めて表示します。
         </Faq>
       </Card>
     </Article>

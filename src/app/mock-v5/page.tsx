@@ -26,7 +26,7 @@ const SCREENS: { group: string; items: { href: string; title: string; desc: stri
       { href: "/mock-v5/settings/notifications", title: "通知の設定", desc: "全体オン/オフ・プッシュ・メール・タイミング・ミュート中の課題" },
       { href: "/mock-v5/settings/courses", title: "コース", desc: "コースごとの通知と表示" },
       { href: "/mock-v5/settings/setup", title: "セットアップ", desc: "Classroom・WebClass・通知を1ページで順に設定" },
-      { href: "/mock-v5/help/screen", title: "ヘルプ（3画面）", desc: "画面の見かた / 同期のしくみ / 安全性とよくある質問" },
+      { href: "/mock-v5/settings/help/screen", title: "ヘルプ（3画面）", desc: "画面の見かた / 同期のしくみ / 安全性とよくある質問" },
     ],
   },
   {

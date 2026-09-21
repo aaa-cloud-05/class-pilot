@@ -92,7 +92,7 @@ export default function MockHomePage() {
         description="新しい課題が届いたら、ここと通知でお知らせします。"
         action={
           <Button variant="secondary" onClick={() => setView("all")}>
-            提出済みも表示
+            すべてを表示
           </Button>
         }
       />
@@ -104,7 +104,7 @@ export default function MockHomePage() {
           <section aria-labelledby={`group-${g.key}`}>
             <SectionHeader
               id={`group-${g.key}`}
-              title={GROUP_LABEL[g.key]}
+              title={g.key === "noDue" && view === "open" ? "期限なしの未提出" : GROUP_LABEL[g.key]}
               count={g.items.length}
               tone={g.key === "recent" ? "danger" : undefined}
             />
@@ -151,7 +151,7 @@ export default function MockHomePage() {
                 onChange={setView}
                 className="flex-1 sm:max-w-[13rem]"
                 options={[
-                  { value: "open", label: "未提出" },
+                  { value: "open", label: "最近" },
                   { value: "all", label: "すべて" },
                 ]}
               />
