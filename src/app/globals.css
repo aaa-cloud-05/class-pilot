@@ -5,6 +5,7 @@
 @import './mock/ui-tokens.css';
 @import './mock-v2/ui-tokens.css';
 @import './mock-v3/ui-tokens.css';
+@import './mock-v4/ui-tokens.css';
 
 @custom-variant dark (&:is(.dark *));
 
