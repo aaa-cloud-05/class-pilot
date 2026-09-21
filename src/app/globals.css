@@ -4,6 +4,7 @@
 /* UI リデザインのモック用トークン（[data-ui] の中だけで効く）。本番化したら消す */
 @import './mock/ui-tokens.css';
 @import './mock-v2/ui-tokens.css';
+@import './mock-v3/ui-tokens.css';
 
 @custom-variant dark (&:is(.dark *));
 

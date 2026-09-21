@@ -5,6 +5,8 @@
 Google Classroom + WebClass の課題管理 PWA。本ドキュメントは**データの保存場所と流れ**を中心に
 現行構成をまとめる。設計の経緯は [phase-plan.md](./phase-plan.md) / [auth-decision-log.md](./auth-decision-log.md) を参照。
 
+全体構成図は [architecture.drawio](./architecture.drawio)（draw.io / diagrams.net で開く）。
+
 ## 技術スタック
 
 - Next.js 16 (App Router) + TypeScript + Tailwind CSS / Vercel

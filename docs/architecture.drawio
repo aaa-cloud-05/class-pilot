@@ -1,0 +1,403 @@
+<mxfile host="app.diagrams.net" modified="2026-09-21T00:00:00.000Z" agent="unionfetch-arch" version="24.0.0" type="device">
+  <diagram id="unionfetch-architecture" name="UnionFetch Architecture">
+    <mxGraphModel dx="1600" dy="1200" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="frame" value="" style="rounded=1;arcSize=1;fillColor=none;strokeColor=#9EC3E6;strokeWidth=2;html=1;" vertex="1" parent="1">
+          <mxGeometry x="10" y="20" width="1500" height="1490" as="geometry" />
+        </mxCell>
+        <mxCell id="title" value="<b>&lt;&lt;UnionFetch&gt;&gt;</b><br><b>Architecture Diagram</b><br>Version 1.0<br>As of 2026/09/21" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EAF2FB;strokeColor=#4A90D9;strokeWidth=2;fontSize=13;fontColor=#1B3A5C;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="90" y="42" width="1330" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="cBrowser" value="ユーザーの端末（ブラウザ / インストール型 PWA）" style="rounded=1;arcSize=2;fillColor=none;strokeColor=#5B7C99;strokeWidth=2;html=1;verticalAlign=top;align=left;spacingLeft=44;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#31506B;" vertex="1" parent="1">
+          <mxGeometry x="60" y="210" width="350" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="cVercel" value="Vercel（Next.js 16 App Router / Edge + Serverless Functions）" style="rounded=1;arcSize=2;fillColor=none;strokeColor=#111111;strokeWidth=2;html=1;verticalAlign=top;align=left;spacingLeft=44;spacingTop=8;fontSize=13;fontStyle=1;fontColor=#111111;" vertex="1" parent="1">
+          <mxGeometry x="480" y="170" width="760" height="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="lBrowser" value="" style="sketch=0;html=1;shape=image;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzVCN0M5OSIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNCIvPjxlbGxpcHNlIGN4PSI0MCIgY3k9IjQwIiByeD0iMTAiIHJ5PSIyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMuNCIvPjxwYXRoIGQ9Ik0xNyAzMmg0NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTE3IDQ4aDQ2IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMy40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="70" y="216" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lVercel" value="" style="sketch=0;html=1;shape=image;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzAwMDAwMCIvPjxwYXRoIGQ9Ik00MCAxNyBMNjQgNjAgSDE2IFoiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="490" y="176" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="b_idb" value="<b>IndexedDB</b><br><font style="font-size:10px">（表示ミラー・一次ストア）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzhFNDRBRCIvPjxlbGxpcHNlIGN4PSI0MCIgY3k9IjIzIiByeD0iMjEiIHJ5PSI3LjUiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCBkPSJNMTkgMjN2MzNjMCA0LjEgOS40IDcuNSAyMSA3LjVzMjEtMy40IDIxLTcuNVYyMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNMTkgMzljMCA0LjEgOS40IDcuNSAyMSA3LjVzMjEtMy40IDIxLTcuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMuMiIvPjwvc3ZnPg==;" vertex="1" parent="1">
+          <mxGeometry x="109" y="270" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="b_client" value="<b>Client（PC ブラウザ）</b><br><font style="font-size:10px">（Chrome / Safari）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzM3NDc0RiIvPjxyZWN0IHg9IjE3IiB5PSIyMSIgd2lkdGg9IjQ2IiBoZWlnaHQ9IjMwIiByeD0iNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjQiLz48cmVjdCB4PSIxMCIgeT0iNTUiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2IiByeD0iMyIgZmlsbD0iI2ZmZmZmZiIvPjxyZWN0IHg9IjI0IiB5PSIyOSIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQiIHJ4PSIyIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjgiLz48cmVjdCB4PSIyNCIgeT0iMzciIHdpZHRoPSIyMCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC44Ii8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="284" y="270" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="b_sw" value="<b>Service Worker</b><br><font style="font-size:10px">（キャッシュ・Push 受信）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzVBMEZDOCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjEwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNC41Ii8+PGcgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PGxpbmUgeDE9IjQwIiB5MT0iMTUiIHgyPSI0MCIgeTI9IjIzIi8+PGxpbmUgeDE9IjQwIiB5MT0iNTciIHgyPSI0MCIgeTI9IjY1Ii8+PGxpbmUgeDE9IjE1IiB5MT0iNDAiIHgyPSIyMyIgeTI9IjQwIi8+PGxpbmUgeDE9IjU3IiB5MT0iNDAiIHgyPSI2NSIgeTI9IjQwIi8+PGxpbmUgeDE9IjIyLjMiIHkxPSIyMi4zIiB4Mj0iMjgiIHkyPSIyOCIvPjxsaW5lIHgxPSI1MiIgeTE9IjUyIiB4Mj0iNTcuNyIgeTI9IjU3LjciLz48bGluZSB4MT0iNTcuNyIgeTE9IjIyLjMiIHgyPSI1MiIgeTI9IjI4Ii8+PGxpbmUgeDE9IjI4IiB5MT0iNTIiIHgyPSIyMi4zIiB5Mj0iNTcuNyIvPjwvZz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="109" y="470" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="b_mobile" value="<b>Mobile Client</b><br><font style="font-size:10px">（iOS / Android・PWA）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzM3NDc0RiIvPjxyZWN0IHg9IjI2IiB5PSIxMiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjU2IiByeD0iNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjQiLz48cmVjdCB4PSIzNCIgeT0iMTgiIHdpZHRoPSIxMiIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSIjZmZmZmZmIi8+PGNpcmNsZSBjeD0iNDAiIGN5PSI2MCIgcj0iMyIgZmlsbD0iI2ZmZmZmZiIvPjxyZWN0IHg9IjMyIiB5PSIyNyIgd2lkdGg9IjE2IiBoZWlnaHQ9IjMuNSIgcng9IjEuNzUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuODUiLz48cmVjdCB4PSIzMiIgeT0iMzUiIHdpZHRoPSIxNiIgaGVpZ2h0PSIzLjUiIHJ4PSIxLjc1IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjg1Ii8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="284" y="470" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="b_ls" value="<b>localStorage</b><br><font style="font-size:10px">（WebClass URL・移行フラグ）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzc4OTA5QyIvPjxyZWN0IHg9IjE2IiB5PSIyMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQwIiByeD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjQiLz48bGluZSB4MT0iMTYiIHkxPSIzMiIgeDI9IjY0IiB5Mj0iMzIiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+PGNpcmNsZSBjeD0iMjUiIGN5PSIyNiIgcj0iMi42IiBmaWxsPSIjZmZmZmZmIi8+PGNpcmNsZSBjeD0iMzQiIGN5PSIyNiIgcj0iMi42IiBmaWxsPSIjZmZmZmZmIi8+PGcgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48bGluZSB4MT0iMjQiIHkxPSI0MiIgeDI9IjM2IiB5Mj0iNDIiLz48bGluZSB4MT0iNDMiIHkxPSI0MiIgeDI9IjU2IiB5Mj0iNDIiLz48bGluZSB4MT0iMjQiIHkxPSI1MSIgeDI9IjM0IiB5Mj0iNTEiLz48bGluZSB4MT0iNDEiIHkxPSI1MSIgeDI9IjU2IiB5Mj0iNTEiLz48L2c+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="109" y="670" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="b_sched" value="<b>通知スケジューラ</b><br><font style="font-size:10px">（表示中のローカル通知）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzBEOTQ4OCIvPjxwYXRoIGQ9Ik00MCAxNGE0LjUgNC41IDAgMCAxIDQuNSA0LjV2MS42QTE1IDE1IDAgMCAxIDU1IDM0LjRWNDdsNC41IDdoLTM5TDI1IDQ3VjM0LjRhMTUgMTUgMCAwIDEgMTAuNS0xNC4zdi0xLjZBNC41IDQuNSAwIDAgMSA0MCAxNHoiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCBkPSJNMzMgNThhNyA3IDAgMCAwIDE0IDB6IiBmaWxsPSIjZmZmZmZmIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="284" y="670" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="b_bm" value="<b>ブックマークレット</b><br><font style="font-size:10px">（手動取り込み）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iI0Y5NzMxNiIvPjxwYXRoIGQ9Ik0yNSAxNGgzMGEzIDMgMCAwIDEgMyAzdjQ5TDQwIDU0IDIyIDY2VjE3YTMgMyAwIDAgMSAzLTN6IiBmaWxsPSIjZmZmZmZmIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="109" y="870" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="b_us" value="<b>ユーザースクリプト</b><br><font style="font-size:10px">（Tampermonkey・自動同期）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzAwNDg1QiIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI1LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBvbHlsaW5lIHBvaW50cz0iMjcsMjcgMTQsNDAgMjcsNTMiLz48cG9seWxpbmUgcG9pbnRzPSI1MywyNyA2Niw0MCA1Myw1MyIvPjxsaW5lIHgxPSI0NiIgeTE9IjIwIiB4Mj0iMzQiIHkyPSI2MCIvPjwvZz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="284" y="870" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_edge" value="<b>Vercel Edge Network</b><br><font style="font-size:10px">（CDN・配信）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzAwMDAwMCIvPjxwYXRoIGQ9Ik00MCAxNyBMNjQgNjAgSDE2IFoiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="537" y="240" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_app" value="<b>App Router ページ</b><br><font style="font-size:10px">（React 19 / RSC + Client）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzFCMjQzMCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIzLjIiPjxlbGxpcHNlIGN4PSI0MCIgY3k9IjQwIiByeD0iMjMiIHJ5PSI4LjgiLz48ZWxsaXBzZSBjeD0iNDAiIGN5PSI0MCIgcng9IjIzIiByeT0iOC44IiB0cmFuc2Zvcm09InJvdGF0ZSg2MCA0MCA0MCkiLz48ZWxsaXBzZSBjeD0iNDAiIGN5PSI0MCIgcng9IjIzIiByeT0iOC44IiB0cmFuc2Zvcm09InJvdGF0ZSgxMjAgNDAgNDApIi8+PC9nPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjUiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="727" y="240" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_static" value="<b>静的アセット public/</b><br><font style="font-size:10px">（sw.js・manifest・icons）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzJFN0QzMiIvPjxwYXRoIGQ9Ik0xNCAyNWE0IDQgMCAwIDEgNC00aDEyLjVsNS41IDYuNUg2MmE0IDQgMCAwIDEgNCA0djI0YTQgNCAwIDAgMS00IDRIMThhNCA0IDAgMCAxLTQtNHoiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="917" y="240" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_userjs" value="<b>/webclass.user.js</b><br><font style="font-size:10px">（ユーザースクリプト配信）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzAwMDAwMCIvPjxwYXRoIGQ9Ik00MCAxNnYyOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0yOCAzNCBMNDAgNDYgTDUyIDM0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTE4IDUydjZhNSA1IDAgMCAwIDUgNWgzNGE1IDUgMCAwIDAgNS01di02IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="1107" y="240" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_auth" value="<b>NextAuth v5</b><br><font style="font-size:10px">（JWT・トークン更新）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzdDM0FFRCIvPjxwYXRoIGQ9Ik00MCAxMiBMNjIgMjF2MTdjMCAxNC05LjQgMjQuNi0yMiAzMC0xMi42LTUuNC0yMi0xNi0yMi0zMFYyMXoiIGZpbGw9IiNmZmZmZmYiLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjM0IiByPSI3IiBmaWxsPSIjN0MzQUVEIi8+PGNpcmNsZSBjeD0iNDAiIGN5PSIzNCIgcj0iMi42IiBmaWxsPSIjZmZmZmZmIi8+PHJlY3QgeD0iMzcuNCIgeT0iMzgiIHdpZHRoPSI1LjIiIGhlaWdodD0iMTYiIGZpbGw9IiM3QzNBRUQiLz48cmVjdCB4PSI0Mi42IiB5PSI0MyIgd2lkdGg9IjUuNSIgaGVpZ2h0PSI0LjYiIGZpbGw9IiM3QzNBRUQiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="537" y="440" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_cron" value="<b>Vercel Cron</b><br><font style="font-size:10px">（毎日 06:00 JST）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzAwMDAwMCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjIzIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIvPjxwYXRoIGQ9Ik00MCAyNCBMNDAgNDAgTDUyIDQ3IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="917" y="440" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_cronapi" value="<b>GET /api/cron/notify</b><br><font style="font-size:10px">（CRON_SECRET・5人並列）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzQ3NTU2OSIvPjxwYXRoIGQ9Ik00MCAxNGE0LjUgNC41IDAgMCAxIDQuNSA0LjV2MS42QTE1IDE1IDAgMCAxIDU1IDM0LjRWNDdsNC41IDdoLTM5TDI1IDQ3VjM0LjRhMTUgMTUgMCAwIDEgMTAuNS0xNC4zdi0xLjZBNC41IDQuNSAwIDAgMSA0MCAxNHoiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCBkPSJNMzMgNThhNyA3IDAgMCAwIDE0IDB6IiBmaWxsPSIjZmZmZmZmIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="1107" y="440" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_apiget" value="<b>GET /api/assignments</b><br><font style="font-size:10px">（DB 読取・トークン不要）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzBCNzI4NSIvPjxnIGZpbGw9IiNmZmZmZmYiPjxyZWN0IHg9IjE1IiB5PSIyMSIgd2lkdGg9IjM0IiBoZWlnaHQ9IjUiIHJ4PSIyLjUiLz48cmVjdCB4PSIxNSIgeT0iMzQiIHdpZHRoPSIyNiIgaGVpZ2h0PSI1IiByeD0iMi41Ii8+PHJlY3QgeD0iMTUiIHk9IjQ3IiB3aWR0aD0iMzQiIGhlaWdodD0iNSIgcng9IjIuNSIvPjwvZz48cGF0aCBkPSJNNTggMjZ2MjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI0LjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik01MSA0MSBMNTggNDggTDY1IDQxIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNC42IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="537" y="640" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_apisync" value="<b>POST /api/classroom/sync</b><br><font style="font-size:10px">（Google 同期 → DB upsert）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzFBNzNFOCIvPjxwYXRoIGQ9Ik0yMSA0MGExOSAxOSAwIDAgMSAzMi0xMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTU1IDE2IEw1NCAyOSBMNDEuNSAyNy41IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHBhdGggZD0iTTU5IDQwYTE5IDE5IDAgMCAxLTMyIDEzLjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMjUgNjQgTDI2IDUxIEwzOC41IDUyLjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="727" y="640" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_apiimport" value="<b>POST /api/import/webclass</b><br><font style="font-size:10px">（取り込み → DB upsert）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iI0MyNDEwQyIvPjxwYXRoIGQ9Ik00MCA2MlYyNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0yOCAzOCBMNDAgMjYgTDUyIDM4IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PHJlY3QgeD0iMTgiIHk9IjE0IiB3aWR0aD0iNDQiIGhlaWdodD0iNS41IiByeD0iMi43NSIgZmlsbD0iI2ZmZmZmZiIvPjwvc3ZnPg==;" vertex="1" parent="1">
+          <mxGeometry x="917" y="640" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_apiother" value="<b>その他の API</b><br><font style="font-size:10px">（courses・notifications・import-token）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzM3NDE1MSIvPjxwYXRoIGQ9Ik0zMyAxN2MtNy41IDAtNy41IDYuNS03LjUgMTEuNVMyMSA0MCAxNS41IDQwQzIxIDQwIDI1LjUgNDUuNSAyNS41IDUxLjVTMjUuNSA2MyAzMyA2MyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00NyAxN2M3LjUgMCA3LjUgNi41IDcuNSAxMS41UzU5IDQwIDY0LjUgNDBDNTkgNDAgNTQuNSA0NS41IDU0LjUgNTEuNVM1NC41IDYzIDQ3IDYzIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="1107" y="640" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_assign" value="<b>lib/server/assignments.ts</b><br><font style="font-size:10px">（DB アクセス・編集 / 削除）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzMxNzhDNiIvPjx0ZXh0IHg9IjQwIiB5PSI1MyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjMwIiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5UUzwvdGV4dD48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="537" y="840" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_rl" value="<b>lib/server/ratelimit.ts</b><br><font style="font-size:10px">（sync・import の制限）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzQ3NTU2OSIvPjxwYXRoIGQ9Ik0xNiA1MGEyNCAyNCAwIDAgMSA0OCAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNNDAgNTAgTDU2IDMyIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjUwIiByPSI1IiBmaWxsPSIjZmZmZmZmIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="727" y="840" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_notify" value="<b>通知エンジン notify.ts</b><br><font style="font-size:10px">（対象算出・重複防止）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzBEOTQ4OCIvPjxwYXRoIGQ9Ik02NiAxNSBMMTMgMzUgTDM1IDQ0IEw0NCA2NiBaIiBmaWxsPSIjZmZmZmZmIi8+PHBhdGggZD0iTTM1IDQ0IEw2NiAxNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMEQ5NDg4IiBzdHJva2Utd2lkdGg9IjMiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="917" y="840" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="v_prisma" value="<b>Prisma Client v6</b><br><font style="font-size:10px">（スキーマは db push 運用）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzJEMzc0OCIvPjxwYXRoIGQ9Ik0zMSAxMSBMNjMgNTUgTDE5IDY2IFoiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCBkPSJNMzEgMTEgTDQxIDY2IiBmaWxsPSJub25lIiBzdHJva2U9IiMyRDM3NDgiIHN0cm9rZS13aWR0aD0iMyIvPjwvc3ZnPg==;" vertex="1" parent="1">
+          <mxGeometry x="537" y="1040" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="e_goauth" value="<b>Google OAuth 2.0</b><br><font style="font-size:10px">（認証・アクセストークン）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iI0ZGRkZGRiIgc3Ryb2tlPSIjREFEQ0UwIiBzdHJva2Utd2lkdGg9IjIiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNCwxNCkgc2NhbGUoMS4wODMpIj48cGF0aCBmaWxsPSIjNDI4NUY0IiBkPSJNNDUuMTIgMjQuNWMwLTEuNTYtLjE0LTMuMDYtLjQtNC41SDI0djguNTFoMTEuODRjLS41MSAyLjc1LTIuMDYgNS4wOC00LjM5IDYuNjR2NS41Mmg3LjExYzQuMTYtMy44MyA2LjU2LTkuNDcgNi41Ni0xNi4xN3oiLz48cGF0aCBmaWxsPSIjMzRBODUzIiBkPSJNMjQgNDZjNS45NCAwIDEwLjkyLTEuOTcgMTQuNTYtNS4zM2wtNy4xMS01LjUyYy0xLjk3IDEuMzItNC40OSAyLjEtNy40NSAyLjEtNS43MyAwLTEwLjU4LTMuODctMTIuMzEtOS4wN0g0LjM0djUuN0M3Ljk2IDQxLjA3IDE1LjQgNDYgMjQgNDZ6Ii8+PHBhdGggZmlsbD0iI0ZCQkMwNSIgZD0iTTExLjY5IDI4LjE4QzExLjI1IDI2Ljg2IDExIDI1LjQ1IDExIDI0cy4yNS0yLjg2LjY5LTQuMTh2LTUuN0g0LjM0QzIuODUgMTcuMDkgMiAyMC40NSAyIDI0cy44NSA2LjkxIDIuMzQgOS44OGw3LjM1LTUuN3oiLz48cGF0aCBmaWxsPSIjRUE0MzM1IiBkPSJNMjQgMTAuNzVjMy4yMyAwIDYuMTMgMS4xMSA4LjQxIDMuMjlsNi4zMS02LjMxQzM0LjkxIDQuMTggMjkuOTMgMiAyNCAyIDE1LjQgMiA3Ljk2IDYuOTMgNC4zNCAxNC4xMmw3LjM1IDUuN2MxLjczLTUuMiA2LjU4LTkuMDcgMTIuMzEtOS4wN3oiLz48L2c+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="1332" y="230" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gclass" value="<b>Google Classroom API</b><br><font style="font-size:10px">（コース・課題・提出状況）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzBGOUQ1OCIvPjxyZWN0IHg9IjE0IiB5PSIyMCIgd2lkdGg9IjUyIiBoZWlnaHQ9IjQwIiByeD0iMyIgZmlsbD0iI2ZmZmZmZiIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iMzUiIHI9IjYiIGZpbGw9IiMwRjlENTgiLz48cGF0aCBkPSJNMjkgNTFjMC01LjUgNC45LTguNSAxMS04LjVTNTEgNDUuNSA1MSA1MXoiIGZpbGw9IiMwRjlENTgiLz48cmVjdCB4PSIyMSIgeT0iMzAiIHdpZHRoPSI2IiBoZWlnaHQ9IjE2IiByeD0iMSIgZmlsbD0iIzBGOUQ1OCIvPjxyZWN0IHg9IjUzIiB5PSIzMCIgd2lkdGg9IjYiIGhlaWdodD0iMTYiIHJ4PSIxIiBmaWxsPSIjMEY5RDU4Ii8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="1332" y="400" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="e_supabase" value="<b>Supabase PostgreSQL</b><br><font style="font-size:10px">（DB・真実のソース）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzNFQ0Y4RSIvPjxwYXRoIGQ9Ik00NSA5IEwyMCA0NSBoMTUgbC00IDI2IDI1LTM2IEg0MSB6IiBmaWxsPSIjZmZmZmZmIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="1332" y="600" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="e_upstash" value="<b>Upstash Redis</b><br><font style="font-size:10px">（レートリミット）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzAwQzQ4QyIvPjxnIGZpbGw9IiNmZmZmZmYiPjxlbGxpcHNlIGN4PSI0MCIgY3k9IjI0IiByeD0iMjMiIHJ5PSI4LjUiLz48cGF0aCBkPSJNMTcgMzRjMCA0LjcgMTAuMyA4LjUgMjMgOC41UzYzIDM4LjcgNjMgMzR2OC41YzAgNC43LTEwLjMgOC41LTIzIDguNXMtMjMtMy44LTIzLTguNXoiLz48cGF0aCBkPSJNMTcgNTBjMCA0LjcgMTAuMyA4LjUgMjMgOC41UzYzIDU0LjcgNjMgNTB2Ni41YzAgNC43LTEwLjMgOC41LTIzIDguNXMtMjMtMy44LTIzLTguNXoiLz48L2c+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="1332" y="780" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="e_resend" value="<b>Resend</b><br><font style="font-size:10px">（メール配信・予約送信）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzAwMDAwMCIvPjxyZWN0IHg9IjEzIiB5PSIyMyIgd2lkdGg9IjU0IiBoZWlnaHQ9IjM1IiByeD0iNCIgZmlsbD0iI2ZmZmZmZiIvPjxwYXRoIGQ9Ik0xMyAyNyBMNDAgNDYgTDY3IDI3IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==;" vertex="1" parent="1">
+          <mxGeometry x="1332" y="990" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="e_push" value="<b>Web Push サービス</b><br><font style="font-size:10px">（FCM / APNs・VAPID）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iI0ZGQTAwMCIvPjxwYXRoIGQ9Ik00MCAxNGE0LjUgNC41IDAgMCAxIDQuNSA0LjV2MS42QTE1IDE1IDAgMCAxIDU1IDM0LjRWNDdsNC41IDdoLTM5TDI1IDQ3VjM0LjRhMTUgMTUgMCAwIDEgMTAuNS0xNC4zdi0xLjZBNC41IDQuNSAwIDAgMSA0MCAxNHoiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCBkPSJNMzMgNThhNyA3IDAgMCAwIDE0IDB6IiBmaWxsPSIjZmZmZmZmIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="1332" y="1160" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="x_webclass" value="<b>WebClass</b><br><font style="font-size:10px">（大学 LMS・内部 JSON API）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzAwNTc5RSIvPjxwYXRoIGQ9Ik00MCAxNiBMNjggMjggTDQwIDQwIEwxMiAyOCBaIiBmaWxsPSIjZmZmZmZmIi8+PHBhdGggZD0iTTIzIDMzdjE0YzAgNC40IDcuNiA4IDE3IDhzMTctMy42IDE3LThWMzMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI0LjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik02NSAyOSBMNjUgNDgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=;" vertex="1" parent="1">
+          <mxGeometry x="109" y="1190" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="x_cronjob" value="<b>cron-job.org</b><br><font style="font-size:10px">（外部トリガー・任意）</font>" style="sketch=0;html=1;shape=image;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;labelBackgroundColor=none;fontSize=11;fontColor=#1A1A1A;spacingTop=3;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iNzgiIGhlaWdodD0iNzgiIHJ4PSIxNCIgZmlsbD0iIzBFQTVFOSIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjIzIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIvPjxwYXRoIGQ9Ik00MCAyNCBMNDAgNDAgTDUyIDQ3IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+;" vertex="1" parent="1">
+          <mxGeometry x="727" y="1300" width="76" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="<div style="text-align:left"><b>凡例</b><br>── 実線：リクエスト / データの流れ　&nbsp;- - 破線：非同期・バックグラウンド（after() / cron / Push 配信）<br>ログイン中は <b>DB が真実のソース</b>、IndexedDB は表示ミラー（未ログイン時のみ一次ストア）。<br>取得は SWR 3 段：①キャッシュ即描画 → ②GET /api/assignments（トークン不要）→ ③POST /api/classroom/sync（裏）。</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#F7FAFC;strokeColor=#B6C6D4;fontSize=10;fontColor=#33414D;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="205" y="1298" width="480" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="n1" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_client" target="v_edge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="430" y="308" />
+            <mxPoint x="430" y="278" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_mobile" target="v_edge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="442" y="508" />
+            <mxPoint x="442" y="297" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n3" value="段1: キャッシュ即描画" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_client" target="b_idb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n4" value="sw.js 登録" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_client" target="b_sw">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="322" y="440" />
+            <mxPoint x="147" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n5" value="ローカル通知チェック" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_sched" target="b_idb">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="322" y="640" />
+            <mxPoint x="235" y="640" />
+            <mxPoint x="235" y="327" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n6" value="内部 JSON API" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_bm" target="x_webclass">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n7" value="内部 JSON API（60分間引き）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_us" target="x_webclass">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="322" y="1130" />
+            <mxPoint x="162" y="1130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n8" value="/import#&lt;JSON&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_bm" target="v_app">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="162" y="1040" />
+            <mxPoint x="418" y="1040" />
+            <mxPoint x="418" y="215" />
+            <mxPoint x="765" y="215" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n9" value="Bearer 取り込みトークン" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_us" target="v_apiimport">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="466" y="908" />
+            <mxPoint x="466" y="600" />
+            <mxPoint x="955" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n10" value="インストール / 自動更新" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;dashed=1;dashPattern=6 4;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.26;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_userjs" target="b_us">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="1145" y="195" />
+            <mxPoint x="454" y="195" />
+            <mxPoint x="454" y="890" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n11" value="配信" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_edge" target="v_app">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_app" target="v_static">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n13" value="ログイン" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_app" target="v_auth">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="668" y="278" />
+            <mxPoint x="668" y="478" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n14" value="OAuth 2.0 / トークン更新" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_auth" target="e_goauth">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="575" y="410" />
+            <mxPoint x="1278" y="410" />
+            <mxPoint x="1278" y="268" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n15" value="PrismaAdapter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_auth" target="v_prisma">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="678" y="478" />
+            <mxPoint x="678" y="1030" />
+            <mxPoint x="556" y="1030" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n16" value="段2 DB 読込" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_app" target="v_apiget">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="663" y="297" />
+            <mxPoint x="663" y="678" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n17" value="段3 Google 同期（裏・5分間引き）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_app" target="v_apisync">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="852" y="297" />
+            <mxPoint x="852" y="620" />
+            <mxPoint x="765" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n18" value="設定 / コース / Push 購読" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.9;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_app" target="v_apiother">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="868" y="308" />
+            <mxPoint x="868" y="625" />
+            <mxPoint x="1145" y="625" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apiget" target="v_assign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apisync" target="v_assign">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="673" y="735" />
+            <mxPoint x="673" y="878" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apiimport" target="v_assign">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="974" y="820" />
+            <mxPoint x="594" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n22" value="Classroom API（5 コース並列）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apisync" target="e_gclass">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="765" y="610" />
+            <mxPoint x="1270" y="610" />
+            <mxPoint x="1270" y="438" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n23" value="レート制限" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;dashed=1;dashPattern=6 4;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apisync" target="v_rl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n24" value="レート制限" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;dashed=1;dashPattern=6 4;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apiimport" target="v_rl">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="858" y="697" />
+            <mxPoint x="858" y="878" />
+            </Array>
+            <mxPoint x="0" y="70" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apiother" target="v_prisma">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="1145" y="1020" />
+            <mxPoint x="655" y="1020" />
+            <mxPoint x="655" y="1078" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n26" value="after()" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;dashed=1;dashPattern=6 4;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apisync" target="v_notify">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="852" y="697" />
+            <mxPoint x="852" y="859" />
+            </Array>
+            <mxPoint x="0" y="40" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n27" value="after()" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;dashed=1;dashPattern=6 4;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_apiimport" target="v_notify">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n28" value="毎日 06:00 JST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_cron" target="v_cronapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n29" value="15〜30分ごと（Push の精度用）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;dashed=1;dashPattern=6 4;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="x_cronjob" target="v_cronapi">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="1246" y="1338" />
+            <mxPoint x="1246" y="478" />
+            </Array>
+            <mxPoint x="0" y="110" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n30" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_cronapi" target="v_notify">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="1145" y="590" />
+            <mxPoint x="1050" y="590" />
+            <mxPoint x="1050" y="859" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n31" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_assign" target="v_prisma">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n32" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_notify" target="v_prisma">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="858" y="897" />
+            <mxPoint x="858" y="1010" />
+            <mxPoint x="594" y="1010" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n33" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.39;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_rl" target="e_upstash">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="765" y="810" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n34" value="Prisma / プーラー 6543" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_prisma" target="e_supabase">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="1254" y="1097" />
+            <mxPoint x="1254" y="638" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n35" value="メール（予約送信）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_notify" target="e_resend">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="955" y="995" />
+            <mxPoint x="1262" y="995" />
+            <mxPoint x="1262" y="1028" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n36" value="Web Push（VAPID）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3C4550;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v_notify" target="e_push">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="974" y="1198" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n37" value="プッシュ配信" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B26A00;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;dashed=1;dashPattern=6 4;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="e_push" target="b_sw">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="1464" y="1198" />
+            <mxPoint x="1464" y="1450" />
+            <mxPoint x="36" y="1450" />
+            <mxPoint x="36" y="508" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n38" value="締切メール" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B26A00;strokeWidth=1.5;endArrow=blockThin;endFill=1;fontSize=10;fontColor=#2B3138;labelBackgroundColor=#FFFFFF;align=center;verticalAlign=middle;dashed=1;dashPattern=6 4;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="e_resend" target="b_client">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+            <mxPoint x="1480" y="1028" />
+            <mxPoint x="1480" y="1472" />
+            <mxPoint x="48" y="1472" />
+            <mxPoint x="48" y="180" />
+            <mxPoint x="322" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
