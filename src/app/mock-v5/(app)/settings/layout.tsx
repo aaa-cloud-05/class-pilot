@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation"
 import { Bell, BookOpen, Layers, Plug, UserRound } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const NAV = [
+const NAV: { href: string; label: string; icon: typeof Bell; exact?: boolean; match?: string }[] = [
   { href: "/mock-v5/settings", label: "アカウントと表示", icon: UserRound, exact: true },
   { href: "/mock-v5/settings/notifications", label: "通知", icon: Bell },
   { href: "/mock-v5/settings/courses", label: "コース", icon: Layers },
   { href: "/mock-v5/settings/setup", label: "セットアップ", icon: Plug },
-  { href: "/mock-v5/help", label: "ヘルプ", icon: BookOpen },
+  { href: "/mock-v5/help/screen", label: "ヘルプ", icon: BookOpen, match: "/mock-v5/help" },
 ]
 
 /** PC は左に設定の項目一覧を固定する2ペイン。スマホは中身だけ */
@@ -23,7 +23,7 @@ export default function MockSettingsLayout({ children }: { children: React.React
           <p className="px-3 pb-3 text-[28px] font-bold tracking-[-0.02em]">設定</p>
           <div className="space-y-1">
             {NAV.map((it) => {
-              const on = it.exact ? pathname === it.href : pathname.startsWith(it.href)
+              const on = it.exact ? pathname === it.href : pathname.startsWith(it.match ?? it.href)
               const Icon = it.icon
               return (
                 <Link

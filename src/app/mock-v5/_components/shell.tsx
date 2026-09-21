@@ -174,7 +174,7 @@ export function SyncSheet() {
             WebClass を開く
             <ExternalLink className="h-3.5 w-3.5" aria-hidden />
           </Button>
-          <ButtonLink href="/mock-v5/help/webclass" variant="ghost" size="sm" onClick={close}>
+          <ButtonLink href="/mock-v5/settings/setup" variant="ghost" size="sm" onClick={close}>
             取り込み方法
           </ButtonLink>
         </SourceBlock>
@@ -273,7 +273,7 @@ export function useSetupSteps() {
       key: "webclass",
       title: "WebClass をつなぐ",
       desc: "ブックマークに1つ登録するだけ",
-      href: "/mock-v5/help/webclass",
+      href: "/mock-v5/settings/setup",
       done: all || syncedAt.webclass != null,
     },
     {

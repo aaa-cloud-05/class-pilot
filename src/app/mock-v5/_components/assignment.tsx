@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
-import { BellOff, Check, ExternalLink, GraduationCap, Globe, Minus, PenLine, Trash2 } from "lucide-react"
+import { BellOff, Check, ChevronRight, ExternalLink, GraduationCap, Globe, Minus, PenLine, Trash2 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import type { MockAssignment, Source, Status } from "../_lib/data"
@@ -118,6 +118,7 @@ export function AssignmentRow({
             <span className={cn("text-[12.5px] font-semibold tabular-nums", TONE_TEXT[due.tone])}>{due.sub}</span>
           )}
         </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" aria-hidden />
       </button>
     </div>
   )

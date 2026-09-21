@@ -83,7 +83,7 @@ export default function MockImportPage() {
                 <Button size="lg" className="w-full" onClick={() => setPhase("importing")}>
                   もう一度試す
                 </Button>
-                <ButtonLink href="/mock-v5/help/webclass" variant="ghost" size="lg" className="w-full">
+                <ButtonLink href="/mock-v5/settings/setup" variant="ghost" size="lg" className="w-full">
                   取り込み方を確認する
                 </ButtonLink>
               </div>

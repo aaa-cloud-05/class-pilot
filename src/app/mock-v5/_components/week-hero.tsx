@@ -2,7 +2,7 @@
 
 import { format, isSameDay } from "date-fns"
 import { ja } from "date-fns/locale"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { motion, useReducedMotion } from "motion/react"
 import { cn } from "@/lib/utils"
 import type { MockAssignment } from "../_lib/data"
@@ -13,7 +13,7 @@ import { useMock } from "./provider"
 import { Card } from "./ui"
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"]
-const BAR_MAX = 54
+const BAR_MAX = 66
 
 /** 提出状況の分類。色はここだけで決める（青＝未提出 / 赤＝期限切れ / 黄＝24時間以内 / 灰＝不明・提出済み） */
 type Cat = "overdue" | "soon" | "open" | "unknown" | "done"
@@ -22,7 +22,7 @@ const CAT_ORDER: Cat[] = ["overdue", "soon", "open", "unknown", "done"]
 
 const CAT_BG: Record<Cat, string> = {
   overdue: "bg-destructive",
-  soon: "bg-warn",
+  soon: "bg-[var(--ui-warn-fill)]",
   open: "bg-primary/75",
   unknown: "bg-muted-foreground/45",
   done: "bg-muted-foreground/25",
@@ -55,7 +55,7 @@ function LoadBars({ week, items, now }: { week: WeekState; items: MockAssignment
         const h = d.total === 0 ? 3 : Math.max(8, Math.round((d.total / peak) * BAR_MAX))
         return (
           <div key={d.date.toISOString()} className="flex w-7 flex-col items-center gap-1.5">
-            <div className="flex h-[54px] w-full items-end justify-center">
+            <div className="flex h-[66px] w-full items-end justify-center">
               <motion.div
                 initial={{ height: 3, opacity: 0 }}
                 animate={{ height: h, opacity: 1 }}
@@ -91,17 +91,30 @@ function LoadBars({ week, items, now }: { week: WeekState; items: MockAssignment
 export function WeekHero({
   week,
   rangeLabel,
+  weekLabel,
+  onPrevWeek,
+  onNextWeek,
+  isCurrentWeek,
   next,
   onOpenNext,
 }: {
   week: WeekState
   rangeLabel: string
+  weekLabel: string
+  onPrevWeek: () => void
+  onNextWeek: () => void
+  isCurrentWeek: boolean
   next: MockAssignment | null
   onOpenNext: (a: MockAssignment) => void
 }) {
   const { now, courseById, assignments } = useMock()
   const reduce = useReducedMotion()
-  const headline = weekHeadline(week, now)
+  // 今週以外を見ているときは、いまの状況を語る文ではなく、その週の中身を出す
+  const headline = isCurrentWeek
+    ? weekHeadline(week, now)
+    : week.total === 0
+      ? "この週に締切はありません。"
+      : `この週は ${week.total} 件。未提出は ${week.remaining} 件です。`
   const weekItems = assignments.filter((a) => a.due && week.days.some((d) => isSameDay(a.due!, d.date)))
   const weekCounts = { counts: countByCat(weekItems, now), total: weekItems.length }
   const nextRel = next ? relativeLabel(next, now) : null
@@ -110,10 +123,28 @@ export function WeekHero({
   return (
     <Card className="overflow-hidden">
       <div className="p-5 lg:p-6">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-[13px] font-medium text-muted-foreground">
-            今週 <span className="tabular-nums">{rangeLabel}</span>
-          </p>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={onPrevWeek}
+              aria-label="前の週"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden />
+            </button>
+            <p className="text-[13px] font-medium text-muted-foreground">
+              {weekLabel} <span className="tabular-nums">{rangeLabel}</span>
+            </p>
+            <button
+              type="button"
+              onClick={onNextWeek}
+              aria-label="次の週"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <ChevronRight className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
           <p className="text-[13px] font-medium tabular-nums text-muted-foreground">
             {format(now, "M月d日(E)", { locale: ja })}
           </p>
@@ -122,7 +153,7 @@ export function WeekHero({
         <div className="mt-3 flex items-end justify-between gap-6">
           <div className="min-w-0">
             <p className="flex items-baseline gap-1.5">
-              <span className="text-[13px] font-medium text-muted-foreground">残り</span>
+              <span className="text-[13px] font-medium text-muted-foreground">未提出</span>
               <CountUp value={week.remaining} className="text-[40px] font-semibold leading-none tracking-[-0.03em] tabular-nums" />
               <span className="text-[15px] font-medium text-muted-foreground">件</span>
             </p>
@@ -139,12 +170,14 @@ export function WeekHero({
             transition={{ ...EASE_OUT, delay: 0.1 }}
           >
             {weekCounts.total > 0 &&
-              CAT_ORDER.map((c) =>
+              CAT_ORDER.map((c, i) =>
                 weekCounts.counts[c] === 0 ? null : (
-                  <span
+                  <motion.span
                     key={c}
                     className={cn("h-full shrink-0", CAT_BG[c])}
-                    style={{ width: `${(weekCounts.counts[c] / weekCounts.total) * 100}%` }}
+                    initial={{ width: reduce ? `${(weekCounts.counts[c] / weekCounts.total) * 100}%` : 0 }}
+                    animate={{ width: `${(weekCounts.counts[c] / weekCounts.total) * 100}%` }}
+                    transition={{ duration: 0.45, delay: 0.12 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   />
                 ),
               )}

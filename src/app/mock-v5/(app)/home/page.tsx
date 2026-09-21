@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { endOfWeek, format, startOfWeek } from "date-fns"
+import { addWeeks, differenceInCalendarWeeks, endOfWeek, format, startOfWeek } from "date-fns"
 import { ArrowDownUp, CalendarCheck2, Inbox, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AssignmentDetail, AssignmentList, AssignmentSheet } from "../../_components/assignment"
@@ -12,7 +12,7 @@ import { DESKTOP_QUERY, useMediaQuery, useMock } from "../../_components/provide
 import { MobileHeader, PageBody, ReauthOrErrorBanner, SetupCard } from "../../_components/shell"
 import { Button, ButtonLink, Card, EmptyState, IconButton, SectionHeader, Segmented, Skeleton } from "../../_components/ui"
 import { WeekHero } from "../../_components/week-hero"
-import { groupAssignments, GROUP_LABEL, type SortMode } from "../../_lib/format"
+import { countLater, groupAssignments, GROUP_LABEL, type SortMode } from "../../_lib/format"
 import { buildWeekState, nextUp } from "../../_lib/week"
 
 function ListSkeleton() {
@@ -52,9 +52,15 @@ export default function MockHomePage() {
     [assignments, now, view, sort],
   )
   const selected = assignments.find((a) => a.id === selectedId) ?? null
-  const week = useMemo(() => buildWeekState(assignments, now), [assignments, now])
+  // ヒーローの週は < > で動かせる（リストは「いま」を基準のまま）
+  const [weekAnchor, setWeekAnchor] = useState<Date>(now)
+  const week = useMemo(() => buildWeekState(assignments, now, weekAnchor), [assignments, now, weekAnchor])
   const next = useMemo(() => nextUp(assignments, now), [assignments, now])
-  const rangeLabel = `${format(startOfWeek(now, { weekStartsOn: 1 }), "M/d")} - ${format(endOfWeek(now, { weekStartsOn: 1 }), "M/d")}`
+  const rangeLabel = `${format(startOfWeek(weekAnchor, { weekStartsOn: 1 }), "M/d")} - ${format(endOfWeek(weekAnchor, { weekStartsOn: 1 }), "M/d")}`
+  const weekDiff = differenceInCalendarWeeks(weekAnchor, now, { weekStartsOn: 1 })
+  const weekLabel =
+    weekDiff === 0 ? "今週" : weekDiff === 1 ? "来週" : weekDiff === -1 ? "先週" : weekDiff > 0 ? `${weekDiff}週間後` : `${-weekDiff}週間前`
+  const laterCount = useMemo(() => countLater(assignments, now), [assignments, now])
 
   const loading = controls.data === "loading"
   const empty = controls.data === "empty"
@@ -70,7 +76,7 @@ export default function MockHomePage() {
         description="Google でログインすると Classroom の課題が、WebClass をつなぐと WebClass の課題が、ここに締切順で並びます。"
         action={
           <div className="flex flex-col gap-2 sm:flex-row">
-            <ButtonLink href="/mock-v5/help/webclass">WebClass をつなぐ</ButtonLink>
+            <ButtonLink href="/mock-v5/settings/setup">WebClass をつなぐ</ButtonLink>
             <Button variant="secondary" onClick={() => setAddOpen(true)}>
               自分で追加
             </Button>
@@ -100,7 +106,7 @@ export default function MockHomePage() {
               id={`group-${g.key}`}
               title={GROUP_LABEL[g.key]}
               count={g.items.length}
-              tone={g.key === "overdue" ? "danger" : undefined}
+              tone={g.key === "recent" ? "danger" : undefined}
             />
             <AssignmentList items={g.items} onOpen={(a) => setSelectedId(a.id)} selectedId={desktop ? selectedId : null} />
           </section>
@@ -119,7 +125,16 @@ export default function MockHomePage() {
           <div className="min-w-0">
             {!empty && !loading && (
               <Appear>
-                <WeekHero week={week} rangeLabel={rangeLabel} next={next} onOpenNext={(a) => setSelectedId(a.id)} />
+                <WeekHero
+                  week={week}
+                  rangeLabel={rangeLabel}
+                  weekLabel={weekLabel}
+                  isCurrentWeek={weekDiff === 0}
+                  onPrevWeek={() => setWeekAnchor((d) => addWeeks(d, -1))}
+                  onNextWeek={() => setWeekAnchor((d) => addWeeks(d, 1))}
+                  next={weekDiff === 0 ? next : null}
+                  onOpenNext={(a) => setSelectedId(a.id)}
+                />
               </Appear>
             )}
 
@@ -153,6 +168,15 @@ export default function MockHomePage() {
             </div>
 
             <div className="mt-3">{list}</div>
+
+            {laterCount > 0 && !loading && !empty && (
+              <p className="mt-4 px-1 text-[13px] text-muted-foreground">
+                来週以降の課題が <span className="font-semibold tabular-nums text-foreground">{laterCount}</span> 件あります。
+                <Link href="/mock-v5/calendar" className="ml-1 font-medium text-primary hover:underline">
+                  カレンダーで見る
+                </Link>
+              </p>
+            )}
           </div>
 
           {/* PC の右カラム：選んだ課題の詳細。未選択なら月の全体像 */}

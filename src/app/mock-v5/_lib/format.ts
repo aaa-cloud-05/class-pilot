@@ -1,34 +1,38 @@
-import { addDays, addWeeks, format, isSameDay, isSameWeek } from "date-fns"
+import { addDays, format, isSameDay, isSameWeek } from "date-fns"
 import { ja } from "date-fns/locale"
 import type { MockAssignment, Status } from "./data"
 
 export type Tone = "danger" | "warn" | "neutral" | "ok"
 
-export type GroupKey = "overdue" | "today" | "tomorrow" | "thisWeek" | "nextWeek" | "later" | "noDue" | "past"
+export type GroupKey = "recent" | "today" | "tomorrow" | "thisWeek" | "noDue" | "past" | "later"
 
 export const GROUP_LABEL: Record<GroupKey, string> = {
-  overdue: "期限切れ",
+  recent: "直近の未提出",
   today: "今日",
   tomorrow: "明日",
   thisWeek: "今週",
-  nextWeek: "来週",
-  later: "それ以降",
   noDue: "期限なし",
   past: "締切を過ぎた提出済み",
+  later: "来週以降",
 }
 
-const GROUP_ORDER: GroupKey[] = ["overdue", "today", "tomorrow", "thisWeek", "nextWeek", "later", "noDue", "past"]
+/** ホームに出す順番。"later"（来週以降）はリストに出さず、件数だけ下に出す */
+const GROUP_ORDER: GroupKey[] = ["recent", "today", "tomorrow", "thisWeek", "noDue", "past"]
 
 const WEEK = { weekStartsOn: 1 as const }
 
 export function groupOf(a: MockAssignment, now: Date): GroupKey {
   if (!a.due) return "noDue"
-  if (a.due < now) return a.status === "submitted" ? "past" : "overdue"
+  if (a.due < now) return a.status === "submitted" ? "past" : "recent"
   if (isSameDay(a.due, now)) return "today"
   if (isSameDay(a.due, addDays(now, 1))) return "tomorrow"
   if (isSameWeek(a.due, now, WEEK)) return "thisWeek"
-  if (isSameWeek(a.due, addWeeks(now, 1), WEEK)) return "nextWeek"
   return "later"
+}
+
+/** 来週以降の件数（リストには出さず、カレンダーへ誘導する） */
+export function countLater(list: MockAssignment[], now: Date): number {
+  return list.filter((a) => groupOf(a, now) === "later" && a.status !== "submitted").length
 }
 
 const STATUS_RANK: Record<Status, number> = { not_submitted: 0, unknown: 1, submitted: 2 }

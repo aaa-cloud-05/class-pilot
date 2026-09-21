@@ -1,69 +1,88 @@
 "use client"
 
-import { Check, HelpCircle } from "lucide-react"
-import { Article, ArticleSection, Prose } from "../../../_components/article"
+import { Check, Minus } from "lucide-react"
+import { Article, Faq } from "../../../_components/article"
 import { Card } from "../../../_components/ui"
 
-const LEGEND = [
-  { mark: <span className="h-6 w-6 rounded-full border-2 border-input" />, label: "未提出", desc: "タップすると提出済みになります" },
+const MARKS = [
+  { mark: <span className="h-5 w-5 rounded-full border-2 border-input" />, label: "未提出", desc: "タップすると提出済みになります" },
   {
     mark: (
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <Check className="h-3.5 w-3.5" strokeWidth={3.2} />
+      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ok text-white">
+        <Check className="h-3 w-3" strokeWidth={3.5} />
       </span>
     ),
     label: "提出済み",
-    desc: "もう一度タップすると未提出に戻ります",
+    desc: "もう一度タップすると戻せます",
   },
   {
     mark: (
-      <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-dashed border-ink-3 text-muted-foreground">
-        <HelpCircle className="h-3.5 w-3.5" strokeWidth={2.4} />
+      <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground text-muted-foreground">
+        <Minus className="h-3 w-3" strokeWidth={3} />
       </span>
     ),
     label: "不明",
-    desc: "WebClass で提出状況が取れなかったもの",
+    desc: "WebClass から提出状況が取れなかったもの",
   },
 ]
 
-export default function MockScreenGuidePage() {
+const COLORS = [
+  { chip: "bg-destructive", label: "赤", desc: "締切を過ぎた未提出" },
+  { chip: "bg-[var(--ui-warn-fill)]", label: "黄", desc: "24時間以内に締切" },
+  { chip: "bg-primary/75", label: "青", desc: "まだ先の未提出" },
+  { chip: "bg-muted-foreground/35", label: "灰", desc: "提出済み・状況が不明" },
+]
+
+export default function ScreenGuidePage() {
   return (
-    <Article title="画面の見かた" lead="「いま何をやるか」をひと目で分かるようにしています。">
-      <ArticleSection title="丸チェック">
-        <Card className="divide-y divide-border overflow-hidden">
-          {LEGEND.map((l) => (
-            <div key={l.label} className="flex items-center gap-4 px-4 py-3.5">
-              <span className="flex w-6 justify-center" aria-hidden>
-                {l.mark}
-              </span>
-              <div>
-                <p className="text-[16px] font-semibold">{l.label}</p>
-                <p className="text-[14px] text-muted-foreground">{l.desc}</p>
-              </div>
-            </div>
-          ))}
-        </Card>
-      </ArticleSection>
+    <Article title="画面の見かた" lead="色と形で、いま何をすればよいかが分かります。">
+      <Card className="overflow-hidden">
+        <Faq q="丸チェックの意味">
+          <ul className="space-y-3">
+            {MARKS.map((m) => (
+              <li key={m.label} className="flex items-center gap-3">
+                <span className="flex w-5 justify-center" aria-hidden>
+                  {m.mark}
+                </span>
+                <span>
+                  <span className="block text-[14px] font-semibold text-foreground">{m.label}</span>
+                  <span className="block text-[13px] text-muted-foreground">{m.desc}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Faq>
 
-      <ArticleSection title="締切の色">
-        <Prose>
-          <p>
-            <span className="font-semibold text-destructive">赤</span>は締切を過ぎた未提出、
-            <span className="font-semibold text-warn">オレンジ</span>は24時間以内、<span className="font-semibold text-foreground">青のチェック</span>が提出済みです。色だけでなく「あと3時間」「2日超過」のように文字でも表示します。
-          </p>
-        </Prose>
-      </ArticleSection>
+        <Faq q="色の意味">
+          <ul className="space-y-2">
+            {COLORS.map((c) => (
+              <li key={c.label} className="flex items-center gap-3">
+                <span className={`h-2.5 w-2.5 rounded-full ${c.chip}`} aria-hidden />
+                <span className="text-[14px] font-semibold text-foreground">{c.label}</span>
+                <span className="text-[13px] text-muted-foreground">{c.desc}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3">色が分からなくても、右側の「あと3時間」「2日超過」の文字で判断できます。</p>
+        </Faq>
 
-      <ArticleSection title="ホームとカレンダー">
-        <Prose>
-          <p>
-            <strong>ホーム</strong>は未提出の課題を「期限切れ・今日・明日・今週…」の順に並べます。「すべて」に切り替えると提出済みも出ます。
-          </p>
-          <p>
-            <strong>カレンダー</strong>は週と月を切り替えられます。日付を選ぶと、その日が締切の課題が下に出ます。
-          </p>
-        </Prose>
-      </ArticleSection>
+        <Faq q="ホームの棒グラフ">
+          曜日ごとの課題の数です。棒の高さがその日の件数、色が提出状況です。上部の{" "}
+          <span className="font-mono text-[13px]">{"< >"}</span> で前後の週に移せます。
+        </Faq>
+
+        <Faq q="進捗バー">
+          その週の課題を、状態ごとの色で全部ぶんだけ並べたものです。灰色が増えるほど片づいています。
+        </Faq>
+
+        <Faq q="カレンダーの点">
+          その日に締切がある課題です。点の色は上の表と同じで、多い日は点が増えます。日付を選ぶと、下にその日の課題が出ます。
+        </Faq>
+
+        <Faq q="リストの並び">
+          直近の未提出・今日・明日・今週・期限なしの順です。来週以降はカレンダーで確認できます。
+        </Faq>
+      </Card>
     </Article>
   )
 }

@@ -3,8 +3,9 @@
 import { useState } from "react"
 import {
   BellRing,
+  Eye,
+  RefreshCw,
   Plug,
-  BookOpen,
   Eraser,
   FileText,
   Info,
@@ -113,8 +114,9 @@ export default function MockSettingsPage() {
             </Card>
           </section>
 
-          <ListGroup title="ヘルプ" className="lg:hidden">
-            <RowLink href="/mock-v5/help" icon={BookOpen} label="はじめかたと使い方" />
+          <ListGroup title="ヘルプ">
+            <RowLink href="/mock-v5/help/screen" icon={Eye} label="画面の見かた" />
+            <RowLink href="/mock-v5/help/sync" icon={RefreshCw} label="同期のしくみ" />
             <RowLink href="/mock-v5/help/safety" icon={Shield} label="安全性とよくある質問" />
           </ListGroup>
 

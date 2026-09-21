@@ -55,6 +55,8 @@
   --ui-danger-soft: #fbedec;
   --ui-warn: #96620a;
   --ui-warn-soft: #fbf3e6;
+  /* グラフや点の塗りに使う黄色。ライトでもダークと同じ明るさにする */
+  --ui-warn-fill: #e3b169;
   --ui-ok: #157a45;
   --ui-ok-soft: #ecf6f0;
   --ui-scrim: rgb(12 13 14 / 0.32);
@@ -107,6 +109,7 @@
   --ui-danger-soft: rgb(255 123 114 / 0.14);
   --ui-warn: #e3b169;
   --ui-warn-soft: rgb(227 177 105 / 0.14);
+  --ui-warn-fill: #e3b169;
   --ui-ok: #5cc98d;
   --ui-ok-soft: rgb(92 201 141 / 0.14);
   --ui-scrim: rgb(0 0 0 / 0.6);
