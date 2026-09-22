@@ -90,7 +90,7 @@ export default function MockNotificationSettingsPage() {
             />
             <RowStatic
               label="メール通知"
-              description={needLogin ? "ログインすると使えます" : "hinata.sato@example.ac.jp に届きます"}
+              description={needLogin ? "ログインすると使えます" : "登録しているメールアドレスに届きます"}
               right={
                 <Switch
                   label="メール通知"
