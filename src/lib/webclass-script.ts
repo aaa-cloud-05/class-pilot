@@ -11,6 +11,7 @@
 // - fetch のキャッシュを無効化しない。ブラウザが If-Modified-Since を自動で付けるので、
 //   変化が無いコースは 304（ボディ無し）で返る。no-store やキャッシュバスターは付けない。
 // - コースごとの取得は直列＋250ms間隔。年度が2年以上前のコースはそもそも叩かない。
+// - 締切がある課題は直近半年ぶん。締切が無い課題は「直近半年に更新されたもの」だけ。
 // - ユーザースクリプトは60分のスロットルを持つ（タブを何枚開いても1回）。
 
 /** ペイロードを URL ハッシュに載せられる上限。超えたら締切の古いものから間引く。 */
@@ -26,7 +27,7 @@ const THROTTLE_MS = 60 * 60 * 1000;
  * ここを上げ忘れると、`/webclass.user.js` を直しても、すでに入れた人には永久に届かない。
  * 取得ロジック（COLLECT）や送信まわりを変えたら、必ずここも上げること。
  */
-const USERSCRIPT_VERSION = "1.1.0";
+const USERSCRIPT_VERSION = "1.2.0";
 
 /**
  * 収集の本体。`unionfetchCollect(onProgress)` を定義する。
@@ -52,8 +53,10 @@ async function unionfetchCollect(onProgress){
   if(!Array.isArray(courses)||!courses.length)throw new Error('NO_COURSES');
   var year=new Date().getFullYear();
   courses=courses.filter(function(c){
-    var m=/^(\\d{4})/.exec(String(c.group_name||''));
-    return !m||(year-parseInt(m[1],10))<2;
+    var y=parseInt(String(c.year||''),10);
+    if(!y){var m=/^(\\d{4})/.exec(String(c.group_name||''));
+      y=m?parseInt(m[1],10):0}
+    return !y||(year-y)<2;
   });
   var oldest=Date.now()-180*86400000;
   var cs=[],tasks=[],failed=0;
@@ -66,17 +69,24 @@ async function unionfetchCollect(onProgress){
       (Array.isArray(list)?list:[]).forEach(function(x){
         if(x.contents_kind!=='Question')return;
         if(x.hidden_content&&x.hidden_content!=='0')return;
-        if(!x.end_date)return;
-        var due=Date.parse(String(x.end_date).replace(' ','T'));
-        if(!due||due<oldest)return;
+        var d=null;
+        if(x.end_date){
+          var due=Date.parse(String(x.end_date).replace(' ','T'));
+          if(!due||due<oldest)return;
+          d=String(x.end_date);
+        }else{
+          var u=String(x.updated||x.created_at||'').replace(' ','T');
+          var upd=u?Date.parse(u):0;
+          if(!upd||upd<oldest)return;
+        }
         var sc=(x.scores||[])[0];
-        tasks.push({k:k,i:String(x.contents_id||''),n:String(x.contents_name||''),d:String(x.end_date),s:(sc&&sc.answer_datetime)?1:0});
+        tasks.push({k:k,i:String(x.contents_id||''),n:String(x.contents_name||''),d:d,s:(sc&&sc.answer_datetime)?1:0});
       });
     }catch(e){failed++}
     await new Promise(function(r){setTimeout(r,250)});
   }
   if(!tasks.length)throw new Error(failed?'FETCH_FAILED':'NO_TASKS');
-  tasks.sort(function(a,b){return b.d.localeCompare(a.d)});
+  tasks.sort(function(a,b){return String(b.d||'').localeCompare(String(a.d||''))});
   var used={},remap={},kept=[];
   tasks.forEach(function(t){used[t.k]=1});
   cs.forEach(function(c,i){if(used[i]){remap[i]=kept.length;kept.push(c)}});
