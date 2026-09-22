@@ -46,6 +46,14 @@ export function countLater(list: MockAssignment[], now: Date): number {
   return list.filter((a) => bucketOf(a, now) === "later").length
 }
 
+/** 来週以降で最初に締切が来る未提出の日。「すべて」を開く月を決めるのに使う */
+export function firstLaterDue(list: MockAssignment[], now: Date): Date | null {
+  const later = list
+    .filter((a) => bucketOf(a, now) === "later" && a.due)
+    .sort((x, y) => x.due!.getTime() - y.due!.getTime())
+  return later[0]?.due ?? null
+}
+
 const STATUS_RANK: Record<Status, number> = { not_submitted: 0, unknown: 1, submitted: 2 }
 
 export type SortMode = "due" | "status"

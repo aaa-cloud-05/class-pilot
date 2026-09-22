@@ -13,7 +13,7 @@ import { DESKTOP_QUERY, useMediaQuery, useMock } from "../../_components/provide
 import { MobileHeader, PageBody, ReauthOrErrorBanner, SetupCard } from "../../_components/shell"
 import { Button, ButtonLink, Card, EmptyState, IconButton, SectionHeader, Segmented, Skeleton } from "../../_components/ui"
 import { WeekHero } from "../../_components/week-hero"
-import { countLater, groupRecent, GROUP_LABEL, type SortMode } from "../../_lib/format"
+import { countLater, firstLaterDue, groupRecent, GROUP_LABEL, type SortMode } from "../../_lib/format"
 import { buildWeekState, nextUp } from "../../_lib/week"
 
 function ListSkeleton() {
@@ -59,6 +59,9 @@ export default function MockHomePage() {
   const weekLabel =
     weekDiff === 0 ? "今週" : weekDiff === 1 ? "来週" : weekDiff === -1 ? "先週" : weekDiff > 0 ? `${weekDiff}週間後` : `${-weekDiff}週間前`
   const laterCount = useMemo(() => countLater(assignments, now), [assignments, now])
+  // 「すべて」で最初に開く月。来週以降を見にいくときは、その課題がある月から始める
+  const [allMonth, setAllMonth] = useState<Date>(now)
+  const firstLater = useMemo(() => firstLaterDue(assignments, now), [assignments, now])
 
   const loading = controls.data === "loading"
   const empty = controls.data === "empty"
@@ -170,7 +173,12 @@ export default function MockHomePage() {
 
             <div className="mt-3">
               {view === "all" && !loading && !empty ? (
-                <AllList onOpen={(a) => setSelectedId(a.id)} selectedId={desktop ? selectedId : null} />
+                <AllList
+                  onOpen={(a) => setSelectedId(a.id)}
+                  selectedId={desktop ? selectedId : null}
+                  month={allMonth}
+                  onMonthChange={setAllMonth}
+                />
               ) : (
                 list
               )}
@@ -181,7 +189,10 @@ export default function MockHomePage() {
                 来週以降の課題が <span className="font-semibold tabular-nums text-foreground">{laterCount}</span> 件あります。
                 <button
                   type="button"
-                  onClick={() => setView("all")}
+                  onClick={() => {
+                    if (firstLater) setAllMonth(firstLater)
+                    setView("all")
+                  }}
                   className="ml-1 rounded-control font-medium text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/40"
                 >
                   すべてで見る

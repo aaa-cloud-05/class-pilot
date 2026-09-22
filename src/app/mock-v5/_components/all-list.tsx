@@ -25,12 +25,15 @@ const NO_DUE_TABS: { value: Status; label: string }[] = [
 export function AllList({
   onOpen,
   selectedId,
+  month,
+  onMonthChange,
 }: {
   onOpen: (a: MockAssignment) => void
   selectedId: string | null
+  month: Date
+  onMonthChange: (d: Date) => void
 }) {
   const { now, assignments } = useMock()
-  const [month, setMonth] = useState<Date>(now)
   const [noDueTab, setNoDueTab] = useState<Status>("not_submitted")
 
   const weeks = useMemo(() => weeksOfMonth(assignments, month), [assignments, month])
@@ -50,7 +53,7 @@ export function AllList({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => setMonth((m) => addMonths(m, -1))}
+            onClick={() => onMonthChange(addMonths(month, -1))}
             aria-label="前の月"
             className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
@@ -61,14 +64,14 @@ export function AllList({
           </span>
           <button
             type="button"
-            onClick={() => setMonth((m) => addMonths(m, 1))}
+            onClick={() => onMonthChange(addMonths(month, 1))}
             aria-label="次の月"
             className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
           {!isCurrentMonth && (
-            <Button variant="ghost" size="sm" className="ml-auto h-8" onClick={() => setMonth(now)}>
+            <Button variant="ghost" size="sm" className="ml-auto h-8" onClick={() => onMonthChange(now)}>
               今月
             </Button>
           )}
