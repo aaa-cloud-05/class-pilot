@@ -157,7 +157,7 @@ export function SyncSheet() {
               {controls.loggedIn ? "再ログイン" : "Google でログイン"}
             </ButtonLink>
           ) : (
-            <Button variant="secondary" size="sm" onClick={() => showToast("Classroom を開きます（モック）")}>
+            <Button size="sm" onClick={() => showToast("Classroom を開きます（モック）")}>
               Classroom を開く
               <ExternalLink className="h-3.5 w-3.5" aria-hidden />
             </Button>
@@ -170,7 +170,7 @@ export function SyncSheet() {
           freshness={webclass}
           status={syncedAt.webclass ? `${timeAgo(syncedAt.webclass, now)}に取り込み` : "まだ取り込んでいません"}
         >
-          <Button variant="secondary" size="sm" disabled={!webclassUrl} onClick={() => showToast("WebClass を開きます（モック）")}>
+          <Button size="sm" disabled={!webclassUrl} onClick={() => showToast("WebClass を開きます（モック）")}>
             WebClass を開く
             <ExternalLink className="h-3.5 w-3.5" aria-hidden />
           </Button>

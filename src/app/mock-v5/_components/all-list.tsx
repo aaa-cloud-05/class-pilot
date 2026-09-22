@@ -9,7 +9,6 @@ import { noDueByStatus, weekBlockLabel, weeksOfMonth } from "../_lib/format"
 import { AssignmentList } from "./assignment"
 import { Appear } from "./motion"
 import { useMock } from "./provider"
-import { StatusBar } from "./status-bar"
 import { Button, Card, SectionHeader, Segmented } from "./ui"
 
 const NO_DUE_TABS: { value: Status; label: string }[] = [
@@ -47,10 +46,9 @@ export function AllList({
   const noDueItems = noDue[noDueTab]
 
   return (
-    <div className="space-y-6">
-      {/* 月の切り替え。カレンダーと同じ並びにする */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-1">
+    <div>
+      {/* 月の切り替え。スクロールしてもタブのすぐ下に残る */}
+      <div className="sticky top-[calc(env(safe-area-inset-top)+6.875rem)] z-[9] -mx-4 flex items-center gap-1 bg-background/85 px-4 py-1.5 backdrop-blur-xl lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
           <button
             type="button"
             onClick={() => onMonthChange(addMonths(month, -1))}
@@ -77,24 +75,21 @@ export function AllList({
           )}
         </div>
 
-        <div className="px-1">
-          <StatusBar key={monthKey} items={monthItems} now={now} />
-          <p className="mt-2 flex items-center justify-between text-[13px] text-muted-foreground">
-            <span className="tabular-nums">
-              この月 提出済み {done} / {monthItems.length}
-            </span>
-            {overdue > 0 && <span className="font-medium text-destructive tabular-nums">期限切れ {overdue}</span>}
-          </p>
-        </div>
-      </div>
+      {/* 進捗の帯はホームに1本あれば足りるので、ここは数だけ */}
+      <p className="mt-1.5 flex items-center justify-between px-1 text-[13px] text-muted-foreground">
+        <span className="tabular-nums">
+          この月 提出済み {done} / {monthItems.length}
+        </span>
+        {overdue > 0 && <span className="font-medium text-destructive tabular-nums">期限切れ {overdue}</span>}
+      </p>
 
       {weeks.length === 0 ? (
-        <Card className="flex items-center gap-3 px-4 py-5 text-muted-foreground">
+        <Card className="mt-5 flex items-center gap-3 px-4 py-5 text-muted-foreground">
           <CalendarX2 className="h-5 w-5 shrink-0" aria-hidden />
           <p className="text-[15px]">この月に締切の課題はありません</p>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="mt-5 space-y-6">
           {weeks.map((w, i) => {
             const { range, tag } = weekBlockLabel(w, now)
             const weekDone = w.items.filter((a) => a.status === "submitted").length
@@ -131,7 +126,7 @@ export function AllList({
       )}
 
       {/* 期限なしは月に属さないので、いちばん下でまとめて見る */}
-      <section className="pt-2">
+      <section className="mt-8">
         <SectionHeader
           title="期限なし"
           action={

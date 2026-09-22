@@ -51,6 +51,10 @@ type Seed = {
   title: string
   /** 「いま」からの時間（時間単位）。null は期限なし */
   inHours: number | null
+  /** inHours の代わりに「N日後の H 時 M 分」で置く。課題が重なる日を作るのに使う */
+  inDays?: number
+  atHour?: number
+  atMinute?: number
   status: Status
   muted?: boolean
 }
@@ -74,6 +78,14 @@ const SEEDS: Seed[] = [
   { courseId: "c2", title: "演習問題 4（行列式）", inHours: -50, status: "submitted" },
   { courseId: "c3", title: "課題6 スタックとキュー", inHours: -130, status: "submitted" },
   { courseId: "c1", title: "第3回 小テスト（情報量）", inHours: -150, status: "submitted" },
+
+  // 3日後は課題が重なる日。1日に6件あるときの見え方を確かめるために入れてある
+  { courseId: "c1", title: "第5回 小テスト（符号化）", inHours: null, inDays: 3, atHour: 9, status: "not_submitted" },
+  { courseId: "c3", title: "課題9 ソートの計算量レポート", inHours: null, inDays: 3, atHour: 10, atMinute: 30, status: "not_submitted" },
+  { courseId: "c5", title: "正規化の演習", inHours: null, inDays: 3, atHour: 13, status: "unknown" },
+  { courseId: "c6", title: "第7回 演習プリント", inHours: null, inDays: 3, atHour: 16, atMinute: 30, status: "submitted" },
+  { courseId: "c2", title: "演習問題 6（固有空間）", inHours: null, inDays: 3, atHour: 18, status: "not_submitted" },
+  { courseId: "c4", title: "Unit 6 Reading Log", inHours: null, inDays: 3, atHour: 23, atMinute: 59, status: "not_submitted" },
 ]
 
 /** 締切は分を切りのよい値にそろえる（23:59 や 13:00 に見えるように） */
@@ -86,6 +98,14 @@ function roundDue(base: Date, inHours: number): Date {
   return d
 }
 
+/** 「N日後の H 時 M 分」。日をまたいで課題が重なる日を作るのに使う */
+function dayAt(now: Date, inDays: number, hour: number, minute: number): Date {
+  const d = new Date(now)
+  d.setDate(d.getDate() + inDays)
+  d.setHours(hour, minute, 0, 0)
+  return d
+}
+
 export function buildAssignments(now: Date, courses: MockCourse[]): MockAssignment[] {
   const byId = new Map(courses.map((c) => [c.id, c]))
   return SEEDS.map((s, i) => {
@@ -94,7 +114,7 @@ export function buildAssignments(now: Date, courses: MockCourse[]): MockAssignme
       id: `a${i + 1}`,
       courseId: s.courseId,
       title: s.title,
-      due: s.inHours == null ? null : roundDue(now, s.inHours),
+      due: s.inDays != null ? dayAt(now, s.inDays, s.atHour ?? 23, s.atMinute ?? 0) : s.inHours == null ? null : roundDue(now, s.inHours),
       status: s.status,
       source: course.source,
       muted: s.muted ?? false,

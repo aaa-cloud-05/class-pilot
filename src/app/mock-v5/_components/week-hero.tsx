@@ -15,16 +15,17 @@ import { Card } from "./ui"
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"]
 const BAR_MAX = 66
+/** 目盛りは固定。1日6件で満杯にし、それより多い日は頭打ちにする */
+const BAR_FULL = 6
 
 /** 曜日ごとの負荷。棒の高さ＝その日の課題数、色＝提出状況（積み上げ） */
 function LoadBars({ week, items, now }: { week: WeekState; items: MockAssignment[]; now: Date }) {
-  const peak = Math.max(1, ...week.days.map((d) => d.total))
   return (
     <div className="flex items-end gap-1.5" aria-hidden>
       {week.days.map((d, i) => {
         const dayItems = items.filter((a) => a.due && isSameDay(a.due, d.date))
         const counts = countByCat(dayItems, now)
-        const h = d.total === 0 ? 3 : Math.max(8, Math.round((d.total / peak) * BAR_MAX))
+        const h = d.total === 0 ? 3 : Math.max(8, Math.round((Math.min(d.total, BAR_FULL) / BAR_FULL) * BAR_MAX))
         return (
           <div key={d.date.toISOString()} className="flex w-7 flex-col items-center gap-1.5">
             <div className="flex h-[66px] w-full items-end justify-center">

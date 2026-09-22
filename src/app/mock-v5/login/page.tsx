@@ -38,7 +38,9 @@ export default function MockLoginPage() {
   return (
     <main className="min-h-dvh lg:grid lg:grid-cols-2">
       <section className="hidden flex-col justify-between bg-card p-12 lg:flex">
-        <Brand size="lg" />
+        <Link href="/mock-v5/home" aria-label="ホームへ" className="w-fit rounded-control outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+          <Brand size="lg" />
+        </Link>
         <div>
           <h2 className="max-w-md text-[40px] font-bold leading-[1.3] tracking-[-0.02em]">課題の締切を、ひとつの場所で。</h2>
           <ul className="mt-10 space-y-6">
@@ -60,15 +62,15 @@ export default function MockLoginPage() {
 
       <section className="flex min-h-dvh flex-col px-6 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-[max(env(safe-area-inset-top),1.5rem)] lg:items-center lg:justify-center">
         <div className="flex flex-1 flex-col lg:w-full lg:max-w-sm lg:flex-none">
-          <div className="lg:hidden">
+          <Link
+            href="/mock-v5/home"
+            aria-label="ホームへ"
+            className="w-fit rounded-control outline-none focus-visible:ring-3 focus-visible:ring-ring/40 lg:hidden"
+          >
             <Brand />
-          </div>
+          </Link>
 
           <div className="flex flex-1 flex-col justify-center py-10 lg:flex-none lg:py-0">
-            {/* イラスト枠：素材が決まったらここに入れる（スマホのみ） */}
-            <div className="mb-8 flex aspect-[4/3] w-full items-center justify-center rounded-sheet border border-dashed border-input text-[13px] text-muted-foreground lg:hidden">
-              イラスト枠
-            </div>
             <h1 className="text-[28px] font-bold leading-snug tracking-[-0.02em] lg:text-[26px]">
               <span className="lg:hidden">課題の締切を、ひとつの場所で。</span>
               <span className="hidden lg:inline">ログイン</span>

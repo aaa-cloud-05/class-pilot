@@ -74,8 +74,8 @@ function itemDelay(dayIndex: number, itemIndex: number) {
 
 function Dots({ items, now, dayIndex = 0 }: { items: MockAssignment[]; now: Date; dayIndex?: number }) {
   return (
-    <span className="flex h-1.5 items-center justify-center gap-[3px]" aria-hidden>
-      {items.slice(0, 3).map((a, i) => (
+    <span className="flex h-1.5 items-center justify-center gap-[2px]" aria-hidden>
+      {items.slice(0, 4).map((a, i) => (
         <motion.span
           key={a.id}
           className={cn("h-1.5 w-1.5 rounded-full", DOT_BG[dotTone(a, now)])}
@@ -84,7 +84,7 @@ function Dots({ items, now, dayIndex = 0 }: { items: MockAssignment[]; now: Date
           transition={{ duration: 0.5, delay: itemDelay(dayIndex, i), ease: [0.16, 1, 0.3, 1] }}
         />
       ))}
-      {items.length > 3 && <span className="text-[10px] font-bold leading-none text-muted-foreground">+</span>}
+      {items.length > 4 && <span className="text-[10px] font-bold leading-none text-muted-foreground">+</span>}
     </span>
   )
 }
@@ -227,7 +227,7 @@ export function MonthGrid({
                 </span>
               </button>
               <div className="space-y-1">
-                {items.slice(0, 3).map((a, i) => (
+                {items.slice(0, 2).map((a, i) => (
                   <motion.button
                     key={a.id}
                     type="button"
@@ -246,16 +246,16 @@ export function MonthGrid({
                     </span>
                   </motion.button>
                 ))}
-                {items.length > 3 && (
+                {items.length > 2 && (
                   <motion.button
                     type="button"
                     onClick={() => onSelect(day)}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 0.55, delay: itemDelay(dayIndex, 3), ease: [0.16, 1, 0.3, 1] }}
-                    className="px-1.5 text-left text-[12px] font-semibold text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                    transition={{ duration: 0.55, delay: itemDelay(dayIndex, 2), ease: [0.16, 1, 0.3, 1] }}
+                    className="rounded-[6px] px-1.5 text-left text-[12px] font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    ほか{items.length - 3}件
+                    すべて見る
                   </motion.button>
                 )}
               </div>
