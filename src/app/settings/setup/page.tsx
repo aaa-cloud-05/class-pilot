@@ -151,6 +151,11 @@ export default function SetupPage() {
       .then((s) => setPush(s != null))
       .catch(() => {})
     if (!loggedIn) return
+    // 発行済みかどうかはサーバが知っている。再発行で既存の設定を壊さないために出す
+    fetch("/api/import/token")
+      .then((r) => r.json())
+      .then((d) => setTokenIssued(!!d.issued))
+      .catch(() => {})
     fetch("/api/notifications/settings")
       .then((r) => r.json())
       .then((d) => setEmail(d.settings?.emailEnabled ?? false))
@@ -324,10 +329,22 @@ export default function SetupPage() {
                 <ButtonLink href="/webclass.user.js" variant="secondary" size="md">
                   スクリプトを追加
                 </ButtonLink>
-                <Button variant="secondary" disabled={!loggedIn} onClick={() => issueToken().then(setToken)}>
+                <Button
+                  variant="secondary"
+                  disabled={!loggedIn}
+                  onClick={() => {
+                    // 再発行すると、いま動いているスクリプトのトークンが即座に使えなくなる
+                    if (tokenIssued && !confirm("いま使っているトークンは使えなくなります。スクリプトに貼り直しが必要です。続けますか？")) return
+                    issueToken().then(setToken)
+                  }}
+                >
                   {tokenIssued ? "トークンを再発行" : "トークンを発行"}
                 </Button>
-                {tokenIssued && !token && <span className="text-[13px] text-muted-foreground">発行済み</span>}
+                {tokenIssued && !token && (
+                  <span className="text-[13px] text-muted-foreground">
+                    発行済み。スクリプトが動いているなら、押す必要はありません
+                  </span>
+                )}
               </div>
               {token && (
                 <div className="flex items-center gap-2 rounded-control border border-border p-2">

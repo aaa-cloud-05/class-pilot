@@ -13,6 +13,12 @@
 // - コースごとの取得は直列＋250ms間隔。年度が2年以上前のコースはそもそも叩かない。
 // - 締切がある課題は直近半年ぶん。締切が無い課題は「直近半年に更新されたもの」だけ。
 // - ユーザースクリプトは60分のスロットルを持つ（タブを何枚開いても1回）。
+//
+// 所要時間（本学・13コースで実測）:
+//   前面のタブ … 約5秒（通信1.7秒＋待機3.25秒）
+//   背面のタブ … 約13秒。Chrome が setTimeout を1秒以上に間引くため
+//   5分以上隠れたタブ … さらに遅い（間引きが1分間隔になる）
+//   どれも完走はする。途中でタブを閉じると中断されるだけ。
 
 /** ペイロードを URL ハッシュに載せられる上限。超えたら締切の古いものから間引く。 */
 const MAX_URL = 60000;
@@ -27,7 +33,7 @@ const THROTTLE_MS = 60 * 60 * 1000;
  * ここを上げ忘れると、`/webclass.user.js` を直しても、すでに入れた人には永久に届かない。
  * 取得ロジック（COLLECT）や送信まわりを変えたら、必ずここも上げること。
  */
-const USERSCRIPT_VERSION = "1.2.0";
+const USERSCRIPT_VERSION = "1.3.0";
 
 /**
  * 収集の本体。`unionfetchCollect(onProgress)` を定義する。
@@ -198,15 +204,17 @@ export function buildUserscriptCode(origin: string): string {
 
 ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
 
-  function askToken(force) {
-    var token = force ? "" : GM_getValue(TOKEN_KEY, "");
-    if (token) return token;
-    // 一度断った人に、WebClass を開くたび prompt を出さない。
-    // 入れ直したくなったら Tampermonkey のメニューから（force=true）。
-    if (!force && GM_getValue(DECLINED_KEY, "")) return "";
-    token = (prompt(
+  /** 保存済みのトークン。一度入れたら二度と聞かない */
+  function savedToken() {
+    return GM_getValue(TOKEN_KEY, "");
+  }
+
+  /** 貼り付けてもらう。断られたら覚えて、次から自動では聞かない */
+  function promptToken() {
+    var token = (prompt(
       "UnionFetch の取り込みトークンを貼り付けてください。\\n" +
-      "（UnionFetch の 設定 → セットアップ で発行できます）"
+      "（UnionFetch の 設定 → セットアップ で発行できます）\\n\\n" +
+      "一度入れれば、次からは聞きません。"
     ) || "").trim();
     if (token) {
       GM_setValue(TOKEN_KEY, token);
@@ -217,8 +225,20 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
     return token;
   }
 
+  /**
+   * 同期に使うトークンを得る。
+   * 保存済みがあればそれを返す（**手動実行でも聞き直さない**）。
+   * 無いときだけ聞く。自動実行では、一度断られていたら黙って諦める。
+   */
+  function tokenFor(manual) {
+    var token = savedToken();
+    if (token) return token;
+    if (!manual && GM_getValue(DECLINED_KEY, "")) return "";
+    return promptToken();
+  }
+
   GM_registerMenuCommand("UnionFetch: トークンを設定し直す", function () {
-    askToken(true);
+    promptToken();
   });
   GM_registerMenuCommand("UnionFetch: 今すぐ同期する", function () {
     run(true);
@@ -255,17 +275,27 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
 
   async function run(force) {
     var last = parseInt(GM_getValue(LAST_KEY, "0"), 10) || 0;
-    if (!force && Date.now() - last < THROTTLE_MS) return;
+    if (!force && Date.now() - last < THROTTLE_MS) {
+      var mins = Math.ceil((THROTTLE_MS - (Date.now() - last)) / 60000);
+      console.log("[UnionFetch] 前回から1時間経っていないので見送り。次は約" + mins + "分後");
+      return;
+    }
 
-    var token = askToken(force);
+    var token = tokenFor(force);
     if (!token) return;
+    console.log("[UnionFetch] 取り込みを開始します");
 
     // 収集する前に時刻を記録する。送信に失敗しても、WebClass を開くたびに
     // 取り直して大学のサーバを叩き続けることがないようにするため。
     GM_setValue(LAST_KEY, String(Date.now()));
 
     try {
+      var started = Date.now();
       var r = await unionfetchCollect(null);
+      console.log(
+        "[UnionFetch] " + r.cs.length + "コース / " + r.t.length + "件を " +
+        Math.round((Date.now() - started) / 1000) + "秒で読み終えました"
+      );
       send({ v: 2, b: r.b, cs: r.cs, t: r.t }, token);
     } catch (e) {
       // 自動実行なので alert は出さない。手動実行(メニュー)のときだけ知らせる。
