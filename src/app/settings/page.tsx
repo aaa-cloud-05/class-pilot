@@ -1,782 +1,245 @@
-"use client";
+"use client"
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
-import { ChevronLeft } from "lucide-react";
-import { useAssignments } from "@/hooks/useAssignments";
+import { useState } from "react"
 import {
-  getNotificationSettings,
-  saveNotificationSettings,
-  type NotificationPreset,
-  type NotificationSettings,
-} from "@/lib/notification-store";
-import { sendTestNotification } from "@/lib/notification-scheduler";
-import { clearAllClientData } from "@/lib/debug-clear";
-import { getWebclassUrl, setWebclassUrl } from "@/lib/webclass-url";
-import { AppHeader } from "@/components/app-header";
-import { cn } from "@/lib/utils";
-import { buildUserscriptCode } from "@/lib/webclass-script";
+  BellRing,
+  BookOpen,
+  Plug,
+  Eraser,
+  FileText,
+  Info,
+  Layers,
+  LogIn,
+  LogOut,
+  Mail,
+  Trash2,
+  Wrench,
+} from "lucide-react"
+import { useSession, signOut } from "next-auth/react"
+import { useApp, type ThemeMode } from "@/components/app/provider"
+import { clearAllClientData } from "@/lib/debug-clear"
+import { MobileHeader, PageBody } from "@/components/app/shell"
 import {
-  enablePush,
-  disablePush,
-  getPushSubscription,
-  isPushSupported,
-  isIosWithoutInstall,
-} from "@/lib/push-client";
+  Button,
+  ButtonLink,
+  Card,
+  INPUT,
+  ListGroup,
+  RowButton,
+  RowLink,
+  RowStatic,
+  Segmented,
+  Sheet,
+} from "@/components/app/ui"
+import { timeAgo } from "@/lib/assignment-format"
 
-const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
-  { value: "relaxed", label: "余裕派", desc: "締切24時間前に1回" },
-  { value: "standard", label: "標準", desc: "24時間前 + 3時間前" },
-  { value: "urgent", label: "ギリギリ派", desc: "3時間前 + 1時間前" },
-];
+const PRESET_LABEL = { relaxed: "早め", standard: "標準", urgent: "直前" } as const
 
-const SECTION_TITLE = "text-[13px] font-semibold text-foreground";
-const HINT = "text-[11.5px] text-muted-foreground";
-const PILL = "rounded-md px-2.5 py-1 text-[11px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
-const INPUT =
-  "w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground/40 focus-visible:ring-2 focus-visible:ring-ring";
+export default function MockSettingsPage() {
+  const { loggedIn, mode, setMode, syncedAt, now, settings, courses, showToast } = useApp()
+  const { data: session } = useSession()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [confirmText, setConfirmText] = useState("")
+  const [clearOpen, setClearOpen] = useState(false)
 
-function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "relative h-6 w-11 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
-        on ? "bg-foreground" : "bg-muted-foreground/25",
-      )}
-    >
-      <span
-        className={cn(
-          "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-background shadow-sm transition-transform",
-          on && "translate-x-5",
-        )}
-      />
-    </button>
-  );
-}
-
-export default function SettingsPage() {
-  const { data: session, status } = useSession();
-  const loggedIn = status === "authenticated";
-  const { assignments, refresh } = useAssignments();
-  const router = useRouter();
-  const [settings, setSettings] = useState<NotificationSettings | null>(null);
-  const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("default");
-  const [emailEnabled, setEmailEnabled] = useState(false);
-  const [emailLoaded, setEmailLoaded] = useState(false);
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [hiddenCourses, setHiddenCourses] = useState<string[]>([]);
-  const [allCourses, setAllCourses] = useState<{ id: string; name: string }[]>([]);
-  const [coursesLoading, setCoursesLoading] = useState(true);
-  const [clearing, setClearing] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [deleting, setDeleting] = useState(false);
-  const [webclassInput, setWebclassInput] = useState("");
-  const [pushOn, setPushOn] = useState(false);
-  const [pushBusy, setPushBusy] = useState(false);
-  const [pushNote, setPushNote] = useState("");
-  const [tokenIssued, setTokenIssued] = useState<boolean | null>(null);
-  const [tokenValue, setTokenValue] = useState("");
-  const [tokenBusy, setTokenBusy] = useState(false);
-  const [copied, setCopied] = useState<"token" | "script" | null>(null);
-  const [webclassMsg, setWebclassMsg] = useState<{ ok: boolean; text: string } | null>(null);
-
-  useEffect(() => {
-    getNotificationSettings().then(setSettings);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setNotifPermission(
-      typeof Notification !== "undefined" ? Notification.permission : "unsupported"
-    );
-    setWebclassInput(getWebclassUrl() ?? "");
-  }, []);
-
-  // この端末が購読済みかを見てトグルの初期状態にする
-  useEffect(() => {
-    if (!loggedIn) return;
-    getPushSubscription()
-      .then((sub) => setPushOn(!!sub))
-      .catch(() => setPushOn(false));
-  }, [loggedIn]);
-
-  // 発行済みかどうかだけ取得（平文トークンはサーバに残っていないので取り直せない）
-  useEffect(() => {
-    if (!loggedIn) return;
-    fetch("/api/import/token")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setTokenIssued(d ? !!d.issued : false))
-      .catch(() => setTokenIssued(false));
-  }, [loggedIn]);
-
-  useEffect(() => {
-    if (!loggedIn) return;
-    fetch("/api/notifications/settings")
-      .then((r) => r.json())
-      .then((data) => {
-        setEmailEnabled(data.settings?.emailEnabled ?? false);
-      })
-      .catch(() => {})
-      .finally(() => setEmailLoaded(true));
-    // 非表示コースも含めた全コースを取得（再追跡できるようにするため）
-    fetch("/api/courses")
-      .then((r) => r.json())
-      .then((data) => {
-        setAllCourses(data.courses ?? []);
-        setHiddenCourses(data.hiddenCourses ?? []);
-      })
-      .catch(() => {})
-      .finally(() => setCoursesLoading(false));
-  }, [loggedIn]);
-
-  async function updateSettings(patch: Partial<Omit<NotificationSettings, "id">>) {
-    await saveNotificationSettings(patch);
-    const updated = await getNotificationSettings();
-    setSettings(updated);
-    if (loggedIn) {
-      fetch("/api/notifications/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      }).catch(() => {});
-    }
-  }
-
-  async function toggleEmailNotification() {
-    setEmailLoading(true);
-    try {
-      const res = await fetch("/api/notifications/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailEnabled: !emailEnabled }),
-      });
-      if (res.ok) {
-        setEmailEnabled(!emailEnabled);
-      }
-    } finally {
-      setEmailLoading(false);
-    }
-  }
-
-  function saveWebclass() {
-    const ok = setWebclassUrl(webclassInput);
-    setWebclassMsg(
-      ok
-        ? { ok: true, text: webclassInput.trim() ? "保存しました" : "クリアしました" }
-        : { ok: false, text: "http(s) の URL を入力してください" }
-    );
-  }
-
-  async function handleDeleteAccount() {
-    setDeleting(true);
-    try {
-      const res = await fetch("/api/account", { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      // サーバー削除に成功したら、端末内ミラーも消してサインアウト（JWT Cookie破棄）
-      await clearAllClientData();
-      await signOut({ callbackUrl: "/" });
-    } catch {
-      setDeleting(false);
-      alert("アカウント削除に失敗しました。時間をおいて再度お試しください。");
-    }
-  }
-
-  const courses = Array.from(
-    new Map(assignments.map((a) => [a.courseId, { id: a.courseId, name: a.courseName }])).values()
-  );
-
-  // コース管理＋コース通知の統合リスト。allCourses(=追跡対象/非表示含む) と課題由来コースの和集合。
-  // trackable=Classroomコース(=非表示切替が意味を持つ)。
-  const courseList = useMemo(() => {
-    const trackableIds = new Set(allCourses.map((c) => c.id));
-    const map = new Map<string, string>();
-    for (const c of allCourses) map.set(c.id, c.name);
-    for (const a of assignments) if (!map.has(a.courseId)) map.set(a.courseId, a.courseName);
-    return Array.from(map, ([id, name]) => ({ id, name, trackable: trackableIds.has(id) }));
-  }, [allCourses, assignments]);
-
-  // 追跡/非表示の切替。非表示にしたら通知も自動でOFF（ミュートに追加）。
-  async function toggleTracking(id: string) {
-    if (!settings) return;
-    const hidden = hiddenCourses.includes(id);
-    const nextHidden = hidden ? hiddenCourses.filter((x) => x !== id) : [...hiddenCourses, id];
-    setHiddenCourses(nextHidden);
-    await saveNotificationSettings({ hiddenCourses: nextHidden });
-    const body: Record<string, unknown> = { hiddenCourses: nextHidden };
-    if (!hidden) {
-      const nextMuted = settings.mutedCourses.includes(id)
-        ? settings.mutedCourses
-        : [...settings.mutedCourses, id];
-      body.mutedCourses = nextMuted;
-      await saveNotificationSettings({ mutedCourses: nextMuted });
-      setSettings((s) => (s ? { ...s, mutedCourses: nextMuted } : s));
-    }
-    fetch("/api/notifications/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }).catch(() => {});
-    if (hidden) refresh(); // 再追跡時に再取得
-  }
-
-  // コース通知 ON/OFF（ミュート切替）。非表示コースは操作不可。
-  function toggleCourseMute(id: string) {
-    if (!settings || hiddenCourses.includes(id)) return;
-    const muted = settings.mutedCourses.includes(id);
-    const mutedCourses = muted
-      ? settings.mutedCourses.filter((x) => x !== id)
-      : [...settings.mutedCourses, id];
-    updateSettings({ mutedCourses });
-  }
-
-  const mutedAssignmentList = assignments.filter(
-    (a) => settings?.mutedAssignments.includes(a.id)
-  );
-
-  const back = (
-    <button
-      type="button"
-      onClick={() => router.back()}
-      aria-label="戻る"
-      className="flex items-center gap-0.5 rounded-md px-1.5 py-1 text-[12.5px] text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <ChevronLeft className="h-4 w-4" aria-hidden />
-      戻る
-    </button>
-  );
-
-  if (!settings) {
-    return (
-      <>
-        <AppHeader right={back} />
-        <main className="flex min-h-[60vh] items-center justify-center text-[13px] text-muted-foreground">
-          読み込み中…
-        </main>
-      </>
-    );
-  }
-
-  // 通知の許可ダイアログはユーザー操作の中でしか出せないので、必ずここから呼ぶ
-  const togglePush = async () => {
-    setPushBusy(true);
-    setPushNote("");
-    try {
-      if (pushOn) {
-        await disablePush();
-        setPushOn(false);
-        return;
-      }
-      const r = await enablePush();
-      if (r.ok) {
-        setPushOn(true);
-        return;
-      }
-      setPushNote(
-        r.reason === "denied"
-          ? "ブラウザで通知がブロックされています。アドレスバーの鍵アイコンから許可してください。"
-          : r.reason === "unsupported"
-            ? "この環境ではプッシュ通知を使えません。"
-            : "設定に失敗しました。時間をおいて試してください。",
-      );
-    } finally {
-      setPushBusy(false);
-    }
-  };
-
-  const issueToken = async () => {
-    if (tokenIssued && !confirm("再発行すると、いま設定済みの端末では同期が止まります。続けますか？")) return;
-    setTokenBusy(true);
-    try {
-      const res = await fetch("/api/import/token", { method: "POST" });
-      if (!res.ok) throw new Error();
-      const { token } = await res.json();
-      setTokenValue(token);
-      setTokenIssued(true);
-    } catch {
-      alert("トークンの発行に失敗しました");
-    } finally {
-      setTokenBusy(false);
-    }
-  };
-
-  const copyText = async (text: string, which: "token" | "script") => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(which);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      alert("コピーできませんでした。長押しして選択してください。");
-    }
-  };
+  const visibleCourses = courses.filter((c) => !c.hidden).length
 
   return (
     <>
-      <AppHeader right={back} />
-
-      <main className="mx-auto w-full max-w-md space-y-6 px-4 pb-24 pt-4">
-        <h1 className="px-1 text-[15px] font-semibold text-foreground">設定</h1>
-
-        {/* 通知 ON/OFF */}
-        <section>
-          <div className="flex items-center justify-between">
-            <h2 className={SECTION_TITLE}>通知</h2>
-            <Toggle on={settings.enabled} onClick={() => updateSettings({ enabled: !settings.enabled })} />
-          </div>
-          {notifPermission === "denied" && (
-            <p className="mt-1 text-[11.5px] text-destructive">
-              ブラウザの通知がブロックされています。ブラウザの設定から許可してください。
-            </p>
-          )}
-          {notifPermission === "granted" && (
-            <button
-              onClick={sendTestNotification}
-              className="mt-2 text-[11.5px] font-medium text-accent-blue hover:underline"
-            >
-              テスト通知を送信
-            </button>
-          )}
-        </section>
-
-        {/* メール通知 */}
-        {loggedIn && settings.enabled && (
-          <section>
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className={SECTION_TITLE}>メール通知</h2>
-                <p className={`mt-0.5 truncate ${HINT}`}>
-                  {session?.user?.email ?? ""} に締切通知を送信
-                </p>
-              </div>
-              {emailLoaded ? (
-                <Toggle on={emailEnabled} onClick={toggleEmailNotification} disabled={emailLoading} />
-              ) : (
-                <div className="h-6 w-11 shrink-0 animate-pulse rounded-full bg-muted" />
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* プッシュ通知 */}
-        {loggedIn && (
-          <section className="border-t border-border pt-5">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <h2 className={SECTION_TITLE}>プッシュ通知</h2>
-                <p className={HINT}>
-                  アプリを開いていなくても、この端末に締切をお知らせします。
-                </p>
-              </div>
-              <Toggle on={pushOn} onClick={togglePush} disabled={pushBusy || !isPushSupported()} />
-            </div>
-            {isIosWithoutInstall() && (
-              <p className={`mt-2 ${HINT}`}>
-                iPhone / iPad では、<strong className="text-foreground">共有 →「ホーム画面に追加」</strong>
-                をしてから、そのアイコンで開いた状態でオンにしてください。Safari のタブのままでは受け取れません。
-              </p>
-            )}
-            {!isPushSupported() && !isIosWithoutInstall() && (
-              <p className={`mt-2 ${HINT}`}>このブラウザはプッシュ通知に対応していません。</p>
-            )}
-            {pushNote && <p className="mt-2 text-[11.5px] text-destructive">{pushNote}</p>}
-          </section>
-        )}
-
-        {/* プリセット */}
-        {settings.enabled && (
-          <section>
-            <h2 className={`mb-2 ${SECTION_TITLE}`}>通知タイミング</h2>
-            <div className="space-y-2">
-              {PRESETS.map((p) => {
-                const active = settings.preset === p.value;
-                return (
-                  <label
-                    key={p.value}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors",
-                      active ? "border-foreground bg-muted/50" : "border-border hover:bg-muted/30",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="preset"
-                      value={p.value}
-                      checked={active}
-                      onChange={() => updateSettings({ preset: p.value })}
-                      className="accent-foreground"
-                    />
-                    <div>
-                      <span className="text-[13px] font-medium text-foreground">{p.label}</span>
-                      <span className={`ml-2 ${HINT}`}>{p.desc}</span>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* コース（追跡/非表示 と 通知ON/OFF を統合） */}
-        {loggedIn && (
-          <section>
-            <div className="mb-1 flex items-baseline justify-between gap-2">
-              <h2 className={SECTION_TITLE}>コース</h2>
-              <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                <span className="w-16 text-center">追跡</span>
-                <span className="w-11 text-center">通知</span>
-              </div>
-            </div>
-            <p className={`mb-2 ${HINT}`}>
-              非表示にしたコースの課題は取り込まれず、通知も自動でOFFになります。
-            </p>
-            {coursesLoading ? (
-              <div className="space-y-1">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="flex items-center gap-2 px-1 py-1.5">
-                    <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
-                    <div className="h-6 w-16 animate-pulse rounded-md bg-muted" />
-                    <div className="h-6 w-11 animate-pulse rounded-full bg-muted" />
-                  </div>
-                ))}
-              </div>
-            ) : courseList.length === 0 ? (
-              <p className={HINT}>コースがありません。</p>
-            ) : (
-              <div className="space-y-1">
-                {courseList.map((course) => {
-                  const hidden = hiddenCourses.includes(course.id);
-                  const notifOn =
-                    settings.enabled && !hidden && !settings.mutedCourses.includes(course.id);
-                  return (
-                    <div key={course.id} className="flex items-center gap-2 px-1 py-1.5">
-                      <span
-                        className={cn(
-                          "flex-1 truncate text-[13px]",
-                          hidden ? "text-muted-foreground" : "text-foreground",
-                        )}
-                      >
-                        {course.name}
-                      </span>
-                      {course.trackable ? (
-                        <button
-                          onClick={() => toggleTracking(course.id)}
-                          className={cn(
-                            PILL,
-                            "w-16 text-center",
-                            hidden
-                              ? "bg-muted text-muted-foreground"
-                              : "border border-border text-foreground hover:bg-muted",
-                          )}
-                        >
-                          {hidden ? "非表示" : "追跡中"}
-                        </button>
-                      ) : (
-                        <span className="w-16" aria-hidden />
-                      )}
-                      <Toggle
-                        on={notifOn}
-                        onClick={() => toggleCourseMute(course.id)}
-                        disabled={hidden || !settings.enabled}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* 未ログイン時はコース通知(ミュート)のみ */}
-        {!loggedIn && settings.enabled && courses.length > 0 && (
-          <section>
-            <h2 className={`mb-2 ${SECTION_TITLE}`}>コース通知</h2>
-            <div className="space-y-1">
-              {courses.map((course) => {
-                const muted = settings.mutedCourses.includes(course.id);
-                return (
-                  <div key={course.id} className="flex items-center justify-between gap-2 px-1 py-1.5">
-                    <span className="flex-1 truncate text-[13px] text-foreground">{course.name}</span>
-                    <Toggle on={!muted} onClick={() => toggleCourseMute(course.id)} />
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ミュート中の課題 */}
-        {settings.enabled && mutedAssignmentList.length > 0 && (
-          <section>
-            <h2 className={`mb-2 ${SECTION_TITLE}`}>ミュート中の課題</h2>
-            <div className="space-y-1">
-              {mutedAssignmentList.map((a) => (
-                <div key={a.id} className="flex items-center justify-between gap-2 rounded-lg px-1 py-1.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] text-foreground">{a.title}</p>
-                    <p className={`truncate ${HINT}`}>{a.courseName}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const mutedAssignments = settings.mutedAssignments.filter((id) => id !== a.id);
-                      updateSettings({ mutedAssignments });
-                    }}
-                    className={cn(PILL, "bg-muted text-muted-foreground")}
-                  >
-                    解除
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* WebClass 連携 */}
-        <section className="border-t border-border pt-5">
-          <h2 className={`mb-1 ${SECTION_TITLE}`}>WebClass の URL</h2>
-          <p className={`mb-2 ${HINT}`}>
-            ヘッダーの同期ランプをタップして WebClass を開けるようにします。所属校の WebClass
-            ログインページの URL を入力してください（この端末に保存されます）。
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="url"
-              inputMode="url"
-              value={webclassInput}
-              onChange={(e) => {
-                setWebclassInput(e.target.value);
-                setWebclassMsg(null);
-              }}
-              placeholder="https://…/webclass/"
-              className={INPUT}
-            />
-            <button
-              onClick={saveWebclass}
-              className="shrink-0 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-90"
-            >
-              保存
-            </button>
-          </div>
-          {webclassMsg && (
-            <p className={cn("mt-1 text-[11.5px]", webclassMsg.ok ? "text-lamp-green" : "text-destructive")}>
-              {webclassMsg.text}
-            </p>
-          )}
-        </section>
-
-        {/* WebClass 自動同期（ユーザースクリプト） */}
-        {loggedIn && (
-          <section className="border-t border-border pt-5">
-            <h2 className={`mb-1 ${SECTION_TITLE}`}>WebClass 自動同期（PC）</h2>
-            <p className={`mb-3 ${HINT}`}>
-              Tampermonkey を入れておくと、WebClass を開くだけで自動的に取り込まれます。
-              ブックマークレットを押す必要がなくなります。
-              <strong className="text-foreground">任意です</strong>。iPhone では使えないので、その場合はブックマークレットのままで問題ありません。
-            </p>
-
-            <ol className={`mb-3 list-decimal space-y-2 pl-4 ${HINT}`}>
-              <li>
-                ブラウザに{" "}
-                <a
-                  href="https://www.tampermonkey.net/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent-blue underline"
-                >
-                  Tampermonkey
-                </a>{" "}
-                を入れる（Chrome ウェブストアから追加）
-              </li>
-              <li>
-                <strong className="text-foreground">「スクリプトを入れる」</strong>を押す。
-                Tampermonkey のインストール画面が開いたら「インストール」。
-                <div className="mt-1.5 rounded-lg border border-border bg-muted/40 px-3 py-2">
-                  <p className="mb-1 font-medium text-foreground">開かない場合（よくあります）</p>
-                  <ol className="list-decimal space-y-0.5 pl-4">
-                    <li>下の「コードをコピー」を押す</li>
-                    <li>
-                      ツールバーの Tampermonkey アイコン →{" "}
-                      <strong className="text-foreground">「新規スクリプトを作成…」</strong>
-                      （アイコンが見えないときはパズルのマークの中）
-                    </li>
-                    <li>
-                      エディタが開くので <strong className="text-foreground">Ctrl+A</strong> で全選択して消し、
-                      コピーしたコードを貼り付ける
-                    </li>
-                    <li>
-                      <strong className="text-foreground">Ctrl+S</strong> で保存
-                    </li>
-                  </ol>
-                  <p className="mt-1.5">
-                    それでも動かないときは、Chrome の <code className="font-mono">chrome://extensions</code> で
-                    <strong className="text-foreground">デベロッパーモードをオン</strong>にしてください。
-                    最近の Chrome では、これが無いと Tampermonkey が正しく動きません。
-                  </p>
-                </div>
-              </li>
-              <li>下でトークンを発行してコピーし、WebClass を開いたときに聞かれたら貼り付ける</li>
-            </ol>
-
-            <div className="mb-3 flex flex-wrap gap-2">
-              <a
-                href="/webclass.user.js"
-                className="rounded-lg border border-border px-3 py-2 text-[13px] font-medium transition hover:bg-muted"
-              >
-                スクリプトを入れる
-              </a>
-              <button
-                onClick={issueToken}
-                disabled={tokenBusy}
-                className="rounded-lg bg-foreground px-3 py-2 text-[13px] font-medium text-background transition hover:opacity-90 disabled:opacity-50"
-              >
-                {tokenBusy ? "発行中…" : tokenIssued ? "トークンを再発行" : "トークンを発行"}
-              </button>
-              <button
-                onClick={() => copyText(buildUserscriptCode(window.location.origin), "script")}
-                className={`rounded-lg px-3 py-2 text-[13px] ${HINT} transition hover:bg-muted`}
-              >
-                {copied === "script" ? "コピーしました" : "コードをコピー"}
-              </button>
-            </div>
-
-            {tokenValue ? (
-              <div className="rounded-lg border border-lamp-green/40 bg-lamp-green/5 p-3">
-                <p className="mb-1 text-[11.5px] font-medium text-foreground">
-                  この画面を離れると二度と表示できません。いまコピーしてください。
-                </p>
-                <div className="flex gap-2">
-                  <code className="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1.5 font-mono text-[11px]">
-                    {tokenValue}
-                  </code>
-                  <button
-                    onClick={() => copyText(tokenValue, "token")}
-                    className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium transition hover:bg-muted"
-                  >
-                    {copied === "token" ? "済" : "コピー"}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              tokenIssued && (
-                <p className={HINT}>
-                  発行済みです。トークンは保存していないため再表示できません。無くした場合は再発行してください。
-                </p>
-              )
-            )}
-          </section>
-        )}
-
-        {/* アカウント */}
-        <section className="border-t border-border pt-5">
+      <MobileHeader variant="title" title="設定" />
+      <PageBody desktopTitle="アカウントと表示">
+        <div className="space-y-7">
           {loggedIn ? (
-            <button onClick={() => signOut()} className="text-[13px] font-medium text-destructive">
-              Google ログアウト
-            </button>
+            <Card className="flex items-center gap-4 p-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-[18px] font-semibold text-muted-foreground">
+                {(session?.user?.name ?? session?.user?.email ?? "?").trim().charAt(0)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[17px] font-bold">{session?.user?.name ?? "ログイン中"}</p>
+                <p className="truncate text-[14px] text-muted-foreground">{session?.user?.email ?? ""}</p>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">Google でログイン中</p>
+              </div>
+            </Card>
           ) : (
-            <Link href="/login" className="text-[13px] font-medium text-accent-blue">
-              Google ログイン（Classroom連携）
-            </Link>
+            <Card className="p-5">
+              <p className="text-[18px] font-bold">Google でログイン</p>
+              <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">
+                Classroom の自動取り込み、メールとプッシュの通知、ほかの端末との同期が使えるようになります。
+              </p>
+              <ButtonLink href="/login" size="lg" className="mt-4 w-full">
+                <LogIn className="h-5 w-5" aria-hidden />
+                Google でログイン
+              </ButtonLink>
+              <p className="mt-3 text-[13px] text-muted-foreground">いまはこの端末の中だけに保存しています。</p>
+            </Card>
           )}
-        </section>
 
-        {/* デバッグ: ローカルデータ削除 */}
-        <section className="border-t border-border pt-5">
-          <h2 className={`mb-1 ${SECTION_TITLE}`}>デバッグ</h2>
-          <p className={`mb-2 ${HINT}`}>
-            端末内のキャッシュ（IndexedDB・Cache・SW・localStorage）を全削除します。 ログイン状態は維持されます。
-          </p>
-          <button
-            onClick={async () => {
-              if (
-                !confirm(
-                  "この端末に保存されたローカルデータ（IndexedDB等）を全て削除します。よろしいですか？"
-                )
-              )
-                return;
-              setClearing(true);
-              await clearAllClientData();
-              alert("ローカルデータを削除しました。再読み込みします。");
-              window.location.reload();
-            }}
-            disabled={clearing}
-            className={cn("text-[13px] font-medium", clearing ? "text-muted-foreground" : "text-destructive")}
-          >
-            {clearing ? "削除中…" : "ローカルデータを全消去"}
-          </button>
-        </section>
-
-        {/* アカウント削除（危険ゾーン） */}
-        {loggedIn && (
-          <section className="border-t border-border pt-5">
-            <h2 className="mb-1 text-[13px] font-semibold text-destructive">アカウント削除</h2>
-            <p className={`mb-2 ${HINT}`}>
-              アカウントとサーバー上の全データ（課題・通知設定・履歴・Google 連携情報）を
-              完全に削除します。この操作は取り消せません。
-            </p>
-            <button
-              onClick={() => {
-                setDeleteConfirm("");
-                setShowDeleteModal(true);
-              }}
-              className="text-[13px] font-medium text-destructive"
-            >
-              アカウントを削除
-            </button>
-          </section>
-        )}
-
-        {/* 法的情報 */}
-        <section className="border-t border-border pt-5">
-          <div className="flex gap-4 text-[11.5px] text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground">プライバシーポリシー</Link>
-            <Link href="/terms" className="hover:text-foreground">利用規約</Link>
-          </div>
-        </section>
-      </main>
-
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-black/40" onClick={() => !deleting && setShowDeleteModal(false)} aria-hidden />
-          <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
-            <h3 className="mb-2 text-[15px] font-bold text-destructive">本当にアカウントを削除しますか？</h3>
-            <p className="mb-1 text-[13px] text-muted-foreground">以下がすべて削除され、復元できません：</p>
-            <ul className="mb-3 list-inside list-disc space-y-0.5 text-[13px] text-muted-foreground">
-              <li>登録・取り込んだ課題</li>
-              <li>通知設定・履歴</li>
-              <li>Google 連携情報</li>
-            </ul>
-            <p className="mb-1 text-[11.5px] text-muted-foreground">
-              確認のため <strong className="text-foreground">削除</strong> と入力してください
-            </p>
-            <input
-              type="text"
-              value={deleteConfirm}
-              onChange={(e) => setDeleteConfirm(e.target.value)}
-              placeholder="削除"
-              className={`${INPUT} mb-3`}
+          <ListGroup title="つなぐ" className="lg:hidden">
+            <RowLink
+              href="/settings/setup"
+              icon={Plug}
+              label="セットアップ"
+              description="Classroom・WebClass・通知を順に設定"
+              detail={
+                loggedIn && syncedAt.classroom ? timeAgo(syncedAt.classroom, now) : syncedAt.webclass ? "一部のみ" : "未設定"
+              }
             />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deleting}
-                className="flex-1 rounded-lg border border-border py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleteConfirm !== "削除" || deleting}
-                className="flex-1 rounded-lg bg-destructive py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
-              >
-                {deleting ? "削除中…" : "完全に削除"}
-              </button>
-            </div>
+          </ListGroup>
+
+          <ListGroup title="通知とコース" className="lg:hidden">
+            <RowLink
+              href="/settings/notifications"
+              icon={BellRing}
+             
+              label="通知"
+              detail={settings.enabled ? `オン・${PRESET_LABEL[settings.preset]}` : "オフ"}
+            />
+            <RowLink href="/settings/courses" icon={Layers} label="コース" detail={`${visibleCourses} コース`} />
+          </ListGroup>
+
+          <section>
+            <h2 className="px-4 pb-2 text-[13px] font-semibold text-muted-foreground">表示</h2>
+            <Card className="p-4">
+              <p className="mb-3 text-[16px]">テーマ</p>
+              <Segmented<ThemeMode>
+                label="テーマ"
+                value={mode}
+                onChange={setMode}
+                options={[
+                  { value: "system", label: "自動" },
+                  { value: "light", label: "ライト" },
+                  { value: "dark", label: "ダーク" },
+                ]}
+              />
+              <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">「自動」は端末の設定に合わせて切り替わります。</p>
+            </Card>
+          </section>
+
+          {/* PC は左の一覧に「ヘルプ」があるので、ここにはスマホ用の1行だけ置く */}
+          <ListGroup className="lg:hidden">
+            <RowLink
+              href="/settings/help"
+              icon={BookOpen}
+              label="ヘルプ"
+              description="画面の見かた・同期のしくみ・安全性"
+            />
+          </ListGroup>
+
+          <ListGroup
+            title="このアプリについて"
+            footer="UnionFetch は Google・WebClass とは関係のない非公式ツールです。課題は読み取り専用で取得し、パスワードは扱いません。"
+          >
+            <RowLink href="/privacy" icon={FileText} label="プライバシーポリシー" />
+            <RowLink href="/terms" icon={FileText} label="利用規約" />
+            <RowStatic icon={Mail} label="お問い合わせ" detail="support@unionfetch.com" />
+            <RowStatic icon={Info} label="バージョン" detail="0.1.0" />
+          </ListGroup>
+
+          {loggedIn && (
+            <ListGroup>
+              <RowButton
+                icon={LogOut}
+               
+                label="ログアウト"
+                onClick={() => signOut({ callbackUrl: "/" })}
+              />
+            </ListGroup>
+          )}
+
+          <ListGroup title="困ったとき・取り消せない操作">
+            <RowButton
+              icon={Eraser}
+             
+              label="この端末のデータを消去"
+              description="表示がおかしいときに。ログイン中なら、サーバーのデータは消えません"
+              onClick={() => setClearOpen(true)}
+            />
+            {loggedIn && (
+              <RowButton
+                icon={Trash2}
+               
+                label="アカウントを削除"
+                tone="danger"
+                description="課題・通知設定・Google 連携をすべて削除します"
+                onClick={() => {
+                  setConfirmText("")
+                  setDeleteOpen(true)
+                }}
+              />
+            )}
+          </ListGroup>
+        </div>
+      </PageBody>
+
+      <Sheet open={clearOpen} onClose={() => setClearOpen(false)} title="この端末のデータを消去">
+        <div className="space-y-4 pt-2">
+          <div className="flex gap-3 rounded-control border border-border p-4">
+            <Wrench className="h-[18px] w-[18px] shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+            <p className="text-[14px] leading-relaxed text-muted-foreground">
+              キャッシュ・保存済みの表示データを消して読み込み直します。ログイン状態は保たれます。
+            </p>
+          </div>
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            ログインしていない場合は、この端末に保存していた課題も消えます。
+          </p>
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <Button variant="secondary" size="lg" onClick={() => setClearOpen(false)}>
+              やめる
+            </Button>
+            <Button
+              variant="danger"
+              size="lg"
+              onClick={async () => {
+                setClearOpen(false)
+                await clearAllClientData()
+                showToast("この端末のデータを消去しました")
+                window.location.reload()
+              }}
+            >
+              消去する
+            </Button>
           </div>
         </div>
-      )}
+      </Sheet>
+
+      <Sheet open={deleteOpen} onClose={() => setDeleteOpen(false)} title="アカウントを削除">
+        <div className="space-y-4 pt-2">
+          <p className="text-[15px] leading-relaxed text-muted-foreground">次のデータがすべて削除され、元に戻せません。</p>
+          <ul className="space-y-1.5 rounded-control bg-muted px-4 py-3 text-[15px]">
+            <li>登録・取り込んだ課題</li>
+            <li>通知の設定と履歴</li>
+            <li>Google との連携情報</li>
+          </ul>
+          <label className="block">
+            <span className="mb-2 block text-[14px] font-semibold text-muted-foreground">
+              確認のため「削除」と入力してください
+            </span>
+            <input className={INPUT} value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="削除" />
+          </label>
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <Button variant="secondary" size="lg" onClick={() => setDeleteOpen(false)}>
+              やめる
+            </Button>
+            <Button
+              variant="danger"
+              size="lg"
+              disabled={confirmText !== "削除"}
+              onClick={async () => {
+                setDeleteOpen(false)
+                const res = await fetch("/api/account", { method: "DELETE" }).catch(() => null)
+                if (!res?.ok) {
+                  showToast("削除に失敗しました")
+                  return
+                }
+                await clearAllClientData()
+                signOut({ callbackUrl: "/" })
+              }}
+            >
+              完全に削除
+            </Button>
+          </div>
+        </div>
+      </Sheet>
     </>
-  );
+  )
 }
