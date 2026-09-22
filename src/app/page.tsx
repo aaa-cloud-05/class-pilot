@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { addWeeks, differenceInCalendarWeeks, endOfWeek, format, startOfWeek } from "date-fns"
-import { ArrowDownUp, CalendarCheck2, ChevronRight, Inbox, X } from "lucide-react"
+import { ArrowDownUp, CalendarCheck2, Inbox, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AllList } from "@/components/app/all-list"
 import { AssignmentDetail, AssignmentList, AssignmentSheet } from "@/components/app/assignment"
@@ -13,7 +13,6 @@ import { useApp } from "@/components/app/provider"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { MobileHeader, PageBody, ReauthOrErrorBanner, SetupCard } from "@/components/app/shell"
 import { Button, ButtonLink, Card, EmptyState, IconButton, SectionHeader, Segmented, Skeleton } from "@/components/app/ui"
-import { UnknownSheet } from "@/components/app/unknown-sheet"
 import { WeekHero } from "@/components/app/week-hero"
 import { countLater, firstLaterDue, groupRecent, GROUP_LABEL, type SortMode } from "@/lib/assignment-format"
 import { buildWeekState, nextUp } from "@/lib/week-view"
@@ -64,8 +63,6 @@ export default function MockHomePage() {
   // 「すべて」で最初に開く月。来週以降を見にいくときは、その課題がある月から始める
   const [allMonth, setAllMonth] = useState<Date>(now)
   const firstLater = useMemo(() => firstLaterDue(assignments, now), [assignments, now])
-  const unknownCount = assignments.filter((a) => a.submissionState === "unknown").length
-  const [unknownOpen, setUnknownOpen] = useState(false)
 
   const empty = !loading && assignments.length === 0
   const showSetup = !setupDismissed
@@ -152,29 +149,6 @@ export default function MockHomePage() {
                   next={weekDiff === 0 ? next : null}
                   onOpenNext={(a) => setSelectedId(a.id)}
                 />
-              </Appear>
-            )}
-
-            {unknownCount > 0 && !loading && !empty && (
-              <Appear delay={0.08} className="mt-4">
-                <button
-                  type="button"
-                  onClick={() => setUnknownOpen(true)}
-                  className="flex w-full items-center gap-3 rounded-card bg-card px-4 py-3 text-left shadow-card outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/40"
-                >
-                  <span
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/70 text-[13px] font-bold text-muted-foreground"
-                    aria-hidden
-                  >
-                    ?
-                  </span>
-                  <span className="min-w-0 flex-1 text-[14px] leading-snug">
-                    提出状況が不明な課題が{" "}
-                    <span className="font-semibold tabular-nums">{unknownCount}</span> 件あります
-                  </span>
-                  <span className="shrink-0 text-[13px] font-medium text-primary">まとめて確認</span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" aria-hidden />
-                </button>
               </Appear>
             )}
 
@@ -269,7 +243,6 @@ export default function MockHomePage() {
         </div>
       </PageBody>
 
-      <UnknownSheet open={unknownOpen} onClose={() => setUnknownOpen(false)} />
       {!desktop && <AssignmentSheet a={selected} onClose={() => setSelectedId(null)} />}
     </>
   )

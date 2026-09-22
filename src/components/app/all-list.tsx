@@ -14,7 +14,6 @@ import { Button, Card, SectionHeader, Segmented } from "@/components/app/ui"
 
 const NO_DUE_TABS: { value: SubmissionState; label: string }[] = [
   { value: "not_submitted", label: "未提出" },
-  { value: "unknown", label: "不明" },
   { value: "submitted", label: "提出済み" },
 ]
 

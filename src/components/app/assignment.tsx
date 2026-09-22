@@ -24,7 +24,6 @@ export const SOURCE_ICON: Record<AssignmentSource, typeof Globe> = {
 export function StatusToggle({ a, size = "md" }: { a: ViewAssignment; size?: "md" | "lg" }) {
   const { toggleSubmitted, loggedIn, showToast } = useApp()
   const submitted = a.submissionState === "submitted"
-  const unknown = a.submissionState === "unknown"
   const disabled = !loggedIn && a.source !== "manual"
 
   return (
@@ -50,18 +49,10 @@ export function StatusToggle({ a, size = "md" }: { a: ViewAssignment; size?: "md
           size === "lg" ? "h-[26px] w-[26px]" : "h-[22px] w-[22px]",
           submitted
             ? "border-primary bg-primary text-primary-foreground"
-            : unknown
-              ? "border-dashed border-muted-foreground/70 text-muted-foreground"
-              : "border-[1.5px] border-muted-foreground/45 text-transparent group-hover:border-primary/70",
+            : "border-[1.5px] border-muted-foreground/45 text-transparent group-hover:border-primary/70",
         )}
       >
-        {unknown ? (
-          <span className={cn("font-bold leading-none", size === "lg" ? "text-[14px]" : "text-[12px]")} aria-hidden>
-            ?
-          </span>
-        ) : (
-          <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
-        )}
+        <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
       </motion.span>
     </button>
   )
@@ -256,7 +247,6 @@ export function AssignmentDetail({ a, onClose }: { a: ViewAssignment; onClose?: 
           options={[
             { value: "not_submitted", label: STATUS_LABEL.not_submitted },
             { value: "submitted", label: STATUS_LABEL.submitted },
-            { value: "unknown", label: STATUS_LABEL.unknown },
           ]}
         />
         {!canEdit && <p className="mt-2 text-[13px] text-muted-foreground">変更するには Google でログインしてください。</p>}

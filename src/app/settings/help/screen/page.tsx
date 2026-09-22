@@ -15,22 +15,13 @@ const MARKS = [
     label: "提出済み",
     desc: "もう一度タップすると戻せます",
   },
-  {
-    mark: (
-      <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground text-[12px] font-bold text-muted-foreground">
-        ?
-      </span>
-    ),
-    label: "不明",
-    desc: "WebClass から提出状況が取れなかったもの。タップして提出済みにできます",
-  },
 ]
 
 const COLORS = [
   { chip: "bg-primary", label: "青", desc: "提出済み" },
   { chip: "bg-destructive", label: "赤", desc: "締切を過ぎた未提出" },
   { chip: "bg-[var(--ui-warn-fill)]", label: "黄", desc: "24時間以内に締切" },
-  { chip: "bg-muted-foreground/45", label: "灰", desc: "まだ先の未提出・状況が不明" },
+  { chip: "bg-muted-foreground/45", label: "灰", desc: "まだ先の未提出" },
 ]
 
 export default function ScreenGuidePage() {
@@ -91,7 +82,7 @@ export default function ScreenGuidePage() {
           </p>
           <p className="mt-3">
             <strong>すべて</strong>は月で切り替えて、その月にかかる週をひと塊ずつ並べます。期限なしの課題はいちばん下で、
-            未提出・不明・提出済みを切り替えて見られます。
+            未提出と提出済みを切り替えて見られます。
           </p>
         </Faq>
       </Card>
