@@ -32,7 +32,7 @@ export function UnknownSheet({ open, onClose }: { open: boolean; onClose: () => 
 
         {unknown.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <CheckCheck className="h-8 w-8 text-ok" strokeWidth={1.75} aria-hidden />
+            <CheckCheck className="h-8 w-8 text-primary" strokeWidth={1.75} aria-hidden />
             <p className="text-[15px] font-medium">不明な課題はありません</p>
           </div>
         ) : (

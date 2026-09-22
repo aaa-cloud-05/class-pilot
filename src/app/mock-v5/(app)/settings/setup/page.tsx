@@ -20,7 +20,7 @@ import {
 } from "../../../_components/ui"
 import { timeAgo } from "../../../_lib/format"
 
-const Yes = () => <Check className="h-4 w-4 text-ok" aria-label="できる" />
+const Yes = () => <Check className="h-4 w-4 text-primary" aria-label="できる" />
 const No = () => <Minus className="h-4 w-4 text-muted-foreground/60" aria-label="できない" />
 
 type Device = "pc" | "iphone" | "android"
@@ -87,7 +87,7 @@ function Step({
         <span
           className={cn(
             "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold tabular-nums",
-            done ? "bg-ok text-white" : "border border-input text-muted-foreground",
+            done ? "bg-primary text-primary-foreground" : "border border-input text-muted-foreground",
           )}
           aria-hidden
         >
@@ -152,7 +152,7 @@ export default function SetupPage() {
             </p>
             <div className="mx-1 mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
               <motion.div
-                className="h-full rounded-full bg-ok"
+                className="h-full rounded-full bg-primary"
                 animate={{ width: `${(doneCount / steps.length) * 100}%` }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               />
