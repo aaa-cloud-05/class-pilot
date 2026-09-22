@@ -101,7 +101,7 @@ export function SectionHeader({
   action,
   id,
 }: {
-  title: string
+  title: React.ReactNode
   count?: number
   tone?: "danger" | "warn"
   action?: React.ReactNode

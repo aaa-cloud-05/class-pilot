@@ -110,10 +110,11 @@ export function weeksOfMonth(list: MockAssignment[], month: Date): WeekBlock[] {
     .filter((w) => w.items.length > 0)
 }
 
-export function weekBlockLabel(w: WeekBlock, now: Date): { range: string; tag: string | null } {
-  const range = `${format(w.start, "M/d")} - ${format(w.end, "M/d")}`
-  const tag = isSameWeek(w.start, now, WEEK) ? "今週" : isSameWeek(w.start, addDays(now, 7), WEEK) ? "来週" : null
-  return { range, tag }
+export function weekBlockLabel(w: WeekBlock, now: Date): { range: string; isCurrentWeek: boolean } {
+  return {
+    range: `${format(w.start, "M/d")} - ${format(w.end, "M/d")}`,
+    isCurrentWeek: isSameWeek(w.start, now, WEEK),
+  }
 }
 
 /** 期限なしの課題を状態ごとに分ける（「すべて」タブの下のタブ用） */

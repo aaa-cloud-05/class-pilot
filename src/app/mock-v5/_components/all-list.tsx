@@ -91,29 +91,18 @@ export function AllList({
       ) : (
         <div className="mt-5 space-y-6">
           {weeks.map((w, i) => {
-            const { range, tag } = weekBlockLabel(w, now)
+            const { range, isCurrentWeek } = weekBlockLabel(w, now)
             const weekDone = w.items.filter((a) => a.status === "submitted").length
             return (
               <Appear key={`${monthKey}-${range}`} delay={Math.min(0.06 * i, 0.3)}>
                 <section>
+                  {/* 今週はバッジを足さず、日付そのものを青くして示す */}
                   <SectionHeader
-                    title={range}
+                    title={<span className={cn("tabular-nums", isCurrentWeek && "text-primary")}>{range}</span>}
                     count={w.items.length}
                     action={
-                      <span className="flex items-center gap-2">
-                        {tag && (
-                          <span
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-[12px] font-semibold",
-                              tag === "今週" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
-                            )}
-                          >
-                            {tag}
-                          </span>
-                        )}
-                        <span className="text-[13px] tabular-nums text-muted-foreground">
-                          提出済み {weekDone} / {w.items.length}
-                        </span>
+                      <span className="text-[13px] tabular-nums text-muted-foreground">
+                        提出済み {weekDone} / {w.items.length}
                       </span>
                     }
                   />
@@ -127,25 +116,22 @@ export function AllList({
 
       {/* 期限なしは月に属さないので、いちばん下でまとめて見る */}
       <section className="mt-8">
-        <SectionHeader
-          title="期限なし"
-          action={
-            <Segmented<Status>
-              label="期限なしの状態"
-              size="sm"
-              value={noDueTab}
-              onChange={setNoDueTab}
-              options={NO_DUE_TABS.map((t) => ({
-                value: t.value,
-                label: (
-                  <span className="flex items-center gap-1.5">
-                    {t.label}
-                    <span className="text-[12px] tabular-nums opacity-70">{noDue[t.value].length}</span>
-                  </span>
-                ),
-              }))}
-            />
-          }
+        <SectionHeader title="期限なし" count={noDue.not_submitted.length + noDue.unknown.length + noDue.submitted.length} />
+        {/* 3つを等幅にしたいので、見出しの横ではなく下にフル幅で置く */}
+        <Segmented<Status>
+          label="期限なしの状態"
+          className="mb-3 flex w-full"
+          value={noDueTab}
+          onChange={setNoDueTab}
+          options={NO_DUE_TABS.map((t) => ({
+            value: t.value,
+            label: (
+              <span className="flex items-center gap-1.5">
+                {t.label}
+                <span className="text-[12px] tabular-nums opacity-70">{noDue[t.value].length}</span>
+              </span>
+            ),
+          }))}
         />
         {noDueItems.length ? (
           <AssignmentList key={noDueTab} items={noDueItems} onOpen={onOpen} selectedId={selectedId} />
