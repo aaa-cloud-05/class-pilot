@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Check, ChevronLeft } from "lucide-react";
+import { Check } from "lucide-react";
 import { transformWebClassPayload } from "@/lib/webclass";
 import { cacheWebClassAssignments, replaceCache } from "@/lib/cache";
 import { setLocalWebclassSyncedAt } from "@/lib/sync-meta";
-import { AppHeader } from "@/components/app-header";
+import { Brand } from "@/components/app/shell";
 
 export default function ImportPage() {
   const router = useRouter();
@@ -133,8 +133,8 @@ export default function ImportPage() {
   if (status === "done") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-lamp-green/15">
-          <Check className="h-6 w-6 text-lamp-green" aria-hidden />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <Check className="h-6 w-6 text-primary" aria-hidden />
         </div>
         <p className="text-[15px] font-semibold text-foreground">{count}件の課題を取り込みました</p>
         <p className="text-[12px] text-muted-foreground">ホームへ移動します…</p>
@@ -148,7 +148,7 @@ export default function ImportPage() {
         <p className="text-[13px] text-destructive">{errorMsg}</p>
         <button
           onClick={() => router.push("/")}
-          className="text-[13px] font-medium text-accent-blue hover:underline"
+          className="text-[13px] font-medium text-primary hover:underline"
         >
           ホームへ戻る
         </button>
@@ -159,19 +159,18 @@ export default function ImportPage() {
   // ハッシュ無しでこのページに来た場合：取り込みは自動、手順はガイドへ集約。
   return (
     <>
-      <AppHeader
-        right={
+      <header className="sticky top-0 z-20 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex min-h-[52px] max-w-xl items-center gap-2 px-4 pt-[env(safe-area-inset-top)]">
+          <Brand />
           <button
             type="button"
             onClick={() => router.push("/")}
-            aria-label="ホームへ"
-            className="flex items-center gap-0.5 rounded-md px-1.5 py-1 text-[12.5px] text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="ml-auto rounded-control px-2 py-1 text-[13px] font-medium text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
           >
-            <ChevronLeft className="h-4 w-4" aria-hidden />
-            ホーム
+            ホームへ
           </button>
-        }
-      />
+        </div>
+      </header>
 
       <main className="mx-auto w-full max-w-lg space-y-4 px-4 pb-24 pt-4">
         <div className="px-1">

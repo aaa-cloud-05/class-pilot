@@ -1,24 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-/* UI リデザインのモック用トークン（[data-ui] の中だけで効く）。本番化したら消す */
-@import './mock/ui-tokens.css';
-@import './mock-v2/ui-tokens.css';
-@import './mock-v3/ui-tokens.css';
-@import './mock-v4/ui-tokens.css';
-@import './mock-v5/ui-tokens.css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-lamp-green: var(--lamp-green);
-  --color-lamp-amber: var(--lamp-amber);
-  --color-lamp-red: var(--lamp-red);
-  --color-lamp-muted: var(--lamp-muted);
-  --color-accent-blue: var(--accent-blue);
-  --color-block: var(--block);
-  --color-block-strong: var(--block-strong);
-  --color-track: var(--track);
   --font-sans: var(--font-geist-sans), 'Geist Fallback', ui-sans-serif, system-ui;
   --font-mono: var(--font-geist-mono), 'Geist Mono Fallback', ui-monospace;
   --font-brand: var(--font-jakarta), var(--font-geist-sans), ui-sans-serif, system-ui;
@@ -149,15 +135,6 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* 旧 UI がまだ使うトークン。画面を全部置き換えたら消す */
-  --lamp-green: oklch(0.72 0.17 150);
-  --lamp-amber: oklch(0.78 0.15 78);
-  --lamp-red: oklch(0.63 0.21 25);
-  --lamp-muted: oklch(0.8 0.01 250);
-  --block: oklch(0.9 0.006 250);
-  --block-strong: oklch(0.32 0.01 255);
-  --track: oklch(0.94 0.004 250);
-  --accent-blue: oklch(0.62 0.18 253);
 }
 
 .dark {
@@ -210,15 +187,6 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-  /* 旧 UI がまだ使うトークン。画面を全部置き換えたら消す */
-  --lamp-green: oklch(0.78 0.18 150);
-  --lamp-amber: oklch(0.82 0.16 80);
-  --lamp-red: oklch(0.68 0.21 25);
-  --lamp-muted: oklch(0.5 0.01 250);
-  --block: oklch(0.34 0.008 255);
-  --block-strong: oklch(0.72 0.01 250);
-  --track: oklch(0.28 0.006 255);
-  --accent-blue: oklch(0.7 0.16 253);
 }
 
 @layer utilities {

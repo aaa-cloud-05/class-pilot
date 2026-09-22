@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
       { source: "/docs/help", destination: "/settings/help/safety", permanent: false },
       { source: "/docs/webclass", destination: "/settings/setup", permanent: false },
       { source: "/me", destination: "/settings", permanent: false },
+      { source: "/new", destination: "/", permanent: false },
     ]
   },
 
