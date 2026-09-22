@@ -9,8 +9,6 @@ const nextConfig: NextConfig = {
       { source: "/settings/help/screen", destination: "/docs/screen", permanent: false },
       { source: "/settings/help/sync", destination: "/docs/sync", permanent: false },
       { source: "/settings/help/safety", destination: "/docs/help", permanent: false },
-      { source: "/settings/notifications", destination: "/settings", permanent: false },
-      { source: "/settings/courses", destination: "/settings", permanent: false },
     ]
   },
 
