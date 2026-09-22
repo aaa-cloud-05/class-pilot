@@ -7,7 +7,6 @@ import { upsertCache } from "@/lib/cache";
 import { COURSE_COLORS } from "@/lib/types";
 import type { Assignment, SubmissionState } from "@/lib/types";
 import { AppHeader } from "@/components/app-header";
-import { NavBar } from "@/components/NavBar";
 import { cn } from "@/lib/utils";
 
 const INPUT =
@@ -174,7 +173,6 @@ export default function AddAssignmentPage() {
         </form>
       </main>
 
-      <NavBar />
     </>
   );
 }

@@ -4,6 +4,8 @@ import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { NotificationScheduler } from "@/components/NotificationScheduler";
+import { AppProvider } from "@/components/app/provider";
+import { AppShell } from "@/components/app/shell";
 import { getAppUrl } from "@/lib/server/app-url";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -60,13 +62,15 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`light h-full antialiased ${geistSans.variable} ${geistMono.variable} ${brandFont.variable}`}
+      className={`h-full antialiased ${geistSans.variable} ${geistMono.variable} ${brandFont.variable}`}
     >
       <body className="min-h-full flex flex-col font-sans antialiased">
         <ServiceWorkerRegistrar />
         <NotificationScheduler />
         <SessionProvider>
-          {children}
+          <AppProvider>
+            <AppShell>{children}</AppShell>
+          </AppProvider>
         </SessionProvider>
       </body>
     </html>

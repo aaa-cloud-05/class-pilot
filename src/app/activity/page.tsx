@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Lamp } from "@/components/lamp";
 import { AppHeader } from "@/components/app-header";
-import { NavBar } from "@/components/NavBar";
 import {
   getNotificationHistory,
   markAsRead,
@@ -119,7 +118,6 @@ export default function NotificationsPage() {
         )}
       </main>
 
-      <NavBar />
     </>
   );
 }
