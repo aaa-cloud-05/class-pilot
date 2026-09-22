@@ -1,13 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // 移行の途中。まだ作っていない画面は、いまある同じ内容のページに送る（PR 7・8 で外す）
+  // 旧 URL を新しい画面に送る
   async redirects() {
     return [
-      { source: "/settings/help", destination: "/docs", permanent: false },
-      { source: "/settings/help/screen", destination: "/docs/screen", permanent: false },
-      { source: "/settings/help/sync", destination: "/docs/sync", permanent: false },
-      { source: "/settings/help/safety", destination: "/docs/help", permanent: false },
+      // 旧 URL。ブックマークや外からのリンクのために残す
+      { source: "/docs", destination: "/settings/help", permanent: false },
+      { source: "/docs/screen", destination: "/settings/help/screen", permanent: false },
+      { source: "/docs/sync", destination: "/settings/help/sync", permanent: false },
+      { source: "/docs/help", destination: "/settings/help/safety", permanent: false },
+      { source: "/docs/webclass", destination: "/settings/setup", permanent: false },
+      { source: "/me", destination: "/settings", permanent: false },
     ]
   },
 
