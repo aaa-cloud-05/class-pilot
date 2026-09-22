@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import {
   AlertTriangle,
   Bell,
@@ -420,6 +421,8 @@ function BottomNav() {
 function Sidebar() {
   const pathname = usePathname()
   const { setAddOpen, notifications, syncedAt, now, loggedIn, setSyncOpen } = useApp()
+  const { data: session } = useSession()
+  const user = session?.user
   const { classroom, webclass } = useSyncSummary()
   const unread = notifications.filter((n) => !n.read).length
   const items = [
@@ -496,13 +499,20 @@ function Sidebar() {
           href="/settings"
           className="flex items-center gap-2.5 rounded-control px-2 py-2 outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/40"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-muted-foreground">
-            {loggedIn ? "佐" : "?"}
-          </span>
+          {user?.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.image} alt="" aria-hidden className="h-8 w-8 shrink-0 rounded-full object-cover" />
+          ) : (
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-muted-foreground">
+              {loggedIn ? (user?.name ?? user?.email ?? "?").trim().charAt(0) : "?"}
+            </span>
+          )}
           <span className="min-w-0">
-            <span className="block truncate text-[13px] font-medium">{loggedIn ? "佐藤 ひなた" : "ログインしていません"}</span>
+            <span className="block truncate text-[13px] font-medium">
+              {loggedIn ? user?.name ?? "ログイン中" : "ログインしていません"}
+            </span>
             <span className="block truncate text-[12px] text-muted-foreground">
-              {loggedIn ? "hinata.sato@example.ac.jp" : "この端末にだけ保存中"}
+              {loggedIn ? user?.email ?? "" : "この端末にだけ保存中"}
             </span>
           </span>
         </Link>

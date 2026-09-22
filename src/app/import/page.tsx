@@ -9,6 +9,7 @@ import { transformWebClassPayload } from "@/lib/webclass";
 import { cacheWebClassAssignments, replaceCache } from "@/lib/cache";
 import { setLocalWebclassSyncedAt } from "@/lib/sync-meta";
 import { Brand } from "@/components/app/shell";
+import { ButtonLink } from "@/components/app/ui";
 
 export default function ImportPage() {
   const router = useRouter();
@@ -115,13 +116,13 @@ export default function ImportPage() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center px-8">
         <div className="w-full max-w-xs">
-          <div className="mb-2 flex items-center justify-between text-[12px] text-muted-foreground">
+          <div className="mb-2 flex items-center justify-between text-[13px] text-muted-foreground">
             <span>WebClass の課題を取り込み中…</span>
-            <span className="font-mono tabular-nums">{Math.round(progress)}%</span>
+            <span className="tabular-nums">{Math.round(progress)}%</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-foreground transition-[width] duration-200 ease-out"
+              className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -136,8 +137,8 @@ export default function ImportPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
           <Check className="h-6 w-6 text-primary" aria-hidden />
         </div>
-        <p className="text-[15px] font-semibold text-foreground">{count}件の課題を取り込みました</p>
-        <p className="text-[12px] text-muted-foreground">ホームへ移動します…</p>
+        <p className="text-[17px] font-bold text-foreground">{count} 件の課題を取り込みました</p>
+        <p className="text-[13px] text-muted-foreground">ホームへ移動します…</p>
       </main>
     );
   }
@@ -145,13 +146,10 @@ export default function ImportPage() {
   if (status === "error") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-8 text-center">
-        <p className="text-[13px] text-destructive">{errorMsg}</p>
-        <button
-          onClick={() => router.push("/")}
-          className="text-[13px] font-medium text-primary hover:underline"
-        >
+        <p className="max-w-sm text-[15px] leading-relaxed text-destructive">{errorMsg}</p>
+        <ButtonLink href="/" size="lg">
           ホームへ戻る
-        </button>
+        </ButtonLink>
       </main>
     );
   }

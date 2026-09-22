@@ -20,6 +20,15 @@ const MAX_URL = 60000;
 const THROTTLE_MS = 60 * 60 * 1000;
 
 /**
+ * ユーザースクリプトの版。
+ *
+ * **Tampermonkey は @version が上がったときだけ更新を取りに来る。**
+ * ここを上げ忘れると、`/webclass.user.js` を直しても、すでに入れた人には永久に届かない。
+ * 取得ロジック（COLLECT）や送信まわりを変えたら、必ずここも上げること。
+ */
+const USERSCRIPT_VERSION = "1.1.0";
+
+/**
  * 収集の本体。`unionfetchCollect(onProgress)` を定義する。
  * 成功すると `{b, cs, t, failed}` を返し、失敗はコード付きの Error を投げる
  * （呼び出し側が alert するか黙るかを選べるようにするため）。
@@ -87,7 +96,13 @@ var unionfetchMessage=function(code){
 };
 `;
 
-/** 読みやすく書いたソースを 1 行の javascript: URL に畳む。行コメントは使えない。 */
+/**
+ * 読みやすく書いたソースを 1 行の javascript: URL に畳む。
+ *
+ * **行コメント（//）は使えない。** 改行を空白に潰すので、`//` から後ろが
+ * スクリプトの末尾まで丸ごとコメントになる。複数行コメントを使うこと。
+ * 気づきにくい壊れ方をするので、ここで強めに書いておく。
+ */
 function inline(src: string): string {
   return "javascript:void(" + src.replace(/\s*\n\s*/g, " ").trim() + ")";
 }
@@ -114,6 +129,7 @@ export function buildBookmarkletCode(origin: string): string {
       tasks=tasks.slice(0,Math.floor(tasks.length*0.8));
       url=build(tasks);
     }
+    /* 取得が非同期なので iOS Safari では window.open が塞がれることがある。その場合は同じタブで開く */
     var w=window.open(url);
     if(!w)location.href=url;
   }catch(e){
@@ -136,12 +152,13 @@ export function buildUserscriptCode(origin: string): string {
   return `// ==UserScript==
 // @name         UnionFetch — WebClass 自動同期
 // @namespace    ${origin}
-// @version      1.0.1
+// @version      ${USERSCRIPT_VERSION}
 // @description  WebClass を開くと、締切のある課題を UnionFetch へ自動で取り込みます
 // @updateURL    ${origin}/webclass.user.js
 // @downloadURL  ${origin}/webclass.user.js
 // @match        https://*/webclass/*
 // @include      /^https?:\\/\\/webclass\\.[^\\/]+\\//
+// @noframes
 // @run-at       document-idle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
@@ -166,6 +183,7 @@ export function buildUserscriptCode(origin: string): string {
   var ORIGIN = ${JSON.stringify(origin)};
   var TOKEN_KEY = "unionfetch:token";
   var LAST_KEY = "unionfetch:lastSync";
+  var DECLINED_KEY = "unionfetch:declined";
   var THROTTLE_MS = ${THROTTLE_MS};
 
 ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
@@ -173,11 +191,19 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
   function askToken(force) {
     var token = force ? "" : GM_getValue(TOKEN_KEY, "");
     if (token) return token;
+    // 一度断った人に、WebClass を開くたび prompt を出さない。
+    // 入れ直したくなったら Tampermonkey のメニューから（force=true）。
+    if (!force && GM_getValue(DECLINED_KEY, "")) return "";
     token = (prompt(
       "UnionFetch の取り込みトークンを貼り付けてください。\\n" +
-      "（UnionFetch の 設定 → WebClass 自動同期 で発行できます）"
+      "（UnionFetch の 設定 → セットアップ で発行できます）"
     ) || "").trim();
-    if (token) GM_setValue(TOKEN_KEY, token);
+    if (token) {
+      GM_setValue(TOKEN_KEY, token);
+      GM_setValue(DECLINED_KEY, "");
+    } else {
+      GM_setValue(DECLINED_KEY, "1");
+    }
     return token;
   }
 
@@ -201,6 +227,7 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
         if (res.status === 401) {
           // トークンが失効・再発行された。保存を消して次回に入れ直してもらう。
           GM_setValue(TOKEN_KEY, "");
+          GM_setValue(DECLINED_KEY, "");
           console.warn("[UnionFetch] トークンが無効です。メニューから入れ直してください。");
           return;
         }
@@ -208,7 +235,6 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
           console.warn("[UnionFetch] 送信に失敗:", res.status, res.responseText);
           return;
         }
-        GM_setValue(LAST_KEY, String(Date.now()));
         console.log("[UnionFetch] 同期しました:", res.responseText);
       },
       onerror: function (e) {
@@ -221,8 +247,12 @@ ${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
     var last = parseInt(GM_getValue(LAST_KEY, "0"), 10) || 0;
     if (!force && Date.now() - last < THROTTLE_MS) return;
 
-    var token = askToken(false);
+    var token = askToken(force);
     if (!token) return;
+
+    // 収集する前に時刻を記録する。送信に失敗しても、WebClass を開くたびに
+    // 取り直して大学のサーバを叩き続けることがないようにするため。
+    GM_setValue(LAST_KEY, String(Date.now()));
 
     try {
       var r = await unionfetchCollect(null);

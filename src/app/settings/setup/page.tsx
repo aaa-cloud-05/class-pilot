@@ -238,10 +238,16 @@ export default function SetupPage() {
             />
             {loggedIn ? (
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={() => showToast("Classroom を開きます（モック）")}>
+                <ButtonLink
+                  href="https://classroom.google.com/"
+                  variant="secondary"
+                  size="md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <ExternalLink className="h-4 w-4" aria-hidden />
                   Classroom を開く
-                </Button>
+                </ButtonLink>
                 <ButtonLink href="/settings" variant="secondary" size="md">
                   設定を開く
                 </ButtonLink>
@@ -315,9 +321,9 @@ export default function SetupPage() {
                 Chrome に Tampermonkey を入れ、発行したトークンを貼ると、WebClass を開くだけで取り込まれます。
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                <Button variant="secondary" onClick={() => showToast("スクリプトを開きます（モック）")}>
+                <ButtonLink href="/webclass.user.js" variant="secondary" size="md">
                   スクリプトを追加
-                </Button>
+                </ButtonLink>
                 <Button variant="secondary" disabled={!loggedIn} onClick={() => issueToken().then(setToken)}>
                   {tokenIssued ? "トークンを再発行" : "トークンを発行"}
                 </Button>
