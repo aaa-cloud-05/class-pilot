@@ -1,5 +1,9 @@
 # 既知の問題・懸念点
 
+> **これは過去の記録です。** 当時のファイル名やルートが今と違うことがあります。
+> 現行のデータフローと構成は [architecture.md](./architecture.md)、
+> 画面は [ui-v5-migration.md](./ui-v5-migration.md) を見てください。
+
 ## Phase 0+1 残存
 
 ### Resend送信先制限

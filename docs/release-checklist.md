@@ -1,6 +1,6 @@
 # UnionFetch — リリースチェックリスト
 
-## 現在地（2026-09-15 時点）
+## 現在地（2026-09-23 時点）
 
 | 項目 | 状態 |
 |---|---|
@@ -10,14 +10,17 @@
 | **メール通知** | `noreply@mail.unionfetch.com` から Gmail・大学メールとも**受信トレイに届く**ことを確認（2026-09-15） |
 | **通知の仕様** | **現行のプリセット3種のまま初回リリースする**と決定（2026-09-06）。[notification-design.md](./notification-design.md) の3本立ては未実装 |
 | Supabase | 東京(ap-northeast-1)へ移設完了（1クエリ 678ms → 53ms） |
-| WebClass 取得 | 内部 JSON API 方式。ブックマークレット＋Tampermonkey 自動同期とも動作確認済み |
+| WebClass 取得 | 内部 JSON API 方式。ブックマークレットは動作確認済み。**締切なしの課題も取り込む**ようにした（2026-09-23、旧実装は3分の2を捨てていた）。Tampermonkey 自動同期は手動実行まで確認済み、自動実行は未確認 |
 | Web Push | 実装済み・未検証（VAPID鍵は `.env.local` にある。Vercel 未設定） |
-| OG 画像 / アイコン | 新しいマーク（カラフルな U）と OG 画像を取り込み済み（2026-09-15）。未コミット・表示確認待ち |
+| OG 画像 / アイコン | 新しいマーク（カラフルな U）と OG 画像を取り込み済み（2026-09-15） |
+| **UI** | **v5 に全面置き換え完了（2026-09-22）**。下タブ3つ（ホーム/カレンダー/設定）＋中央の追加ボタン。旧 `/me` `/new` `/docs/*` は廃止して redirect。経緯は [ui-v5-migration.md](./ui-v5-migration.md)、作法は [ui-playbook.md](./ui-playbook.md) |
+| **提出状況の「不明」** | **廃止（2026-09-23）**。WebClass の API は提出したかどうかを必ず返すと実測で確定したため（[webclass-api.md](./webclass-api.md) §4.8）。型は互換のため残すが、画面では未提出として出る |
 
 ### 次にやること
 
-1. **B の残り**（任意・リリースは止めない）… OG 画像とアイコンの表示確認、Vercel Analytics、Upstash の本番 env 確認
-2. **リリース** … 下の「リリース当日の手順」。友人3人に配って1週間
+1. **新しい UI を実機で触る**（スマホ・PC）。移行直後なので、まずここ
+2. **B の残り**（任意・リリースは止めない）… Vercel Analytics、Upstash の本番 env 確認
+3. **リリース** … 下の「リリース当日の手順」。友人3人に配って1週間
 3. **通知仕様の見直し** … 3本立て（[notification-design.md](./notification-design.md)）は
    **友人3人テストで通知洪水を実際に観測してから**着手する。
    18コース93課題だと `93件 × 3通` の構造なので、締切が重なる週に必ず出る
@@ -26,7 +29,7 @@
 
 - [x] **取り込みトークンを再発行して Tampermonkey に貼り直す**（2026-09-15 完了）。
   ユーザースクリプトの保存キーが `classmino:token` → `unionfetch:token` に変わったため、
-  既存の設定は読まれない（設定 → WebClass 自動同期 で再発行）
+  既存の設定は読まれない（設定 → セットアップ で再発行）
 - Service Worker の `CACHE_NAME` が `unionfetch-v2` に変わるので、
   既存ユーザーの古いキャッシュは activate 時に自動削除される（対応不要）
 - `/privacy` `/terms` の連絡先は `support@unionfetch.com`。
@@ -58,11 +61,12 @@
       `/privacy` と `/terms` の連絡先は既にこのアドレスに差し替え済み。
       **開通前にデプロイすると、公開している問い合わせ窓口が死ぬ。**
 - [x] **A6. 「メール通知は準備中」の記述を消す**（2026-09-06）
-      `src/app/docs/help/page.tsx` と `src/app/docs/sync/page.tsx` の2箇所を
+      当時の `src/app/docs/help/page.tsx` と `src/app/docs/sync/page.tsx` の2箇所を
+      （いまは `src/app/settings/help/safety/` と `src/app/settings/help/sync/`）
       「初期状態が OFF なので設定で ON にする」という**行動を促す文**に差し替えた。
       `emailEnabled` の初期値は false なので、消し忘れると
       「案内を読んだユーザーが誰もトグルを ON にせず、くさびが一度も発火しない」ことになる。
-      `/docs` のウィザード（ステップ3「メール通知をオン」）とも矛盾している。
+      当時の `/docs` のウィザード（いまは 設定 › セットアップ の手順3）とも矛盾している。
 - [x] **A7. 自分以外のアドレスに通知メールが届くことを実機で確認**（2026-09-15）
       ← A1〜A6 が本当に効いたかの唯一の合否判定。
       2026-09-06 に `noreply@mail.unionfetch.com` から3通（Gmail 2 / 大学メール 1）を送信し、

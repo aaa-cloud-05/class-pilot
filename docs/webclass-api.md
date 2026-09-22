@@ -3,7 +3,7 @@
 最終更新: 2026-09-05 ／ 対象: 電気通信大学 `webclass.cdel.uec.ac.jp`（WebClass / 日本データパシフィック）
 
 課題の取得を **DOM スクレイピングから JSON API 呼び出しへ**切り替えるための調査記録。
-実装は `src/lib/bookmarklet.ts` / `src/lib/webclass.ts`。
+実装は `src/lib/webclass-script.ts` / `src/lib/webclass.ts`。
 
 > **生キャプチャを `docs/row/` に置く場合の注意**：DevTools の出力には
 > `_shibsession_*` / `WBT_Session`（＝有効なログインセッション）と本名・学籍番号・得点が
