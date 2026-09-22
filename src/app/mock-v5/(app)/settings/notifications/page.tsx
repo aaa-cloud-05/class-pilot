@@ -8,9 +8,9 @@ import { MobileHeader, PageBody } from "../../../_components/shell"
 import { Button, ListGroup, RowButton, RowStatic, Switch } from "../../../_components/ui"
 
 const PRESETS: { value: Preset; label: string; desc: string }[] = [
-  { value: "relaxed", label: "余裕派", desc: "締切の24時間前に1回" },
+  { value: "relaxed", label: "早め", desc: "締切の24時間前に1回" },
   { value: "standard", label: "標準", desc: "24時間前と3時間前" },
-  { value: "urgent", label: "ギリギリ派", desc: "3時間前と1時間前" },
+  { value: "urgent", label: "直前", desc: "3時間前と1時間前" },
 ]
 
 export default function MockNotificationSettingsPage() {

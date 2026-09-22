@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
-import { BellOff, Check, ChevronRight, ExternalLink, GraduationCap, Globe, Minus, PenLine, Trash2 } from "lucide-react"
+import { BellOff, Check, ChevronRight, ExternalLink, GraduationCap, Globe, PenLine, Trash2 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import type { MockAssignment, Source, Status } from "../_lib/data"
@@ -54,7 +54,9 @@ export function StatusToggle({ a, size = "md" }: { a: MockAssignment; size?: "md
         )}
       >
         {unknown ? (
-          <Minus className="h-3 w-3" strokeWidth={2.4} aria-hidden />
+          <span className={cn("font-bold leading-none", size === "lg" ? "text-[14px]" : "text-[12px]")} aria-hidden>
+            ?
+          </span>
         ) : (
           <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
         )}

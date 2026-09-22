@@ -5,6 +5,7 @@ import Link from "next/link"
 import { addWeeks, differenceInCalendarWeeks, endOfWeek, format, startOfWeek } from "date-fns"
 import { ArrowDownUp, CalendarCheck2, Inbox, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AllList } from "../../_components/all-list"
 import { AssignmentDetail, AssignmentList, AssignmentSheet } from "../../_components/assignment"
 import { MonthGrid } from "../../_components/calendar-parts"
 import { Appear } from "../../_components/motion"
@@ -12,7 +13,7 @@ import { DESKTOP_QUERY, useMediaQuery, useMock } from "../../_components/provide
 import { MobileHeader, PageBody, ReauthOrErrorBanner, SetupCard } from "../../_components/shell"
 import { Button, ButtonLink, Card, EmptyState, IconButton, SectionHeader, Segmented, Skeleton } from "../../_components/ui"
 import { WeekHero } from "../../_components/week-hero"
-import { countLater, groupAssignments, GROUP_LABEL, type SortMode } from "../../_lib/format"
+import { countLater, groupRecent, GROUP_LABEL, type SortMode } from "../../_lib/format"
 import { buildWeekState, nextUp } from "../../_lib/week"
 
 function ListSkeleton() {
@@ -42,15 +43,12 @@ function ListSkeleton() {
 export default function MockHomePage() {
   const { now, assignments, controls, setupDismissed, setAddOpen } = useMock()
   const desktop = useMediaQuery(DESKTOP_QUERY)
-  const [view, setView] = useState<"open" | "all">("open")
+  const [view, setView] = useState<"recent" | "all">("recent")
   const [sort, setSort] = useState<SortMode>("due")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [calDay, setCalDay] = useState<Date>(now)
 
-  const groups = useMemo(
-    () => groupAssignments(assignments, now, { includeSubmitted: view === "all", sort }),
-    [assignments, now, view, sort],
-  )
+  const groups = useMemo(() => groupRecent(assignments, now, sort), [assignments, now, sort])
   const selected = assignments.find((a) => a.id === selectedId) ?? null
   // ヒーローの週は < > で動かせる（リストは「いま」を基準のまま）
   const [weekAnchor, setWeekAnchor] = useState<Date>(now)
@@ -65,6 +63,18 @@ export default function MockHomePage() {
   const loading = controls.data === "loading"
   const empty = controls.data === "empty"
   const showSetup = !setupDismissed && !controls.setupDone
+
+  const sortToggle = (
+    <button
+      type="button"
+      onClick={() => setSort(sort === "due" ? "status" : "due")}
+      aria-label={`今週の並び順：${sort === "due" ? "締切順" : "状態順"}（押すと切り替え）`}
+      className="flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
+    >
+      <ArrowDownUp className="h-3.5 w-3.5" aria-hidden />
+      {sort === "due" ? "締切順" : "状態順"}
+    </button>
+  )
 
   const list = loading ? (
     <ListSkeleton />
@@ -92,7 +102,7 @@ export default function MockHomePage() {
         description="新しい課題が届いたら、ここと通知でお知らせします。"
         action={
           <Button variant="secondary" onClick={() => setView("all")}>
-            すべてを表示
+            すべてを見る
           </Button>
         }
       />
@@ -104,9 +114,10 @@ export default function MockHomePage() {
           <section aria-labelledby={`group-${g.key}`}>
             <SectionHeader
               id={`group-${g.key}`}
-              title={g.key === "noDue" && view === "open" ? "期限なしの未提出" : GROUP_LABEL[g.key]}
+              title={GROUP_LABEL[g.key]}
               count={g.items.length}
               tone={g.key === "recent" ? "danger" : undefined}
+              action={g.key === "thisWeek" ? sortToggle : undefined}
             />
             <AssignmentList items={g.items} onOpen={(a) => setSelectedId(a.id)} selectedId={desktop ? selectedId : null} />
           </section>
@@ -151,30 +162,30 @@ export default function MockHomePage() {
                 onChange={setView}
                 className="flex-1 sm:max-w-[13rem]"
                 options={[
-                  { value: "open", label: "最近" },
+                  { value: "recent", label: "最近" },
                   { value: "all", label: "すべて" },
                 ]}
               />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-auto h-9"
-                onClick={() => setSort(sort === "due" ? "status" : "due")}
-                aria-label={`並び順：${sort === "due" ? "締切順" : "状態順"}（押すと切り替え）`}
-              >
-                <ArrowDownUp className="h-3.5 w-3.5" aria-hidden />
-                {sort === "due" ? "締切順" : "状態順"}
-              </Button>
             </div>
 
-            <div className="mt-3">{list}</div>
+            <div className="mt-3">
+              {view === "all" && !loading && !empty ? (
+                <AllList onOpen={(a) => setSelectedId(a.id)} selectedId={desktop ? selectedId : null} />
+              ) : (
+                list
+              )}
+            </div>
 
-            {laterCount > 0 && !loading && !empty && (
+            {view === "recent" && laterCount > 0 && !loading && !empty && (
               <p className="mt-4 px-1 text-[13px] text-muted-foreground">
                 来週以降の課題が <span className="font-semibold tabular-nums text-foreground">{laterCount}</span> 件あります。
-                <Link href="/mock-v5/calendar" className="ml-1 font-medium text-primary hover:underline">
-                  カレンダーで見る
-                </Link>
+                <button
+                  type="button"
+                  onClick={() => setView("all")}
+                  className="ml-1 rounded-control font-medium text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/40"
+                >
+                  すべてで見る
+                </button>
               </p>
             )}
           </div>

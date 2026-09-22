@@ -9,7 +9,7 @@ import { MobileHeader, PageBody } from "./shell"
 export function Article({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
   return (
     <>
-      <MobileHeader variant="back" title={title} backHref="/mock-v5/settings" />
+      <MobileHeader variant="back" title={title} backHref="/mock-v5/settings/help" />
       <PageBody desktopTitle={title}>
         {lead && <p className="px-1 pb-4 pt-1 text-[15px] leading-relaxed text-muted-foreground lg:-mt-4 lg:pt-0">{lead}</p>}
         <div className="space-y-8">{children}</div>

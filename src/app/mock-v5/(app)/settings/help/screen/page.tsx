@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Minus } from "lucide-react"
+import { Check } from "lucide-react"
 import { Article, Faq } from "../../../../_components/article"
 import { Card } from "../../../../_components/ui"
 
@@ -17,12 +17,12 @@ const MARKS = [
   },
   {
     mark: (
-      <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground text-muted-foreground">
-        <Minus className="h-3 w-3" strokeWidth={3} />
+      <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground text-[12px] font-bold text-muted-foreground">
+        ?
       </span>
     ),
     label: "不明",
-    desc: "WebClass から提出状況が取れなかったもの",
+    desc: "WebClass から提出状況が取れなかったもの。タップして提出済みにできます",
   },
 ]
 
@@ -79,9 +79,15 @@ export default function ScreenGuidePage() {
           その日に締切がある課題です。点の色は上の表と同じで、多い日は点が増えます。日付を選ぶと、下にその日の課題が出ます。
         </Faq>
 
-        <Faq q="リストの並び">
-          「最近」は 直近の未提出・今日・明日・今週・期限なしの未提出 の順です。来週以降はカレンダーで確認できます。
-          「すべて」に切り替えると、提出済みも含めて表示します。
+        <Faq q="「最近」と「すべて」">
+          <p>
+            <strong>最近</strong>は 直近の未提出・今日・明日・今週・期限なしの未提出 の順です。今日・明日・今週は提出済みも
+            まとめて出るので、その週に何が終わっているかも分かります。今週の見出しにある「締切順 / 状態順」で並びを変えられます。
+          </p>
+          <p className="mt-3">
+            <strong>すべて</strong>は月で切り替えて、その月にかかる週をひと塊ずつ並べます。期限なしの課題はいちばん下で、
+            未提出・不明・提出済みを切り替えて見られます。
+          </p>
         </Faq>
       </Card>
     </Article>

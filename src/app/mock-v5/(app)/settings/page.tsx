@@ -3,8 +3,7 @@
 import { useState } from "react"
 import {
   BellRing,
-  Eye,
-  RefreshCw,
+  BookOpen,
   Plug,
   Eraser,
   FileText,
@@ -13,7 +12,6 @@ import {
   LogIn,
   LogOut,
   Mail,
-  Shield,
   Trash2,
   Wrench,
 } from "lucide-react"
@@ -33,7 +31,7 @@ import {
 } from "../../_components/ui"
 import { timeAgo } from "../../_lib/format"
 
-const PRESET_LABEL = { relaxed: "余裕派", standard: "標準", urgent: "ギリギリ派" } as const
+const PRESET_LABEL = { relaxed: "早め", standard: "標準", urgent: "直前" } as const
 
 export default function MockSettingsPage() {
   const { controls, setControl, syncedAt, now, notif, courses, showToast } = useMock()
@@ -114,10 +112,14 @@ export default function MockSettingsPage() {
             </Card>
           </section>
 
-          <ListGroup title="ヘルプ">
-            <RowLink href="/mock-v5/settings/help/screen" icon={Eye} label="画面の見かた" />
-            <RowLink href="/mock-v5/settings/help/sync" icon={RefreshCw} label="同期のしくみ" />
-            <RowLink href="/mock-v5/settings/help/safety" icon={Shield} label="安全性とよくある質問" />
+          {/* PC は左の一覧に「ヘルプ」があるので、ここにはスマホ用の1行だけ置く */}
+          <ListGroup className="lg:hidden">
+            <RowLink
+              href="/mock-v5/settings/help"
+              icon={BookOpen}
+              label="ヘルプ"
+              description="画面の見かた・同期のしくみ・安全性"
+            />
           </ListGroup>
 
           <ListGroup

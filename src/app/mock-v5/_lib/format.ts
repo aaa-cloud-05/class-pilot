@@ -1,65 +1,118 @@
-import { addDays, format, isSameDay, isSameWeek } from "date-fns"
+import {
+  addDays,
+  eachWeekOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameDay,
+  isSameWeek,
+  startOfMonth,
+} from "date-fns"
 import { ja } from "date-fns/locale"
 import type { MockAssignment, Status } from "./data"
 
 export type Tone = "danger" | "warn" | "neutral" | "ok"
 
-export type GroupKey = "recent" | "today" | "tomorrow" | "thisWeek" | "noDue" | "past" | "later"
+/* ───────── 「最近」タブの分類 ───────── */
+
+export type GroupKey = "recent" | "today" | "tomorrow" | "thisWeek" | "noDue"
 
 export const GROUP_LABEL: Record<GroupKey, string> = {
   recent: "直近の未提出",
   today: "今日",
   tomorrow: "明日",
   thisWeek: "今週",
-  noDue: "期限なし",
-  past: "締切を過ぎた提出済み",
-  later: "来週以降",
+  noDue: "期限なしの未提出",
 }
 
-/** ホームに出す順番。"later"（来週以降）はリストに出さず、件数だけ下に出す */
-const GROUP_ORDER: GroupKey[] = ["recent", "today", "tomorrow", "thisWeek", "noDue", "past"]
+const RECENT_ORDER: GroupKey[] = ["recent", "today", "tomorrow", "thisWeek", "noDue"]
 
 const WEEK = { weekStartsOn: 1 as const }
 
-export function groupOf(a: MockAssignment, now: Date): GroupKey {
-  if (!a.due) return "noDue"
-  if (a.due < now) return a.status === "submitted" ? "past" : "recent"
+/** hidden＝「最近」には出さないもの（過去の提出済み・期限なしの提出済み） */
+type Bucket = GroupKey | "later" | "hidden"
+
+function bucketOf(a: MockAssignment, now: Date): Bucket {
+  if (!a.due) return a.status === "submitted" ? "hidden" : "noDue"
+  if (a.due < now && a.status !== "submitted") return "recent"
   if (isSameDay(a.due, now)) return "today"
   if (isSameDay(a.due, addDays(now, 1))) return "tomorrow"
   if (isSameWeek(a.due, now, WEEK)) return "thisWeek"
-  return "later"
+  return a.status === "submitted" ? "hidden" : "later"
 }
 
-/** 来週以降の件数（リストには出さず、カレンダーへ誘導する） */
+/** 来週以降の未提出の件数。リストには出さず、件数だけ下に出す */
 export function countLater(list: MockAssignment[], now: Date): number {
-  return list.filter((a) => groupOf(a, now) === "later" && a.status !== "submitted").length
+  return list.filter((a) => bucketOf(a, now) === "later").length
 }
 
 const STATUS_RANK: Record<Status, number> = { not_submitted: 0, unknown: 1, submitted: 2 }
 
 export type SortMode = "due" | "status"
 
-export function groupAssignments(
+const byDue = (x: MockAssignment, y: MockAssignment) =>
+  (x.due?.getTime() ?? Number.POSITIVE_INFINITY) - (y.due?.getTime() ?? Number.POSITIVE_INFINITY)
+
+/**
+ * 「最近」タブ。今日・明日・今週は提出済みも含めた全部を出す。
+ * 直近の未提出と期限なしだけは、やることだけに絞る。
+ */
+export function groupRecent(
   list: MockAssignment[],
   now: Date,
-  opts: { includeSubmitted: boolean; sort: SortMode },
+  weekSort: SortMode,
 ): { key: GroupKey; items: MockAssignment[] }[] {
   const buckets = new Map<GroupKey, MockAssignment[]>()
   for (const a of list) {
-    if (!opts.includeSubmitted && a.status === "submitted") continue
-    const key = groupOf(a, now)
-    if (!buckets.has(key)) buckets.set(key, [])
-    buckets.get(key)!.push(a)
+    const k = bucketOf(a, now)
+    if (k === "later" || k === "hidden") continue
+    if (!buckets.has(k)) buckets.set(k, [])
+    buckets.get(k)!.push(a)
   }
-  const byDue = (x: MockAssignment, y: MockAssignment) =>
-    (x.due?.getTime() ?? Number.POSITIVE_INFINITY) - (y.due?.getTime() ?? Number.POSITIVE_INFINITY)
-  return GROUP_ORDER.filter((k) => buckets.has(k)).map((key) => {
-    const items = [...buckets.get(key)!].sort((x, y) =>
-      opts.sort === "status" ? STATUS_RANK[x.status] - STATUS_RANK[y.status] || byDue(x, y) : byDue(x, y),
-    )
-    if (key === "past") items.reverse()
+  return RECENT_ORDER.filter((k) => buckets.has(k)).map((key) => {
+    const items = [...buckets.get(key)!]
+    if (key === "recent") {
+      // 直近＝いちばん近くで落としたものを上に
+      items.sort((x, y) => (y.due?.getTime() ?? 0) - (x.due?.getTime() ?? 0))
+    } else if (key === "thisWeek" && weekSort === "status") {
+      items.sort((x, y) => STATUS_RANK[x.status] - STATUS_RANK[y.status] || byDue(x, y))
+    } else {
+      items.sort(byDue)
+    }
     return { key, items }
   })
+}
+
+/* ───────── 「すべて」タブの分類 ───────── */
+
+export interface WeekBlock {
+  start: Date
+  end: Date
+  items: MockAssignment[]
+}
+
+/** その月にかかる週を1週ずつの塊にする。課題が1件もない週は出さない */
+export function weeksOfMonth(list: MockAssignment[], month: Date): WeekBlock[] {
+  return eachWeekOfInterval({ start: startOfMonth(month), end: endOfMonth(month) }, WEEK)
+    .map((start) => {
+      const end = endOfWeek(start, WEEK)
+      const items = list.filter((a) => a.due && a.due >= start && a.due <= end).sort(byDue)
+      return { start, end, items }
+    })
+    .filter((w) => w.items.length > 0)
+}
+
+export function weekBlockLabel(w: WeekBlock, now: Date): { range: string; tag: string | null } {
+  const range = `${format(w.start, "M/d")} - ${format(w.end, "M/d")}`
+  const tag = isSameWeek(w.start, now, WEEK) ? "今週" : isSameWeek(w.start, addDays(now, 7), WEEK) ? "来週" : null
+  return { range, tag }
+}
+
+/** 期限なしの課題を状態ごとに分ける（「すべて」タブの下のタブ用） */
+export function noDueByStatus(list: MockAssignment[]): Record<Status, MockAssignment[]> {
+  const out: Record<Status, MockAssignment[]> = { not_submitted: [], unknown: [], submitted: [] }
+  for (const a of list) if (!a.due) out[a.status].push(a)
+  return out
 }
 
 function relAhead(ms: number): string {

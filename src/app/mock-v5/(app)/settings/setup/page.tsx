@@ -49,10 +49,16 @@ const BOOKMARK_STEPS: Record<Device, string[]> = {
 }
 
 const PRESETS: { value: Preset; label: string }[] = [
-  { value: "relaxed", label: "24時間前" },
-  { value: "standard", label: "24h + 3h" },
-  { value: "urgent", label: "3h + 1h" },
+  { value: "relaxed", label: "早め" },
+  { value: "standard", label: "標準" },
+  { value: "urgent", label: "直前" },
 ]
+
+const PRESET_TIMING: Record<Preset, string> = {
+  relaxed: "締切の24時間前に1回",
+  standard: "24時間前と3時間前",
+  urgent: "3時間前と1時間前",
+}
 
 function Step({
   n,
@@ -352,6 +358,7 @@ export default function SetupPage() {
                 className="w-full sm:w-[20rem]"
                 options={PRESETS}
               />
+              <p className="mt-2 text-[13px] text-muted-foreground">{PRESET_TIMING[notif.preset]}</p>
             </div>
           </Step>
 
