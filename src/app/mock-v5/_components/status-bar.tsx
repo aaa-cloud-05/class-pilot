@@ -4,7 +4,10 @@ import { motion, useReducedMotion } from "motion/react"
 import { cn } from "@/lib/utils"
 import type { MockAssignment } from "../_lib/data"
 
-/** 提出状況の分類。色はここだけで決める（赤＝期限切れ / 黄＝24時間以内 / 青＝未提出 / 灰＝不明・提出済み） */
+/**
+ * 提出状況の分類。**色はここだけで決める**（カレンダーのドットもヘルプの説明図もここを見る）。
+ * 青＝提出済み / 赤＝期限切れ / 黄＝24時間以内 / 濃い灰＝まだ先の未提出 / 薄い灰＝不明
+ */
 export type Cat = "overdue" | "soon" | "open" | "unknown" | "done"
 
 export const CAT_ORDER: Cat[] = ["overdue", "soon", "open", "unknown", "done"]
@@ -12,9 +15,9 @@ export const CAT_ORDER: Cat[] = ["overdue", "soon", "open", "unknown", "done"]
 export const CAT_BG: Record<Cat, string> = {
   overdue: "bg-destructive",
   soon: "bg-[var(--ui-warn-fill)]",
-  open: "bg-primary/75",
-  unknown: "bg-muted-foreground/45",
-  done: "bg-muted-foreground/25",
+  open: "bg-muted-foreground/45",
+  unknown: "bg-muted-foreground/25",
+  done: "bg-primary",
 }
 
 export function catOf(a: MockAssignment, now: Date): Cat {

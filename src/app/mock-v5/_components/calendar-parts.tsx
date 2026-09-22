@@ -31,12 +31,13 @@ export function dotTone(a: MockAssignment, now: Date): DotTone {
   return "open"
 }
 
+/** 色の意味は status-bar.tsx の表と揃える（青＝提出済み / 灰＝まだ先・不明） */
 export const DOT_BG: Record<DotTone, string> = {
   danger: "bg-destructive",
   warn: "bg-warn",
-  ok: "bg-muted-foreground/30",
-  unknown: "bg-muted-foreground/40",
-  open: "bg-primary/70",
+  ok: "bg-primary",
+  unknown: "bg-muted-foreground/25",
+  open: "bg-muted-foreground/45",
 }
 
 /** チップは色帯をやめて、先頭のドットだけで状態を示す */

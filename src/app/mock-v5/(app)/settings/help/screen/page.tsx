@@ -8,7 +8,7 @@ const MARKS = [
   { mark: <span className="h-5 w-5 rounded-full border-2 border-input" />, label: "未提出", desc: "タップすると提出済みになります" },
   {
     mark: (
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ok text-white">
+      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
         <Check className="h-3 w-3" strokeWidth={3.5} />
       </span>
     ),
@@ -27,10 +27,10 @@ const MARKS = [
 ]
 
 const COLORS = [
+  { chip: "bg-primary", label: "青", desc: "提出済み" },
   { chip: "bg-destructive", label: "赤", desc: "締切を過ぎた未提出" },
   { chip: "bg-[var(--ui-warn-fill)]", label: "黄", desc: "24時間以内に締切" },
-  { chip: "bg-primary/75", label: "青", desc: "まだ先の未提出" },
-  { chip: "bg-muted-foreground/35", label: "灰", desc: "提出済み・状況が不明" },
+  { chip: "bg-muted-foreground/45", label: "灰", desc: "まだ先の未提出・状況が不明" },
 ]
 
 export default function ScreenGuidePage() {
@@ -73,7 +73,7 @@ export default function ScreenGuidePage() {
         </Faq>
 
         <Faq q="進捗バー">
-          その週の課題を、状態ごとの色で全部ぶんだけ並べたものです。灰色が増えるほど片づいています。
+          その週の課題を、状態ごとの色で全部ぶんだけ並べたものです。青が増えるほど片づいています。
         </Faq>
 
         <Faq q="課題が多い日の見え方">
