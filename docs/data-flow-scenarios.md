@@ -184,7 +184,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  subgraph ADD["追加（/add）"]
+  subgraph ADD["追加（中央の＋ボタン → シート）"]
     A1["フォーム送信"] --> A2{"ログイン中?"}
     A2 -- "未" --> A3["IndexedDBへ保存"]
     A2 -- "済" --> A4["POST /api/assignments<br/>validateManualCreate（必須/日付/状態/長さ）"]

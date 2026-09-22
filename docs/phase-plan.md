@@ -1,5 +1,9 @@
 # UnionFetch: 実装計画と設計方針
 
+> **これは過去の記録です。** 当時のファイル名やルートが今と違うことがあります。
+> 現行のデータフローと構成は [architecture.md](./architecture.md)、
+> 画面は [ui-v5-migration.md](./ui-v5-migration.md) を見てください。
+
 ## 全体フェーズ
 
 ```

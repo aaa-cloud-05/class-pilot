@@ -78,7 +78,7 @@ WebClass 取り込み・手動追加もすべて IndexedDB に直接保存され
 キャッシュは「全置換」ではなく「単一更新」を使う（他の課題を消さないため）。
 
 ```
-追加  /add → POST /api/assignments → 応答を upsertCache(1件) + 画面へ          （未ログインは IndexedDB へ upsertCache）
+追加  中央の＋ボタン → 追加シート → POST /api/assignments → 応答を upsertCache(1件) + 画面へ（未ログインは IndexedDB へ upsertCache）
 編集  EditDialog → PATCH /api/assignments/[id] → 応答で applyEdit()（state置換 + upsertCache）
 削除  カードメニュー → DELETE /api/assignments/[id] → removeAssignment()（stateから除去 + removeCache）
 ```
@@ -92,25 +92,35 @@ WebClass 取り込み・手動追加もすべて IndexedDB に直接保存され
   - Safari 対策: トランザクション内で `await` しない（自動コミットで `TransactionInactiveError`
     になるため、操作を同期発行して最後に `tx.done` を待つ）
 
-## データフロー④ WebClass 取り込み（ブックマークレット）
+## データフロー④ WebClass 取り込み（ブックマークレット / 自動同期）
 
 **WebClass の内部 JSON API を直接呼ぶ**（旧: 課題実施状況一覧の DOM 解析）。
 API 仕様・調査経緯・負荷対策は [webclass-api.md](./webclass-api.md)。
 
 ```
-WebClass の任意のページでブックマークレット実行   ★どのページでもよい
+WebClass の任意のページで実行（ブックマークレットは手動、ユーザースクリプトは自動）
    → GET  {BASE}/ip_mods.php/plugin/score_summary_table/courses
-   → 年度が2年以上前のコースを除外
+   → コースの year（無ければコース名の先頭4桁）が2年以上前なら除外
    → GET  .../contents?group_id=<id>   コースごとに直列・250ms間隔
         ・fetch のキャッシュを無効化しない = If-Modified-Since が自動で付き、
           変化が無ければ 304（ボディ無し）で返る
-        ・contents_kind==="Question" / 非表示でない / end_date あり / 締切が180日以内
+        ・contents_kind==="Question" / 非表示でない
+        ・締切あり → 締切が180日以内。締切なし → updated が180日以内（期限なしとして取り込む）
         ・提出判定は scores[0].answer_datetime の有無だけを見て、氏名・学籍番号・点数は捨てる
-   → /import#<JSON> を開く（URLが長すぎる場合は締切の古い順に間引く）
    → transformWebClassPayload() で正規化
-   ├─ ログイン中: POST /api/import/webclass（hiddenフィルタ→DB upsert）→ replaceCache → ホームへ
-   └─ 未ログイン: cacheWebClassAssignments()（IndexedDB の wc- を置換）→ ホームへ
+   │
+   ├─ ブックマークレット（手動・全端末）
+   │    → /import#<JSON> を開く（URLが長すぎる場合は締切の古い順に間引く）
+   │    ├─ ログイン中: POST /api/import/webclass（hiddenフィルタ→DB upsert）→ replaceCache → ホームへ
+   │    └─ 未ログイン: cacheWebClassAssignments()（IndexedDB の wc- を置換）→ ホームへ
+   │
+   └─ ユーザースクリプト（自動・Tampermonkey・60分に1回）
+        → POST /api/import/webclass に直接（Authorization: Bearer <取り込みトークン>）
+          ※ クロスサイト送信なのでセッション Cookie が付かず、トークンで本人を示す
 ```
+
+所要時間は本学13コースで、前面のタブなら約5秒。背面のタブは Chrome が
+`setTimeout` を間引くため10秒以上かかるが、完走はする。
 
 識別子は API の安定した ID に基づく。
 
@@ -119,7 +129,8 @@ WebClass の任意のページでブックマークレット実行   ★どの�
 | 課題ID (`externalId`) | コース名+課題名+締切のhash | `wc-<contents_id>` |
 | DBキー (`sourceKey`) | `webclass:<コース名>::<課題名>` | `webclass:wc-<contents_id>` |
 | コースID | コース名のhash | `wc-<group_id>` |
-| 提出状態 | 「状態」列の文字列判定（`unknown` あり） | `answer_datetime` の有無（`unknown` なし） |
+| 提出状態 | 「状態」列の文字列判定（`unknown` あり） | `answer_datetime` の有無（**`unknown` は発生しない**） |
+| 締切なしの課題 | 取り込まない | `updated` が180日以内なら取り込む（期限なし） |
 | リンク | コースのトップ | 課題ページへの直リンク |
 
 締切や課題名が変わっても同じ課題として追えるので、通知履歴の重複防止キーが安定する。
@@ -250,6 +261,17 @@ src/lib/server/notification-logic.ts 送信対象の算出（予約 / 取りこ�
 src/lib/server/app-url.ts            公開URL（メールの絶対リンク・metadataBase）
 src/lib/debug-clear.ts               ローカル全データ削除（デバッグ用・設定画面）
 src/auth.ts                          NextAuth 設定・トークン更新
+
+画面まわり（2026-09-22 に v5 へ置き換え。経緯は ui-v5-migration.md）
+src/components/app/provider.tsx      画面が使う状態を1か所に（useAssignments・通知設定・セッション・WebClassURL）
+src/components/app/shell.tsx         ヘッダー・下タブ3つ＋追加ボタン・PCサイドバー・同期シート・トースト
+src/components/app/assignment.tsx    課題の行・リスト・詳細・追加シート
+src/components/app/{week-hero,all-list,calendar-parts,status-bar}.tsx  ホームとカレンダーの部品
+src/components/app/ui.tsx            Button/Card/Sheet/Segmented などの土台
+src/lib/status.ts                    **提出状態→表示カテゴリ→色を決める唯一の場所**
+src/lib/assignment-view.ts           Assignment＋ミュート設定 → 画面が使う形（ViewAssignment）
+src/lib/assignment-format.ts         締切の書き方とリストの分類
+src/lib/week-view.ts                 ホームの「今週」の組み立て
 prisma/schema.prisma                 DB スキーマ
 ```
 
