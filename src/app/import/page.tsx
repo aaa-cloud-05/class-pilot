@@ -182,7 +182,7 @@ export default function ImportPage() {
         </div>
 
         <Link
-          href="/docs/webclass"
+          href="/settings/setup"
           className="inline-block rounded-xl bg-foreground px-5 py-3 text-sm font-semibold text-background transition hover:opacity-90"
         >
           取り込み手順を見る
