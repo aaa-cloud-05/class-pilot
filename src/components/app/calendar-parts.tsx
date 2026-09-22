@@ -25,7 +25,6 @@ const CHIP_TEXT: Record<StatusCat, string> = {
   overdue: "text-destructive",
   soon: "text-foreground",
   open: "text-foreground",
-  unknown: "text-muted-foreground",
   done: "text-muted-foreground line-through decoration-muted-foreground/40",
 }
 

@@ -136,7 +136,7 @@ export function WeekHero({
         </div>
 
         <div className="mt-4">
-          {/* 今週の内訳で全部を埋める（赤＝期限切れ / 黄＝24時間以内 / 青＝未提出 / 灰＝不明・提出済み） */}
+          {/* 今週の内訳で全部を埋める（青＝提出済み / 赤＝期限切れ / 黄＝24時間以内 / 灰＝まだ先） */}
           <StatusBar items={weekItems} now={now} />
           <p className="mt-2 flex items-center justify-between text-[13px] text-muted-foreground">
             <span className="tabular-nums">

@@ -17,7 +17,7 @@ import type { SubmissionState } from "@/lib/types"
 /** 締切までこの時間を切ったら「もうすぐ」扱い（黄） */
 export const SOON_MS = 24 * 60 * 60 * 1000
 
-export type StatusCat = "overdue" | "soon" | "open" | "unknown" | "done"
+export type StatusCat = "overdue" | "soon" | "open" | "done"
 
 /** 色を決めるのに必要な最小の形。`Assignment` はこれを満たす */
 export interface StatusInput {
@@ -26,12 +26,15 @@ export interface StatusInput {
 }
 
 /**
- * 3つの提出状態と締切から、表示上の5カテゴリを決める。
+ * 提出状態と締切から、表示上の4カテゴリを決める。
  * 期限なしの未提出は `open`（急がないもの）に入れる。
+ *
+ * `unknown` は**未提出として扱う**。WebClass の API は提出したかどうかを必ず返すので
+ * （docs/webclass-api.md §4.8）、いま `unknown` が残っているのは手で追加したものと、
+ * API 方式より前に取り込んだ古い行だけ。画面では未提出として出し、丸を押せば解消できる。
  */
 export function catOf(a: StatusInput, now: Date): StatusCat {
   if (a.submissionState === "submitted") return "done"
-  if (a.submissionState === "unknown") return "unknown"
   if (!a.dueDate) return "open"
   const diff = a.dueDate.getTime() - now.getTime()
   if (diff < 0) return "overdue"
@@ -43,14 +46,13 @@ export function catOf(a: StatusInput, now: Date): StatusCat {
  * 積み上げの順。縦の棒グラフは上から、横の進捗バーは左から この順に並ぶ。
  * 急ぐものを先頭に、提出済みを末尾に置く。
  */
-export const CAT_ORDER: StatusCat[] = ["overdue", "soon", "open", "unknown", "done"]
+export const CAT_ORDER: StatusCat[] = ["overdue", "soon", "open", "done"]
 
 /** 面の塗り（棒グラフ・進捗バー・カレンダーのドット） */
 export const CAT_BG: Record<StatusCat, string> = {
   overdue: "bg-destructive",
   soon: "bg-[var(--ui-warn-fill)]",
   open: "bg-muted-foreground/45",
-  unknown: "bg-muted-foreground/25",
   done: "bg-primary",
 }
 
@@ -59,7 +61,6 @@ export const CAT_TEXT: Record<StatusCat, string> = {
   overdue: "text-destructive",
   soon: "text-[var(--ui-warn-fill)]",
   open: "text-muted-foreground",
-  unknown: "text-muted-foreground",
   done: "text-muted-foreground",
 }
 
@@ -68,7 +69,6 @@ export const CAT_LABEL: Record<StatusCat, string> = {
   overdue: "締切を過ぎた未提出",
   soon: "24時間以内に締切",
   open: "まだ先の未提出",
-  unknown: "提出したか分からない",
   done: "提出済み",
 }
 
@@ -76,12 +76,17 @@ export const CAT_LABEL: Record<StatusCat, string> = {
 export const STATUS_LABEL: Record<SubmissionState, string> = {
   not_submitted: "未提出",
   submitted: "提出済み",
-  unknown: "不明",
+  unknown: "未提出",
+}
+
+/** 画面で扱う提出状態は2つだけ。unknown は未提出側に寄せる */
+export function isSubmitted(state: SubmissionState): boolean {
+  return state === "submitted"
 }
 
 /** 積み上げグラフ・進捗バー用の集計 */
 export function countByCat(list: StatusInput[], now: Date): Record<StatusCat, number> {
-  const out: Record<StatusCat, number> = { overdue: 0, soon: 0, open: 0, unknown: 0, done: 0 }
+  const out: Record<StatusCat, number> = { overdue: 0, soon: 0, open: 0, done: 0 }
   for (const a of list) out[catOf(a, now)] += 1
   return out
 }
