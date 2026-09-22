@@ -1,7 +1,6 @@
 "use client";
 
 import { AppHeader } from "@/components/app-header";
-import { NavBar } from "@/components/NavBar";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -23,7 +22,6 @@ export default function MePage() {
         </Link>
       </main>
 
-      <NavBar />
     </div>
   );
 }

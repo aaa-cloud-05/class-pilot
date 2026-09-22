@@ -14,7 +14,6 @@ import {
 import { useAssignments } from "@/hooks/useAssignments";
 import { getNotificationSettings } from "@/lib/notification-store";
 import { AppHeader } from "@/components/app-header";
-import { NavBar } from "@/components/NavBar";
 import { cn } from "@/lib/utils";
 
 type StepKey = "login" | "webclass" | "notif";
@@ -195,7 +194,6 @@ export default function DocsHubPage() {
           UnionFetch は Google・WebClass とは無関係の非公式ツールです。課題は読み取り専用で取得し、パスワードは扱いません。
         </p>
       </main>
-      <NavBar />
     </div>
   );
 }

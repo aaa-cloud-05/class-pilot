@@ -574,7 +574,14 @@ export function MobileHeader({
   )
 }
 
+/** 枠（ナビ・シート）を出さない画面。全画面で見せたいもの */
+const CHROMELESS = ["/login", "/import"]
+
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  if (CHROMELESS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return <>{children}</>
+  }
   return (
     <>
       <Sidebar />
