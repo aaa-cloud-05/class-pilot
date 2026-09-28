@@ -25,6 +25,7 @@ import {
   type NotificationSettings,
 } from "@/lib/notification-store"
 import { getWebclassUrl, setWebclassUrl as saveWebclassUrl } from "@/lib/webclass-url"
+import { GUEST_AVATAR, randomAvatar, readAvatar, saveAvatar } from "@/lib/avatar"
 import {
   colorForCourseName,
   toViewAssignments,
@@ -95,6 +96,10 @@ export interface AppContextValue {
 
   webclassUrl: string
   setWebclassUrl: (url: string) => void
+
+  /** 表示するアイコン（src/lib/avatar.ts）。未ログインのときは常に灰色 */
+  avatarId: number
+  setAvatarId: (id: number) => void
 
   addOpen: boolean
   setAddOpen: (open: boolean) => void
@@ -167,6 +172,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<NotificationSettings>(EMPTY_SETTINGS)
   const [notifications, setNotifications] = useState<NotificationRecord[]>([])
   const [webclassUrl, setWebclassUrlState] = useState("")
+  const [savedAvatar, setSavedAvatar] = useState<number | null>(null)
   const [mode, setModeState] = useState<ThemeMode>("light")
   const [syncing, setSyncing] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -195,6 +201,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setModeState(readMode())
     setWebclassUrlState(getWebclassUrl() ?? "")
+    setSavedAvatar(readAvatar())
     getNotificationSettings().then(setSettings).catch(() => {})
     getNotificationHistory().then(setNotifications).catch(() => {})
   }, [])
@@ -442,6 +449,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [showToast],
   )
 
+  /* ───────── アイコン ───────── */
+  useEffect(() => {
+    // 初回ログイン：まだ決まっていなければ、灰色以外からランダムに選んで保存する
+    if (!loggedIn || readAvatar() != null) return
+    const id = randomAvatar()
+    saveAvatar(id)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSavedAvatar(id)
+  }, [loggedIn])
+
+  const setAvatarId = useCallback((id: number) => {
+    saveAvatar(id)
+    setSavedAvatar(id)
+  }, [])
+
+  const avatarId = loggedIn ? (savedAvatar ?? GUEST_AVATAR) : GUEST_AVATAR
+
   const refresh = useCallback(() => {
     if (syncing) return
     setSyncing(true)
@@ -486,6 +510,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCourse,
     webclassUrl,
     setWebclassUrl,
+    avatarId,
+    setAvatarId,
     addOpen,
     setAddOpen,
     syncOpen,

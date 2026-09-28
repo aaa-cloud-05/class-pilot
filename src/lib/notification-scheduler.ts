@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 import { getCachedAssignments } from "./cache";
 import {
   getNotificationSettings,
@@ -57,7 +59,7 @@ export async function checkAndNotify(): Promise<number> {
         } else {
           console.log(`[通知] 送信: ${assignment.title} (残り${Math.round(minutesLeft)}分, ${timing.type})`);
           const timeLabel = timing.type === "24h" ? "24時間" : timing.type === "3h" ? "3時間" : "1時間";
-          const notifTitle = `締切まで${timeLabel}`;
+          const notifTitle = `締切まであと${timeLabel}`;
           const notifBody = `「${assignment.title}」（${assignment.courseName}）`;
           await recordNotification(assignment.id, timing.type, notifTitle, notifBody);
           if (typeof Notification !== "undefined" && Notification.permission === "granted") {
@@ -73,14 +75,17 @@ export async function checkAndNotify(): Promise<number> {
   return sent;
 }
 
+const TEST_TITLE = "通知のテスト";
+const TEST_BODY = "締切が近づくと、このように課題名と締切日時をお知らせします。";
+
 export async function sendTestNotification(): Promise<void> {
   console.log(`[通知テスト] permission=${Notification.permission}`);
   try {
     const reg = await navigator.serviceWorker.getRegistration();
     console.log(`[通知テスト] SW登録=${!!reg}, active=${!!reg?.active}`);
     if (reg?.active) {
-      await reg.showNotification("テスト通知", {
-        body: "通知が正常に動作しています",
+      await reg.showNotification(TEST_TITLE, {
+        body: TEST_BODY,
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-192.png",
         tag: "test",
@@ -94,8 +99,8 @@ export async function sendTestNotification(): Promise<void> {
   }
 
   try {
-    const n = new Notification("テスト通知", {
-      body: "通知が正常に動作しています",
+    const n = new Notification(TEST_TITLE, {
+      body: TEST_BODY,
       icon: "/icons/icon-192.png",
     });
     console.log("[通知テスト] Notification API送信成功");
@@ -110,8 +115,10 @@ async function showDeadlineNotification(
   type: NotificationRecord["type"]
 ): Promise<void> {
   const timeLabel = type === "24h" ? "24時間" : type === "3h" ? "3時間" : "1時間";
-  const title = `締切まで${timeLabel}`;
-  const body = `「${assignment.title}」（${assignment.courseName}）`;
+  const title = `締切まであと${timeLabel}`;
+  // サーバのプッシュ（src/lib/server/notify.ts）と同じ2行の形
+  const due = assignment.dueDate ? `・${format(assignment.dueDate, "M月d日(E) HH:mm", { locale: ja })} まで` : "";
+  const body = `${assignment.title}\n${assignment.courseName}${due}`;
 
   try {
     const reg = await navigator.serviceWorker.getRegistration();
