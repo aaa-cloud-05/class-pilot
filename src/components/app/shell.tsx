@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils"
 import { timeAgo } from "@/lib/assignment-format"
 import { getPushSubscription } from "@/lib/push-client"
 import { AddAssignmentSheet } from "./assignment"
+import { Avatar } from "./avatar"
 import { SPRING } from "@/components/app/motion"
 import { useApp } from "@/components/app/provider"
 import { Button, ButtonLink, Card, IconButton, Sheet } from "@/components/app/ui"
@@ -512,14 +513,8 @@ function Sidebar() {
           href="/settings"
           className="flex items-center gap-2.5 rounded-control px-2 py-2 outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/40"
         >
-          {user?.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.image} alt="" aria-hidden className="h-8 w-8 shrink-0 rounded-full object-cover" />
-          ) : (
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-muted-foreground">
-              {loggedIn ? (user?.name ?? user?.email ?? "?").trim().charAt(0) : "?"}
-            </span>
-          )}
+          {/* 未ログインは灰色。アイコンは 設定 のアカウント欄で変える */}
+          <Avatar size={32} />
           <span className="min-w-0">
             <span className="block truncate text-[13px] font-medium">
               {loggedIn ? user?.name ?? "ログイン中" : "ログインしていません"}
