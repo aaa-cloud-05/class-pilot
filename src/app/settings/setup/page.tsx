@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react"
 import type { NotificationPreset } from "@/lib/notification-store"
 import { buildBookmarkletCode } from "@/lib/webclass-script"
 import { MobileHeader, PageBody, WEBCLASS_URL_ANCHOR } from "@/components/app/shell"
+import { useEmailNotification } from "@/hooks/useEmailNotification"
 import {
   Button,
   ButtonLink,
@@ -147,8 +148,8 @@ export default function SetupPage() {
   } = useApp()
   const { data: session } = useSession()
   // メールとトークンは通知設定とは別の場所（サーバ）にある。通知はメール一本
-  const [email, setEmail] = useState(false)
   const [tokenIssued, setTokenIssued] = useState(false)
+  const { on: emailOn, setOn: setEmailOn } = useEmailNotification()
 
   useEffect(() => {
     if (!loggedIn) return
@@ -157,24 +158,7 @@ export default function SetupPage() {
       .then((r) => r.json())
       .then((d) => setTokenIssued(!!d.issued))
       .catch(() => {})
-    fetch("/api/notifications/settings")
-      .then((r) => r.json())
-      .then((d) => setEmail(d.settings?.emailEnabled ?? false))
-      .catch(() => {})
   }, [loggedIn])
-
-  const toggleEmail = async (v: boolean) => {
-    setEmail(v)
-    const res = await fetch("/api/notifications/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emailEnabled: v }),
-    }).catch(() => null)
-    if (!res?.ok) {
-      setEmail(!v)
-      showToast("設定を保存できませんでした")
-    }
-  }
 
   /** サーバで発行する。表示できるのは1度きりなので、返り値をそのまま出す */
   const issueToken = async (): Promise<string> => {
@@ -197,7 +181,7 @@ export default function SetupPage() {
   }
   const [token, setToken] = useState("")
 
-  const steps = [loggedIn, syncedAt.webclass != null, settings.enabled && email]
+  const steps = [loggedIn, syncedAt.webclass != null, emailOn === true]
   const doneCount = steps.filter(Boolean).length
 
   return (
@@ -285,7 +269,7 @@ export default function SetupPage() {
             />
 
             <div className="space-y-3 border-t border-border pt-4">
-              <p className="text-[14px] font-semibold">A. ブックマークレット（まずこれ）</p>
+              <p className="text-[14px] font-semibold">A. ブックマークレット</p>
               <Segmented<Device>
                 label="端末"
                 value={device}
@@ -381,25 +365,22 @@ export default function SetupPage() {
           <Step
             n={3}
             title="メール通知をオンにする"
-            done={settings.enabled && email}
-            status={settings.enabled && email ? "締切の前にメールで知らせます" : "いまはオフです"}
+            done={emailOn === true}
+            status={emailOn ? "締切の前にメールで知らせます" : "いまはオフです"}
           >
             <p className="text-[14px] leading-relaxed text-muted-foreground">
               締切の前に、ログインしている Google アカウントのメールアドレスへ届きます。通知機能のない WebClass の課題にも届きます。
             </p>
             <ListGroup>
               <RowStatic
-                label="メール"
+                label="締切をメールで知らせる"
                 description={loggedIn ? session?.user?.email ?? "" : "ログインが必要"}
                 right={
                   <Switch
-                    label="メール"
-                    checked={email && loggedIn}
-                    disabled={!loggedIn}
-                    onChange={(v) => {
-                      updateSettings({ enabled: true })
-                      toggleEmail(v)
-                    }}
+                    label="締切をメールで知らせる"
+                    checked={emailOn === true}
+                    disabled={!loggedIn || emailOn == null}
+                    onChange={setEmailOn}
                   />
                 }
               />

@@ -3,8 +3,9 @@
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { useApp } from "@/components/app/provider"
+import { useEmailNotification } from "@/hooks/useEmailNotification"
 import type { NotificationPreset } from "@/lib/notification-store"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import { Button, ListGroup, RowButton, RowStatic, Switch } from "@/components/app/ui"
@@ -16,63 +17,29 @@ const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
 ]
 
 export default function MockNotificationSettingsPage() {
-  const { settings, updateSettings, loggedIn, assignments, courseById, toggleAssignmentMute, showToast } = useApp()
-  // 通知はメール一本（プッシュはアプリを開いたときしか出ず役に立たないので外した）。
-  // メールのオン・オフは通知設定とは別に、サーバの emailEnabled にある
-  const [email, setEmail] = useState(false)
-
-  useEffect(() => {
-    if (!loggedIn) return
-    fetch("/api/notifications/settings")
-      .then((r) => r.json())
-      .then((d) => setEmail(d.settings?.emailEnabled ?? false))
-      .catch(() => {})
-  }, [loggedIn])
-
-  const toggleEmail = async (v: boolean) => {
-    setEmail(v)
-    const res = await fetch("/api/notifications/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emailEnabled: v }),
-    }).catch(() => null)
-    if (!res?.ok) {
-      setEmail(!v)
-      showToast("設定を保存できませんでした")
-    }
-  }
+  const { settings, updateSettings, loggedIn, assignments, courseById, toggleAssignmentMute } = useApp()
+  const { data: session } = useSession()
+  // 通知はメール一本（プッシュはアプリを開いたときしか出ず役に立たないので外した）。スイッチも1つ
+  const { on, setOn } = useEmailNotification()
 
   const muted = assignments.filter((a) => a.muted)
-  const needLogin = !loggedIn
 
   return (
     <>
       <MobileHeader variant="back" title="通知" backHref="/settings" />
       <PageBody desktopTitle="通知">
         <div className="space-y-7">
-          <ListGroup footer="オフにすると、締切のメールが届かなくなります。">
+          <ListGroup footer="締切の前に、Google アカウントのメールアドレスへ届きます。WebClass の課題にも届きます。">
             <RowStatic
-              label="締切の通知"
-              right={<Switch label="締切の通知" checked={settings.enabled} onChange={(v) => updateSettings({ enabled: v })} />}
-            />
-          </ListGroup>
-
-          <ListGroup title="受け取り方" className={cn(!settings.enabled && "pointer-events-none opacity-50")}>
-            <RowStatic
-              label="メール通知"
-              description={needLogin ? "ログインすると使えます" : "登録しているメールアドレスに届きます"}
+              label="締切をメールで知らせる"
+              description={loggedIn ? session?.user?.email ?? "" : "ログインすると使えます"}
               right={
-                <Switch
-                  label="メール通知"
-                  checked={email && !needLogin}
-                  disabled={needLogin || !settings.enabled}
-                  onChange={(v) => toggleEmail(v)}
-                />
+                <Switch label="締切をメールで知らせる" checked={on === true} disabled={!loggedIn || on == null} onChange={setOn} />
               }
             />
           </ListGroup>
 
-          <ListGroup title="タイミング" className={cn(!settings.enabled && "pointer-events-none opacity-50")}>
+          <ListGroup title="タイミング" className={cn(!on && "pointer-events-none opacity-50")}>
             {PRESETS.map((p) => {
               const on = settings.preset === p.value
               return (

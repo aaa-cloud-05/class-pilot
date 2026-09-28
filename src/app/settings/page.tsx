@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
 import { useApp, type ThemeMode } from "@/components/app/provider"
+import { useEmailNotification } from "@/hooks/useEmailNotification"
 import { clearAllClientData } from "@/lib/debug-clear"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import {
@@ -41,6 +42,7 @@ export default function MockSettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [confirmText, setConfirmText] = useState("")
   const [clearOpen, setClearOpen] = useState(false)
+  const { on: emailOn } = useEmailNotification()
 
   const visibleCourses = courses.filter((c) => !c.hidden).length
 
@@ -92,7 +94,7 @@ export default function MockSettingsPage() {
               icon={BellRing}
              
               label="通知"
-              detail={settings.enabled ? `オン・${PRESET_LABEL[settings.preset]}` : "オフ"}
+              detail={emailOn ? `オン・${PRESET_LABEL[settings.preset]}` : emailOn === false ? "オフ" : ""}
             />
             <RowLink href="/settings/courses" icon={Layers} label="コース" detail={`${visibleCourses} コース`} />
           </ListGroup>
