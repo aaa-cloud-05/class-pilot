@@ -79,11 +79,14 @@ export function weekHeadline(w: WeekState, now: Date): string {
   return `山場は${dayLabel}。今日は${w.todayOpen}件だけです。`
 }
 
-/** 次に手をつける1件。期限切れ → 締切が近い順 */
+/**
+ * 次に手をつける1件＝まだ締切が来ていない未提出のうち、締切がいちばん近いもの。
+ * 期限切れはここに出さない（「最近」の直近の未提出に出る）。
+ */
 export function nextUp(list: ViewAssignment[], now: Date): ViewAssignment | null {
-  const open = list.filter((a) => a.submissionState !== "submitted" && a.dueDate)
-  if (open.length === 0) return null
-  const overdue = open.filter((a) => a.dueDate! < now).sort((x, y) => y.dueDate!.getTime() - x.dueDate!.getTime())
-  if (overdue.length) return overdue[0]
-  return open.filter((a) => a.dueDate! >= now).sort((x, y) => x.dueDate!.getTime() - y.dueDate!.getTime())[0] ?? null
+  return (
+    list
+      .filter((a) => a.submissionState !== "submitted" && a.dueDate && a.dueDate >= now)
+      .sort((x, y) => x.dueDate!.getTime() - y.dueDate!.getTime())[0] ?? null
+  )
 }

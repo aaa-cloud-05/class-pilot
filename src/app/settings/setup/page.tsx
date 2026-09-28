@@ -7,9 +7,7 @@ import { cn } from "@/lib/utils"
 import { useApp } from "@/components/app/provider"
 import { useSession } from "next-auth/react"
 import type { NotificationPreset } from "@/lib/notification-store"
-import { disablePush, enablePush, getPushSubscription } from "@/lib/push-client"
 import { buildBookmarkletCode } from "@/lib/webclass-script"
-import { sendTestNotification } from "@/lib/notification-scheduler"
 import { MobileHeader, PageBody, WEBCLASS_URL_ANCHOR } from "@/components/app/shell"
 import {
   Button,
@@ -148,19 +146,11 @@ export default function SetupPage() {
     showToast,
   } = useApp()
   const { data: session } = useSession()
-  // メール・プッシュ・トークンは通知設定とは別の場所にある
+  // メールとトークンは通知設定とは別の場所（サーバ）にある。通知はメール一本
   const [email, setEmail] = useState(false)
-  const [push, setPush] = useState(false)
   const [tokenIssued, setTokenIssued] = useState(false)
-  const [permission, setPermission] = useState<"granted" | "default" | "denied">("default")
 
   useEffect(() => {
-    // 通知の許可状態はブラウザにしかないので、マウント後に読む
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (typeof Notification !== "undefined") setPermission(Notification.permission)
-    getPushSubscription()
-      .then((s) => setPush(s != null))
-      .catch(() => {})
     if (!loggedIn) return
     // 発行済みかどうかはサーバが知っている。再発行で既存の設定を壊さないために出す
     fetch("/api/import/token")
@@ -186,12 +176,6 @@ export default function SetupPage() {
     }
   }
 
-  const togglePush = async (v: boolean) => {
-    const ok = v ? await enablePush().catch(() => false) : await disablePush().catch(() => false)
-    if (ok) setPush(v)
-    else showToast("プッシュ通知を切り替えられませんでした")
-  }
-
   /** サーバで発行する。表示できるのは1度きりなので、返り値をそのまま出す */
   const issueToken = async (): Promise<string> => {
     const res = await fetch("/api/import/token", { method: "POST" }).catch(() => null)
@@ -213,7 +197,7 @@ export default function SetupPage() {
   }
   const [token, setToken] = useState("")
 
-  const steps = [loggedIn, syncedAt.webclass != null, settings.enabled && (push || email)]
+  const steps = [loggedIn, syncedAt.webclass != null, settings.enabled && email]
   const doneCount = steps.filter(Boolean).length
 
   return (
@@ -245,7 +229,7 @@ export default function SetupPage() {
             }
           >
             <p className="text-[14px] leading-relaxed text-muted-foreground">
-              ログインすると Classroom の課題が自動で入り、メールとプッシュで通知できるようになります。ログインしなくても、WebClass
+              ログインすると Classroom の課題が自動で入り、締切の前にメールで通知できるようになります。ログインしなくても、WebClass
               の取り込みと手動の追加は使えます。
             </p>
             <Table
@@ -254,7 +238,7 @@ export default function SetupPage() {
                 ["課題を手で追加・編集", <Yes key="a" />, <Yes key="b" />],
                 ["WebClass の取り込み", <Yes key="c" />, <Yes key="d" />],
                 ["Classroom の自動取得", <No key="e" />, <Yes key="f" />],
-                ["メール・プッシュ通知", <No key="g" />, <Yes key="h" />],
+                ["メール通知", <No key="g" />, <Yes key="h" />],
                 ["ほかの端末と同期", <No key="i" />, <Yes key="j" />],
               ]}
             />
@@ -396,34 +380,14 @@ export default function SetupPage() {
 
           <Step
             n={3}
-            title="通知をオンにする"
-            done={settings.enabled && (push || email)}
-            status={settings.enabled ? "締切の前に知らせます" : "いまはオフです"}
+            title="メール通知をオンにする"
+            done={settings.enabled && email}
+            status={settings.enabled && email ? "締切の前にメールで知らせます" : "いまはオフです"}
           >
-            <Table
-              head={["種類", "届く条件", "ログイン"]}
-              rows={[
-                ["プッシュ", "アプリを閉じていても届く（iPhone はホーム画面に追加が必要）", "必要"],
-                ["メール", "締切の前にメールが届く", "必要"],
-                ["ブラウザ", "この端末でアプリを開いているとき", "不要"],
-              ]}
-            />
+            <p className="text-[14px] leading-relaxed text-muted-foreground">
+              締切の前に、ログインしている Google アカウントのメールアドレスへ届きます。通知機能のない WebClass の課題にも届きます。
+            </p>
             <ListGroup>
-              <RowStatic
-                label="プッシュ通知"
-                description={loggedIn ? "閉じていても届く" : "ログインが必要"}
-                right={
-                  <Switch
-                    label="プッシュ通知"
-                    checked={push && loggedIn}
-                    disabled={!loggedIn}
-                    onChange={(v) => {
-                      updateSettings({ enabled: true })
-                      togglePush(v)
-                    }}
-                  />
-                }
-              />
               <RowStatic
                 label="メール"
                 description={loggedIn ? session?.user?.email ?? "" : "ログインが必要"}
@@ -437,21 +401,6 @@ export default function SetupPage() {
                       toggleEmail(v)
                     }}
                   />
-                }
-              />
-              <RowStatic
-                label="この端末のブラウザ通知"
-                description={permission === "granted" ? "許可済み" : "未許可"}
-                right={
-                  permission === "granted" ? (
-                    <Button size="sm" variant="secondary" onClick={() => sendTestNotification()}>
-                      テスト
-                    </Button>
-                  ) : (
-                    <Button size="sm" onClick={() => togglePush(true)}>
-                      許可する
-                    </Button>
-                  )
                 }
               />
             </ListGroup>

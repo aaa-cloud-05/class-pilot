@@ -9,7 +9,7 @@ import { Button } from "@/components/app/ui"
 
 const POINTS = [
   { icon: Layers, title: "WebClass と Classroom をひとつに", desc: "2つの課題を締切順にまとめて表示します" },
-  { icon: BellRing, title: "締切の前に知らせる", desc: "プッシュ通知とメールで、出し忘れを防ぎます" },
+  { icon: BellRing, title: "締切の前に知らせる", desc: "締切の前にメールが届くので、出し忘れを防げます" },
   { icon: CalendarDays, title: "1週間の予定がすぐ分かる", desc: "カレンダーで忙しい日をひと目で確認" },
 ]
 

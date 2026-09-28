@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { addDays, addWeeks, endOfWeek, format, isSameDay, startOfWeek } from "date-fns"
 import { ja } from "date-fns/locale"
-import { CalendarCheck2, CalendarRange, CalendarX2, ChevronRight, Inbox, X } from "lucide-react"
+import { CalendarRange, ChevronRight, Inbox, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ViewAssignment } from "@/lib/assignment-view"
 import { AllList, type FocusWeek } from "@/components/app/all-list"
@@ -14,7 +14,7 @@ import { Appear } from "@/components/app/motion"
 import { useApp } from "@/components/app/provider"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { MobileHeader, PageBody, ReauthOrErrorBanner, SetupCard } from "@/components/app/shell"
-import { Button, ButtonLink, Card, EmptyState, IconButton, SectionHeader, Segmented, Skeleton } from "@/components/app/ui"
+import { Button, ButtonLink, Card, EmptyState, IconButton, NoDeadlineCard, SectionHeader, Segmented, Skeleton } from "@/components/app/ui"
 import { WeekHero } from "@/components/app/week-hero"
 import { countLater, countThisWeek, firstLaterDue, groupRecent, GROUP_LABEL } from "@/lib/assignment-format"
 import { buildWeekState, nextUp } from "@/lib/week-view"
@@ -82,12 +82,14 @@ export default function MockHomePage() {
     setView("all")
     setFocusWeek((f) => ({ date: d, n: (f?.n ?? 0) + 1 }))
   }
-  // ヒーローの週を動かしたら、その週を「すべて」で見せる
+  // ヒーローの週を動かしたら「すべて」に切り替える。続けて押せるよう、スクロールはしない
   const moveWeek = (delta: number) => {
     const diff = weekDiff + delta
     setWeekDiff(diff)
     setPickedDay(null)
-    showWeekInAll(addWeeks(now, diff))
+    setAllMonth(addWeeks(now, diff))
+    setView("all")
+    setFocusWeek(null)
   }
   // 棒を押したら「最近」にその日の課題を出す。同じ日をもう一度押すと外す
   const pickDay = (d: Date) => {
@@ -123,10 +125,14 @@ export default function MockHomePage() {
   )
 
   // 並び: 直近の未提出 → 棒グラフで選んだ日 → 今日 → 明日 → 今週の課題を見る → 期限なしの未提出
+  // 今日・明日は課題が無くても出す（無いこと自体を知らせる）
   const recent = groups.find((g) => g.key === "recent")
-  const today = groups.find((g) => g.key === "today")
-  const tomorrow = groups.find((g) => g.key === "tomorrow")
+  const today = groups.find((g) => g.key === "today")?.items ?? []
+  const tomorrow = groups.find((g) => g.key === "tomorrow")?.items ?? []
   const noDue = groups.find((g) => g.key === "noDue")
+  const dayList = (items: ViewAssignment[]) => (items.length ? plainList(items) : <NoDeadlineCard />)
+  // 今日の見出しは青にする（「すべて」の今週と同じ）
+  const todayTitle = (label: string) => <span className="text-primary">{label}</span>
   // 選んだ日が今日・明日なら、そのグループは選んだ日の側にまとめる（同じ課題を2回出さない）
   const pickedIsToday = pickedDay != null && isSameDay(pickedDay, now)
   const pickedIsTomorrow = pickedDay != null && isSameDay(pickedDay, addDays(now, 1))
@@ -139,20 +145,13 @@ export default function MockHomePage() {
     })
   }
   if (pickedDay) {
-    const title = `${pickedIsToday ? "今日 " : pickedIsTomorrow ? "明日 " : ""}${format(pickedDay, "M月d日(E)", { locale: ja })}`
+    const label = `${pickedIsToday ? "今日 " : pickedIsTomorrow ? "明日 " : ""}${format(pickedDay, "M月d日(E)", { locale: ja })}`
     blocks.push({
       key: `picked-${format(pickedDay, "yyyy-MM-dd")}`,
       node: group(
         "picked",
-        title,
-        pickedItems.length ? (
-          plainList(pickedItems)
-        ) : (
-          <Card className="flex items-center gap-3 px-4 py-5 text-muted-foreground">
-            <CalendarX2 className="h-5 w-5 shrink-0" aria-hidden />
-            <p className="text-[15px]">この日が締切の課題はありません</p>
-          </Card>
-        ),
+        pickedIsToday ? todayTitle(label) : label,
+        dayList(pickedItems),
         {
           count: pickedItems.length,
           action: (
@@ -169,23 +168,16 @@ export default function MockHomePage() {
       ),
     })
   }
-  if (today && !pickedIsToday) {
-    blocks.push({ key: "today", node: group("today", GROUP_LABEL.today, plainList(today.items), { count: today.items.length }) })
-  }
-  if (tomorrow && !pickedIsTomorrow) {
+  if (!pickedIsToday) {
     blocks.push({
-      key: "tomorrow",
-      node: group("tomorrow", GROUP_LABEL.tomorrow, plainList(tomorrow.items), { count: tomorrow.items.length }),
+      key: "today",
+      node: group("today", todayTitle(GROUP_LABEL.today), dayList(today), { count: today.length }),
     })
   }
-  if (blocks.length === 0 && !noDue) {
+  if (!pickedIsTomorrow) {
     blocks.push({
-      key: "none",
-      node: (
-        <Card>
-          <EmptyState icon={CalendarCheck2} title="最近の課題はありません" description="新しい課題が届いたら、ここと通知でお知らせします。" />
-        </Card>
-      ),
+      key: "tomorrow",
+      node: group("tomorrow", GROUP_LABEL.tomorrow, dayList(tomorrow), { count: tomorrow.length }),
     })
   }
   // 今週の残りはリストにせず、「すべて」の今週へ送る

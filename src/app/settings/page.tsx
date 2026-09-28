@@ -64,7 +64,7 @@ export default function MockSettingsPage() {
             <Card className="p-5">
               <p className="text-[18px] font-bold">Google でログイン</p>
               <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">
-                Classroom の自動取り込み、メールとプッシュの通知、ほかの端末との同期が使えるようになります。
+                Classroom の自動取り込み、締切のメール通知、ほかの端末との同期が使えるようになります。
               </p>
               <ButtonLink href="/login" size="lg" className="mt-4 w-full">
                 <LogIn className="h-5 w-5" aria-hidden />

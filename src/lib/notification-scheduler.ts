@@ -1,5 +1,3 @@
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
 import { getCachedAssignments } from "./cache";
 import {
   getNotificationSettings,
@@ -61,10 +59,9 @@ export async function checkAndNotify(): Promise<number> {
           const timeLabel = timing.type === "24h" ? "24時間" : timing.type === "3h" ? "3時間" : "1時間";
           const notifTitle = `締切まであと${timeLabel}`;
           const notifBody = `「${assignment.title}」（${assignment.courseName}）`;
+          // OS の通知は出さない（アプリを開いたときしか出ず役に立たないため。通知はメール一本）。
+          // 「通知」の画面に出す履歴だけ残す
           await recordNotification(assignment.id, timing.type, notifTitle, notifBody);
-          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-            await showDeadlineNotification(assignment, timing.type);
-          }
           sent++;
         }
       }
@@ -73,79 +70,4 @@ export async function checkAndNotify(): Promise<number> {
 
   console.log(`[通知] 完了: ${sent}件送信`);
   return sent;
-}
-
-const TEST_TITLE = "通知のテスト";
-const TEST_BODY = "締切が近づくと、このように課題名と締切日時をお知らせします。";
-
-export async function sendTestNotification(): Promise<void> {
-  console.log(`[通知テスト] permission=${Notification.permission}`);
-  try {
-    const reg = await navigator.serviceWorker.getRegistration();
-    console.log(`[通知テスト] SW登録=${!!reg}, active=${!!reg?.active}`);
-    if (reg?.active) {
-      await reg.showNotification(TEST_TITLE, {
-        body: TEST_BODY,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
-        tag: "test",
-        data: { url: "/" },
-      });
-      console.log("[通知テスト] SW通知送信成功");
-      return;
-    }
-  } catch (e) {
-    console.log("[通知テスト] SW通知エラー:", e);
-  }
-
-  try {
-    const n = new Notification(TEST_TITLE, {
-      body: TEST_BODY,
-      icon: "/icons/icon-192.png",
-    });
-    console.log("[通知テスト] Notification API送信成功");
-    n.onclick = () => window.focus();
-  } catch (e) {
-    console.log("[通知テスト] Notification APIエラー:", e);
-  }
-}
-
-async function showDeadlineNotification(
-  assignment: { id: string; title: string; courseName: string; link: string; dueDate: Date | null },
-  type: NotificationRecord["type"]
-): Promise<void> {
-  const timeLabel = type === "24h" ? "24時間" : type === "3h" ? "3時間" : "1時間";
-  const title = `締切まであと${timeLabel}`;
-  // サーバのプッシュ（src/lib/server/notify.ts）と同じ2行の形
-  const due = assignment.dueDate ? `・${format(assignment.dueDate, "M月d日(E) HH:mm", { locale: ja })} まで` : "";
-  const body = `${assignment.title}\n${assignment.courseName}${due}`;
-
-  try {
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (reg?.active) {
-      await reg.showNotification(title, {
-        body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
-        tag: `${assignment.id}:${type}`,
-        data: { url: assignment.link || "/" },
-      });
-      console.log(`[通知] SW通知成功: ${assignment.title}`);
-      return;
-    }
-    console.log(`[通知] SW未アクティブ, Notification APIにフォールバック`);
-  } catch (e) {
-    console.log(`[通知] SW通知エラー:`, e);
-  }
-
-  try {
-    new Notification(title, {
-      body,
-      icon: "/icons/icon-192.png",
-      tag: `${assignment.id}:${type}`,
-    });
-    console.log(`[通知] Notification API成功: ${assignment.title}`);
-  } catch (e) {
-    console.log(`[通知] Notification APIエラー:`, e);
-  }
 }

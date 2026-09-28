@@ -11,7 +11,7 @@
 | **通知の仕様** | **現行のプリセット3種のまま初回リリースする**と決定（2026-09-06）。[notification-design.md](./notification-design.md) の3本立ては未実装 |
 | Supabase | 東京(ap-northeast-1)へ移設完了（1クエリ 678ms → 53ms） |
 | WebClass 取得 | 内部 JSON API 方式。ブックマークレットは動作確認済み。**締切なしの課題も取り込む**ようにした（2026-09-23、旧実装は3分の2を捨てていた）。Tampermonkey 自動同期は手動実行まで確認済み、自動実行は未確認 |
-| Web Push | 実装済み・未検証（VAPID鍵は `.env.local` にある。Vercel 未設定） |
+| **通知はメール一本** | **2026-09-29 決定**。Web Push とブラウザ内の通知（アプリを開いたときだけ出る OS 通知）は、アプリを開かないと役に立たないので画面から外した。サーバの Web Push 送信処理と `PushSubscription` テーブルは残してある（VAPID は Vercel 未設定のままなので本番では動かない）。PWA（ホーム画面に追加）も案内しない |
 | OG 画像 / アイコン | 新しいマーク（カラフルな U）と OG 画像を取り込み済み（2026-09-15） |
 | **UI** | **v5 に全面置き換え完了（2026-09-22）**。下タブ3つ（ホーム/カレンダー/設定）＋中央の追加ボタン。旧 `/me` `/new` `/docs/*` は廃止して redirect。経緯は [ui-v5-migration.md](./ui-v5-migration.md)、作法は [ui-playbook.md](./ui-playbook.md) |
 | **提出状況の「不明」** | **廃止（2026-09-23）**。WebClass の API は提出したかどうかを必ず返すと実測で確定したため（[webclass-api.md](./webclass-api.md) §4.8）。型は互換のため残すが、画面では未提出として出る |

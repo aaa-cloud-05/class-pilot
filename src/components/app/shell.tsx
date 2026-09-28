@@ -23,7 +23,6 @@ import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import { timeAgo } from "@/lib/assignment-format"
-import { getPushSubscription } from "@/lib/push-client"
 import { AddAssignmentSheet } from "./assignment"
 import { SPRING } from "@/components/app/motion"
 import { useApp } from "@/components/app/provider"
@@ -253,28 +252,21 @@ export function Toast() {
 /* ───────── はじめの設定 ───────── */
 
 /**
- * 通知の手順は「プッシュかメールが本当に届く状態」で完了にする（セットアップ画面と同じ判定）。
+ * 通知の手順は「メールが本当に届く状態」で完了にする（セットアップ画面と同じ判定）。通知はメール一本。
  * settings.enabled は初期値が true なので、それだけで見ると未ログインでも完了に数えてしまう。
- * プッシュもメールもログインが要るので、未ログインなら取りに行かない。
+ * メールはログインが要るので、未ログインなら取りに行かない。
  * null＝まだ分からない（メールの設定を取りに行っている最中）。
  */
 function useNotifReachable(loggedIn: boolean): boolean | null {
   const [email, setEmail] = useState<boolean | null>(null)
-  const [push, setPush] = useState(false)
   useEffect(() => {
     if (!loggedIn) return
     fetch("/api/notifications/settings")
       .then((r) => r.json())
       .then((d) => setEmail(d.settings?.emailEnabled ?? false))
       .catch(() => setEmail(false))
-    // Service Worker が無い端末ではずっと返らないので、これは待たない
-    getPushSubscription()
-      .then((s) => setPush(s != null))
-      .catch(() => {})
   }, [loggedIn])
-  if (!loggedIn) return false
-  if (email || push) return true
-  return email
+  return loggedIn ? email : false
 }
 
 export function useSetupSteps() {
@@ -297,8 +289,8 @@ export function useSetupSteps() {
     },
     {
       key: "notif",
-      title: "締切の通知をオンにする",
-      desc: "プッシュかメールで受け取れます",
+      title: "メール通知をオンにする",
+      desc: "締切の前にメールが届きます",
       href: "/settings/notifications",
       done: settings.enabled && reachable === true,
       pending: reachable === null,

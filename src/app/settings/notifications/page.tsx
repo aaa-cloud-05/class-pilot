@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { useApp } from "@/components/app/provider"
 import type { NotificationPreset } from "@/lib/notification-store"
-import { disablePush, enablePush, getPushSubscription } from "@/lib/push-client"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import { Button, ListGroup, RowButton, RowStatic, Switch } from "@/components/app/ui"
 
@@ -18,18 +17,11 @@ const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
 
 export default function MockNotificationSettingsPage() {
   const { settings, updateSettings, loggedIn, assignments, courseById, toggleAssignmentMute, showToast } = useApp()
-  // メールとプッシュは通知設定とは別の場所にある（サーバの emailEnabled と、この端末の購読状態）
+  // 通知はメール一本（プッシュはアプリを開いたときしか出ず役に立たないので外した）。
+  // メールのオン・オフは通知設定とは別に、サーバの emailEnabled にある
   const [email, setEmail] = useState(false)
-  const [push, setPush] = useState(false)
-  const [permission, setPermission] = useState<"granted" | "default" | "denied">("default")
 
   useEffect(() => {
-    // 通知の許可状態はブラウザにしかないので、マウント後に読む
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (typeof Notification !== "undefined") setPermission(Notification.permission)
-    getPushSubscription()
-      .then((s) => setPush(s != null))
-      .catch(() => {})
     if (!loggedIn) return
     fetch("/api/notifications/settings")
       .then((r) => r.json())
@@ -50,12 +42,6 @@ export default function MockNotificationSettingsPage() {
     }
   }
 
-  const togglePush = async (v: boolean) => {
-    const ok = v ? await enablePush().catch(() => false) : await disablePush().catch(() => false)
-    if (typeof Notification !== "undefined") setPermission(Notification.permission)
-    if (ok) setPush(v)
-    else showToast(v ? "プッシュ通知をオンにできませんでした" : "オフにできませんでした")
-  }
   const muted = assignments.filter((a) => a.muted)
   const needLogin = !loggedIn
 
@@ -64,30 +50,14 @@ export default function MockNotificationSettingsPage() {
       <MobileHeader variant="back" title="通知" backHref="/settings" />
       <PageBody desktopTitle="通知">
         <div className="space-y-7">
-          <ListGroup footer="オフにすると、プッシュ・メール・この端末の通知がすべて止まります。">
+          <ListGroup footer="オフにすると、締切のメールが届かなくなります。">
             <RowStatic
               label="締切の通知"
               right={<Switch label="締切の通知" checked={settings.enabled} onChange={(v) => updateSettings({ enabled: v })} />}
             />
           </ListGroup>
 
-          <ListGroup
-            title="受け取り方"
-            footer="iPhone では、Safari の共有ボタン →「ホーム画面に追加」で開いたときだけプッシュ通知を受け取れます。"
-            className={cn(!settings.enabled && "pointer-events-none opacity-50")}
-          >
-            <RowStatic
-              label="プッシュ通知"
-              description={needLogin ? "ログインすると使えます" : "アプリを閉じていても、この端末に届きます"}
-              right={
-                <Switch
-                  label="プッシュ通知"
-                  checked={push && !needLogin}
-                  disabled={needLogin || !settings.enabled}
-                  onChange={(v) => togglePush(v)}
-                />
-              }
-            />
+          <ListGroup title="受け取り方" className={cn(!settings.enabled && "pointer-events-none opacity-50")}>
             <RowStatic
               label="メール通知"
               description={needLogin ? "ログインすると使えます" : "登録しているメールアドレスに届きます"}
@@ -98,27 +68,6 @@ export default function MockNotificationSettingsPage() {
                   disabled={needLogin || !settings.enabled}
                   onChange={(v) => toggleEmail(v)}
                 />
-              }
-            />
-            <RowStatic
-              label="この端末のブラウザ通知"
-              description={
-                permission === "granted"
-                  ? "許可されています。アプリを開いたときに届きます"
-                  : permission === "denied"
-                    ? "ブロックされています。ブラウザの設定から許可してください"
-                    : "まだ許可されていません"
-              }
-              right={
-                permission === "granted" ? (
-                  <Button variant="secondary" size="sm" onClick={() => showToast("テスト通知を送りました（モック）")}>
-                    テスト
-                  </Button>
-                ) : (
-                  <Button size="sm" onClick={() => togglePush(true)}>
-                    許可する
-                  </Button>
-                )
               }
             />
           </ListGroup>

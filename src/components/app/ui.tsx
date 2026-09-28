@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef } from "react"
 import Link from "next/link"
-import { ChevronRight, X, type LucideIcon } from "lucide-react"
+import { ChevronRight, PartyPopper, X, type LucideIcon } from "lucide-react"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { cn } from "@/lib/utils"
 import { Button as ShButton } from "@/components/ui/button"
@@ -92,6 +92,16 @@ export function IconButton({
 
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("rounded-card bg-card shadow-card", className)} {...props} />
+}
+
+/** 締切が1つも無い日（月）のカード。うれしい状態なので、×ではなくクラッカーを出す（青＝片づいた） */
+export function NoDeadlineCard({ children = "この日が締切の課題はありません" }: { children?: React.ReactNode }) {
+  return (
+    <Card className="flex items-center gap-3 px-4 py-5 text-muted-foreground">
+      <PartyPopper className="h-5 w-5 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+      <p className="text-[15px]">{children}</p>
+    </Card>
+  )
 }
 
 export function SectionHeader({

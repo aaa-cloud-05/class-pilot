@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { addMonths, format, isSameMonth, startOfWeek } from "date-fns"
-import { CalendarX2, ChevronLeft, ChevronRight, Inbox } from "lucide-react"
+import { ChevronLeft, ChevronRight, Inbox } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { SubmissionState } from "@/lib/types"
 import type { ViewAssignment } from "@/lib/assignment-view"
@@ -10,7 +10,7 @@ import { noDueByStatus, weekBlockLabel, weeksOfMonth } from "@/lib/assignment-fo
 import { AssignmentList, ClampedList } from "@/components/app/assignment"
 import { Appear } from "@/components/app/motion"
 import { useApp } from "@/components/app/provider"
-import { Button, Card, SectionHeader, Segmented } from "@/components/app/ui"
+import { Button, Card, NoDeadlineCard, SectionHeader, Segmented } from "@/components/app/ui"
 
 const NO_DUE_TABS: { value: SubmissionState; label: string }[] = [
   { value: "not_submitted", label: "未提出" },
@@ -101,10 +101,9 @@ export function AllList({
       </p>
 
       {weeks.length === 0 ? (
-        <Card className="mt-5 flex items-center gap-3 px-4 py-5 text-muted-foreground">
-          <CalendarX2 className="h-5 w-5 shrink-0" aria-hidden />
-          <p className="text-[15px]">この月に締切の課題はありません</p>
-        </Card>
+        <div className="mt-5">
+          <NoDeadlineCard>この月に締切の課題はありません</NoDeadlineCard>
+        </div>
       ) : (
         <div className="mt-5 space-y-6">
           {weeks.map((w, i) => {
