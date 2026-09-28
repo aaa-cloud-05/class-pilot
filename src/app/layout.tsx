@@ -14,15 +14,17 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 const brandFont = Plus_Jakarta_Sans({ subsets: ["latin"], weight: "700", variable: "--font-jakarta" });
 
 const APP_URL = getAppUrl();
+// LINE・X・Slack などで共有したとき、OG 画像と一緒に出るタイトルと説明文。売りは /login の3点に揃える
+const TITLE = "UnionFetch — 課題の締切を、ひとつの場所で。";
 const DESCRIPTION =
-  "Google Classroom と WebClass の課題を1か所にまとめ、締切前にメールとブラウザ通知でお知らせします。";
+  "WebClass と Google Classroom の課題を、締切順にひとつのリストへ。通知機能のない WebClass の課題も、締切の前にプッシュとメールでお知らせします。1週間の忙しさもひと目で。";
 
 export const metadata: Metadata = {
   // 相対パスの OG 画像などを絶対URLに解決するための基準。未設定だとビルドが警告を出し、
   // LINE や X で共有したときにサムネイルが出ない。
   metadataBase: new URL(APP_URL),
   title: {
-    default: "UnionFetch — 課題を、見逃さない。",
+    default: TITLE,
     template: "%s | UnionFetch",
   },
   description: DESCRIPTION,
@@ -36,15 +38,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "UnionFetch",
-    title: "UnionFetch — 課題を、見逃さない。",
+    title: TITLE,
     description: DESCRIPTION,
     url: "/",
     locale: "ja_JP",
-    images: [{ url: "/og.png", width: 1672, height: 941, alt: "UnionFetch — 課題を、見逃さない。" }],
+    images: [{ url: "/og.png", width: 1672, height: 941, alt: TITLE }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "UnionFetch — 課題を、見逃さない。",
+    title: TITLE,
     description: DESCRIPTION,
     images: ["/og.png"],
   },

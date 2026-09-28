@@ -72,7 +72,7 @@ export async function notifyUser(
     pushEnabled
       ? deliver(userId, "push", false, assignments, ns, alreadySentKeys, now, async (p) => {
           const ok = await sendPushToUser(userId, {
-            title: `締切まで${p.label}`,
+            title: `締切まであと${p.label}`,
             body: `${p.assignmentTitle}（${p.courseName}）`,
             // 通知をタップしたらアプリを開く。課題ページ自体はログインが要るため
             url: "/",
@@ -128,7 +128,7 @@ async function deliver(
           assignmentId: p.assignmentId,
           type: p.type,
           channel,
-          title: `締切まで${p.label}`,
+          title: `締切まであと${p.label}`,
           body: `「${p.assignmentTitle}」（${p.courseName}）`,
         },
       });

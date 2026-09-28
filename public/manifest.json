@@ -1,7 +1,8 @@
 {
   "name": "UnionFetch",
   "short_name": "UnionFetch",
-  "description": "課題を、見逃さない。",
+  "description": "課題の締切を、ひとつの場所で。WebClass と Google Classroom の課題をまとめて、締切の前に通知します。",
+  "lang": "ja",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
