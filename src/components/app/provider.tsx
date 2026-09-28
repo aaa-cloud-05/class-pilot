@@ -141,6 +141,7 @@ const EMPTY_SETTINGS: NotificationSettings = {
   id: "global",
   enabled: true,
   preset: "standard",
+  reminderMinutes: [],
   mutedCourses: [],
   mutedAssignments: [],
   hiddenCourses: [],

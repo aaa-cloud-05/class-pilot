@@ -1,23 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSession } from "next-auth/react"
 import { useApp } from "@/components/app/provider"
 import { useEmailNotification } from "@/hooks/useEmailNotification"
-import type { NotificationPreset } from "@/lib/notification-store"
 import { MobileHeader, PageBody } from "@/components/app/shell"
-import { Button, ListGroup, RowButton, RowStatic, Switch } from "@/components/app/ui"
-
-const PRESETS: { value: NotificationPreset; label: string; desc: string }[] = [
-  { value: "relaxed", label: "早め", desc: "締切の24時間前に1回" },
-  { value: "standard", label: "標準", desc: "24時間前と3時間前" },
-  { value: "urgent", label: "直前", desc: "3時間前と1時間前" },
-]
+import { Button, ListGroup, RowStatic, Switch } from "@/components/app/ui"
+import { ReminderPicker } from "@/components/app/reminder-picker"
 
 export default function MockNotificationSettingsPage() {
-  const { settings, updateSettings, loggedIn, assignments, courseById, toggleAssignmentMute } = useApp()
+  const { loggedIn, assignments, courseById, toggleAssignmentMute } = useApp()
   const { data: session } = useSession()
   // 通知はメール一本（プッシュはアプリを開いたときしか出ず役に立たないので外した）。スイッチも1つ
   const { on, setOn } = useEmailNotification()
@@ -40,24 +33,9 @@ export default function MockNotificationSettingsPage() {
           </ListGroup>
 
           <ListGroup title="タイミング" className={cn(!on && "pointer-events-none opacity-50")}>
-            {PRESETS.map((p) => {
-              const on = settings.preset === p.value
-              return (
-                <RowButton
-                  key={p.value}
-                  label={p.label}
-                  description={p.desc}
-                  onClick={() => updateSettings({ preset: p.value })}
-                  detail={
-                    <Check
-                      className={cn("ml-auto h-5 w-5 text-primary", on ? "opacity-100" : "opacity-0")}
-                      strokeWidth={2.6}
-                      aria-label={on ? "選択中" : undefined}
-                    />
-                  }
-                />
-              )
-            })}
+            <div className="p-4">
+              <ReminderPicker disabled={!on} />
+            </div>
           </ListGroup>
 
           <ListGroup

@@ -18,6 +18,7 @@ import {
 import { useSession, signOut } from "next-auth/react"
 import { useApp, type ThemeMode } from "@/components/app/provider"
 import { useEmailNotification } from "@/hooks/useEmailNotification"
+import { reminderLabel, remindersOf } from "@/lib/reminders"
 import { clearAllClientData } from "@/lib/debug-clear"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import {
@@ -34,7 +35,6 @@ import {
 } from "@/components/app/ui"
 import { timeAgo } from "@/lib/assignment-format"
 
-const PRESET_LABEL = { relaxed: "早め", standard: "標準", urgent: "直前" } as const
 
 export default function MockSettingsPage() {
   const { loggedIn, mode, setMode, syncedAt, now, settings, courses, showToast } = useApp()
@@ -94,7 +94,7 @@ export default function MockSettingsPage() {
               icon={BellRing}
              
               label="通知"
-              detail={emailOn ? `オン・${PRESET_LABEL[settings.preset]}` : emailOn === false ? "オフ" : ""}
+              detail={emailOn ? `オン・${remindersOf(settings).map(reminderLabel).join("・")}` : emailOn === false ? "オフ" : ""}
             />
             <RowLink href="/settings/courses" icon={Layers} label="コース" detail={`${visibleCourses} コース`} />
           </ListGroup>

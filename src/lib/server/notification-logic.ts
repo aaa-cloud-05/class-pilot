@@ -1,25 +1,15 @@
-import type { NotificationPreset } from "@/lib/notification-store";
+import { remainingLabel, reminderType } from "@/lib/reminders";
 
 export interface NotificationTiming {
   minutes: number;
-  type: "24h" | "3h" | "1h";
+  /** 重複防止のキー（履歴の type）。src/lib/reminders.ts の reminderType */
+  type: string;
   label: string;
 }
 
-const PRESETS: Record<NotificationPreset, NotificationTiming[]> = {
-  relaxed: [{ minutes: 24 * 60, type: "24h", label: "24時間" }],
-  standard: [
-    { minutes: 24 * 60, type: "24h", label: "24時間" },
-    { minutes: 3 * 60, type: "3h", label: "3時間" },
-  ],
-  urgent: [
-    { minutes: 3 * 60, type: "3h", label: "3時間" },
-    { minutes: 60, type: "1h", label: "1時間" },
-  ],
-};
-
-export function getTimingsForPreset(preset: NotificationPreset): NotificationTiming[] {
-  return PRESETS[preset] ?? PRESETS.standard;
+/** 利用者が選んだ「締切の何分前」から、送るタイミングを作る */
+export function timingsFor(reminderMinutes: number[]): NotificationTiming[] {
+  return reminderMinutes.map((m) => ({ minutes: m, type: reminderType(m), label: remainingLabel(m) }));
 }
 
 export interface PendingNotification {
@@ -29,7 +19,7 @@ export interface PendingNotification {
   courseId: string;
   dueDate: Date;
   link: string;
-  type: "24h" | "3h" | "1h";
+  type: string;
   /** 件名・見出しに出す残り時間。予約送信は定義どおり、追いつき送信は実際の残り時間。 */
   label: string;
   /** Resend の予約送信時刻。undefined = 即時送信。 */
@@ -49,11 +39,13 @@ interface AssignmentForNotify {
 }
 
 interface NotifyContext {
-  preset: NotificationPreset;
+  /** 締切の何分前に送るか（src/lib/reminders.ts の remindersOf で決めたもの） */
+  reminderMinutes: number[];
   mutedCourses: string[];
   mutedAssignments: string[];
   alreadySentKeys: Set<string>;
   now: Date;
+  /** 送信時刻がこの先これ以内のものだけ、いま予約する（それより先は次の実行に回す） */
   horizonMs: number;
   /** 送信先のチャネル。重複防止キーに含める。 */
   channel: "email" | "push";
@@ -83,7 +75,8 @@ function formatRemaining(ms: number): string {
  * 予約時刻が過去のものを単に捨てると、この“いちばん救いたい課題”が無通知になる。
  *
  * そこで取りこぼしは次のように扱う：
- * - 予約できるタイミングが1つでもあれば、それに任せる（追いつき送信はしない＝重複を避ける）
+ * - この先のタイミングが1つでもあれば（いま予約するものも、次の実行で予約するものも）、それに任せる
+ *   （追いつき送信はしない＝重複を避ける）
  * - 1つも無ければ、**締切にいちばん近い1件だけ**を即時送信する（「まだ間に合う」救済）
  * - 送らなかった取りこぼしは `send: false` で返し、呼び出し側が履歴だけ閉じる
  *   （閉じないと、次の同期のたびに救済候補として蒸し返される）
@@ -92,7 +85,7 @@ export function computePendingNotifications(
   assignments: AssignmentForNotify[],
   ctx: NotifyContext,
 ): PendingNotification[] {
-  const timings = getTimingsForPreset(ctx.preset);
+  const timings = timingsFor(ctx.reminderMinutes);
   const pending: PendingNotification[] = [];
   const nowMs = ctx.now.getTime();
 
@@ -104,16 +97,19 @@ export function computePendingNotifications(
 
     const dueMs = a.dueDate.getTime();
     if (dueMs <= nowMs) continue;
-    if (dueMs > nowMs + ctx.horizonMs) continue;
 
-    // 未送信のタイミングを「まだ予約できる」と「予約時刻を過ぎた」に振り分ける
+    // 未送信のタイミングを「いま予約する」「まだ先（次の実行で予約する）」「送り時を過ぎた」に振り分ける。
+    // 先読みの幅は**送信時刻**で測る。以前は締切で測っていたため、cron（毎朝）の時点で
+    // 締切まで30時間を超えている課題（＝夜が締切のほとんど）の「24時間前」が、予約されないまま過ぎていた
     const upcoming: { timing: NotificationTiming; scheduledAt: Date }[] = [];
     const missed: NotificationTiming[] = [];
+    let later = 0;
     for (const timing of timings) {
       if (ctx.alreadySentKeys.has(`${a.id}:${timing.type}:${ctx.channel}`)) continue;
       const atMs = dueMs - timing.minutes * 60 * 1000;
-      if (atMs >= nowMs) upcoming.push({ timing, scheduledAt: new Date(atMs) });
-      else missed.push(timing);
+      if (atMs < nowMs) missed.push(timing);
+      else if (atMs <= nowMs + ctx.horizonMs) upcoming.push({ timing, scheduledAt: new Date(atMs) });
+      else later++;
     }
 
     const base = {
@@ -146,8 +142,9 @@ export function computePendingNotifications(
     // Push は予約できず先送りしているだけなので、この条件を付けると
     // 「後続のタイミングがまだ残っている」という理由で、いま送り時が来た通知
     // （24時間前など）が永久に握り潰されてしまう。
+    // 「まだ先」のタイミングが残っているなら、それが届くので救済は要らない
     missed.sort((x, y) => x.minutes - y.minutes);
-    const canRescue = ctx.canSchedule ? upcoming.length === 0 : true;
+    const canRescue = ctx.canSchedule ? upcoming.length === 0 && later === 0 : true;
     const rescue = canRescue ? missed[0] : undefined;
     for (const timing of missed) {
       const isRescue = timing === rescue;

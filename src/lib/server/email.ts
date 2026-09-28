@@ -26,11 +26,12 @@ interface DeadlineEmail {
   scheduledAt?: Date;
 }
 
-export async function sendDeadlineEmail({ to, scheduledAt, ...content }: DeadlineEmail) {
+/** 送る（予約する）。予約したときは、あとで取り消せるよう Resend の ID を返す */
+export async function sendDeadlineEmail({ to, scheduledAt, ...content }: DeadlineEmail): Promise<string | null> {
   // 件名・本文の組み立ては email-template.ts（送らずにプレビューできるよう分けてある）
   const { subject, html, text } = renderDeadlineEmail({ ...content, appUrl: getAppUrl() });
 
-  const { error } = await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: FROM,
     to,
     ...(REPLY_TO ? { replyTo: REPLY_TO } : {}),
@@ -42,5 +43,14 @@ export async function sendDeadlineEmail({ to, scheduledAt, ...content }: Deadlin
 
   if (error) {
     throw new Error(`Resend error: ${error.message}`);
+  }
+  return data?.id ?? null;
+}
+
+/** 予約したメールを取り消す（提出した・締切が変わった・通知を切った、など） */
+export async function cancelScheduledEmail(id: string): Promise<void> {
+  const { error } = await resend.emails.cancel(id);
+  if (error) {
+    throw new Error(`Resend cancel error: ${error.message}`);
   }
 }

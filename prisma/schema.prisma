@@ -108,7 +108,10 @@ model NotificationSetting {
   id               String   @id @default(cuid())
   userId           String   @unique
   enabled          Boolean  @default(true)
+  /// 以前のプリセット（relaxed / standard / urgent）。reminderMinutes が空のときだけ読み替えに使う
   preset           String   @default("standard")
+  /// 締切の何分前にメールを送るか（最大2つ。src/lib/reminders.ts の選択肢から）
+  reminderMinutes  Int[]    @default([])
   emailEnabled     Boolean  @default(false)
   mutedCourses     String[] @default([])
   mutedAssignments    String[] @default([])
@@ -131,6 +134,12 @@ model NotificationHistory {
   title        String
   body         String
   read         Boolean  @default(false)
+  /// 予約送信したメールの Resend ID。提出・締切変更などで要らなくなったら取り消す
+  providerId   String?
+  /// 予約した送信時刻。これが未来のものだけ取り消せる
+  scheduledAt  DateTime?
+  /// 予約したときの締切。いまの締切と違えば取り消して予約し直す
+  dueAt        DateTime?
 
   createdAt DateTime @default(now())
 

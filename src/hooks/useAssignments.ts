@@ -109,6 +109,7 @@ async function pullNotificationSettings(): Promise<void> {
     await saveNotificationSettings({
       enabled: settings.enabled,
       preset: settings.preset,
+      reminderMinutes: settings.reminderMinutes ?? [],
       mutedCourses: settings.mutedCourses ?? [],
       mutedAssignments: settings.mutedAssignments ?? [],
       hiddenCourses: settings.hiddenCourses ?? [],

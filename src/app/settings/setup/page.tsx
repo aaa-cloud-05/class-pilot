@@ -6,10 +6,10 @@ import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/components/app/provider"
 import { useSession } from "next-auth/react"
-import type { NotificationPreset } from "@/lib/notification-store"
 import { buildBookmarkletCode } from "@/lib/webclass-script"
 import { MobileHeader, PageBody, WEBCLASS_URL_ANCHOR } from "@/components/app/shell"
 import { useEmailNotification } from "@/hooks/useEmailNotification"
+import { ReminderPicker } from "@/components/app/reminder-picker"
 import {
   Button,
   ButtonLink,
@@ -50,18 +50,6 @@ const BOOKMARK_STEPS: Record<Device, string[]> = {
     "ブックマークを編集し、URL をコードに置き換える",
     "WebClass を開き、アドレスバーにブックマーク名を入力して選ぶ",
   ],
-}
-
-const PRESETS: { value: NotificationPreset; label: string }[] = [
-  { value: "relaxed", label: "早め" },
-  { value: "standard", label: "標準" },
-  { value: "urgent", label: "直前" },
-]
-
-const PRESET_TIMING: Record<NotificationPreset, string> = {
-  relaxed: "締切の24時間前に1回",
-  standard: "24時間前と3時間前",
-  urgent: "3時間前と1時間前",
 }
 
 function Step({
@@ -139,8 +127,6 @@ export default function SetupPage() {
     loggedIn,
     syncedAt,
     now,
-    settings,
-    updateSettings,
     webclassUrl,
     setWebclassUrl,
     courses,
@@ -387,14 +373,7 @@ export default function SetupPage() {
             </ListGroup>
             <div>
               <p className="mb-2 text-[14px] font-semibold">いつ知らせる？</p>
-              <Segmented<NotificationPreset>
-                label="通知のタイミング"
-                value={settings.preset}
-                onChange={(p) => updateSettings({ preset: p })}
-                className="w-full sm:w-[20rem]"
-                options={PRESETS}
-              />
-              <p className="mt-2 text-[13px] text-muted-foreground">{PRESET_TIMING[settings.preset]}</p>
+              <ReminderPicker />
             </div>
           </Step>
 

@@ -1,5 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/server/prisma";
+import { after } from "next/server";
+import { notifyUser } from "@/lib/server/notify";
 import {
   createManualAssignment,
   getUserAssignments,
@@ -51,5 +53,14 @@ export async function POST(request: Request) {
   }
 
   const assignment = await createManualAssignment(session.user.id, v.data);
+  // 手で追加した課題も、次の cron を待たずに通知を予約する
+  const userId = session.user.id;
+  after(async () => {
+    try {
+      await notifyUser(userId);
+    } catch (e) {
+      console.error("[NOTIFY] 予約に失敗:", e);
+    }
+  });
   return Response.json({ assignment });
 }

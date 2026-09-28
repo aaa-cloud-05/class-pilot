@@ -1,6 +1,18 @@
 import { auth } from "@/auth";
 import { editAssignment, softDeleteAssignment, validateEdit } from "@/lib/server/assignments";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
+import { notifyUser } from "@/lib/server/notify";
+
+/** 通知の予約を、いまの状態に合わせ直す（取り消し・予約し直し）。応答は待たせない */
+function renotify(userId: string) {
+  after(async () => {
+    try {
+      await notifyUser(userId);
+    } catch (e) {
+      console.error("[NOTIFY] 予約の合わせ直しに失敗:", e);
+    }
+  });
+}
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,6 +40,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (!updated) {
     return Response.json({ error: "課題が見つかりません" }, { status: 404 });
   }
+  // 提出済みにした・締切を直した、を予約済みのメールにすぐ反映する
+  renotify(session.user.id);
 
   return Response.json({ assignment: updated });
 }
@@ -44,6 +58,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   if (!deleted) {
     return Response.json({ error: "課題が見つかりません" }, { status: 404 });
   }
+  renotify(session.user.id);
 
   return Response.json({ ok: true });
 }

@@ -1,28 +1,6 @@
 import { getCachedAssignments } from "./cache";
-import {
-  getNotificationSettings,
-  hasBeenNotified,
-  recordNotification,
-  type NotificationPreset,
-  type NotificationRecord,
-} from "./notification-store";
-
-interface PresetTiming {
-  minutes: number;
-  type: NotificationRecord["type"];
-}
-
-const PRESETS: Record<NotificationPreset, PresetTiming[]> = {
-  relaxed: [{ minutes: 24 * 60, type: "24h" }],
-  standard: [
-    { minutes: 24 * 60, type: "24h" },
-    { minutes: 3 * 60, type: "3h" },
-  ],
-  urgent: [
-    { minutes: 3 * 60, type: "3h" },
-    { minutes: 60, type: "1h" },
-  ],
-};
+import { getNotificationSettings, hasBeenNotified, recordNotification } from "./notification-store";
+import { remainingLabel, reminderType, remindersOf } from "./reminders";
 
 export async function checkAndNotify(): Promise<number> {
   if (typeof window === "undefined") return 0;
@@ -35,10 +13,11 @@ export async function checkAndNotify(): Promise<number> {
 
   const assignments = await getCachedAssignments();
   const now = Date.now();
-  const timings = PRESETS[settings.preset];
+  // サーバのメールと同じタイミング（src/lib/reminders.ts）
+  const timings = remindersOf(settings).map((m) => ({ minutes: m, type: reminderType(m), label: remainingLabel(m) }));
   let sent = 0;
 
-  console.log(`[通知] チェック開始: ${assignments.length}件, preset=${settings.preset}`);
+  console.log(`[通知] チェック開始: ${assignments.length}件, ${timings.map((t) => t.type).join("/")}`);
 
   for (const assignment of assignments) {
     if (!assignment.dueDate) continue;
@@ -56,8 +35,7 @@ export async function checkAndNotify(): Promise<number> {
           console.log(`[通知] スキップ(送信済み): ${assignment.title} ${timing.type}`);
         } else {
           console.log(`[通知] 送信: ${assignment.title} (残り${Math.round(minutesLeft)}分, ${timing.type})`);
-          const timeLabel = timing.type === "24h" ? "24時間" : timing.type === "3h" ? "3時間" : "1時間";
-          const notifTitle = `締切まであと${timeLabel}`;
+          const notifTitle = `締切まであと${timing.label}`;
           const notifBody = `「${assignment.title}」（${assignment.courseName}）`;
           // OS の通知は出さない（アプリを開いたときしか出ず役に立たないため。通知はメール一本）。
           // 「通知」の画面に出す履歴だけ残す
