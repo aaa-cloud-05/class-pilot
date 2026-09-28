@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { addWeeks, differenceInCalendarWeeks, endOfWeek, format, startOfWeek } from "date-fns"
+import { addWeeks, endOfWeek, format, startOfWeek } from "date-fns"
 import { ArrowDownUp, CalendarCheck2, Inbox, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AllList } from "@/components/app/all-list"
@@ -47,21 +47,24 @@ export default function MockHomePage() {
   const [view, setView] = useState<"recent" | "all">("recent")
   const [sort, setSort] = useState<SortMode>("due")
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [calDay, setCalDay] = useState<Date>(now)
+  // 日付の状態は「選んでいなければ now」で持つ。開いたときの日付で固定すると、
+  // 開きっぱなしで日をまたいだときに昨日以前を「今日」のように指し続ける
+  const [calDay, setCalDay] = useState<Date | null>(null)
 
   const groups = useMemo(() => groupRecent(assignments, now, sort), [assignments, now, sort])
   const selected = assignments.find((a) => a.id === selectedId) ?? null
-  // ヒーローの週は < > で動かせる（リストは「いま」を基準のまま）
-  const [weekAnchor, setWeekAnchor] = useState<Date>(now)
+  // ヒーローの週は < > で動かせる（リストは「いま」を基準のまま）。今週からのずれで持つ
+  const [weekDiff, setWeekDiff] = useState(0)
+  const weekAnchor = useMemo(() => addWeeks(now, weekDiff), [now, weekDiff])
   const week = useMemo(() => buildWeekState(assignments, now, weekAnchor), [assignments, now, weekAnchor])
   const next = useMemo(() => nextUp(assignments, now), [assignments, now])
   const rangeLabel = `${format(startOfWeek(weekAnchor, { weekStartsOn: 1 }), "M/d")} - ${format(endOfWeek(weekAnchor, { weekStartsOn: 1 }), "M/d")}`
-  const weekDiff = differenceInCalendarWeeks(weekAnchor, now, { weekStartsOn: 1 })
   const weekLabel =
     weekDiff === 0 ? "今週" : weekDiff === 1 ? "来週" : weekDiff === -1 ? "先週" : weekDiff > 0 ? `${weekDiff}週間後` : `${-weekDiff}週間前`
   const laterCount = useMemo(() => countLater(assignments, now), [assignments, now])
   // 「すべて」で最初に開く月。来週以降を見にいくときは、その課題がある月から始める
-  const [allMonth, setAllMonth] = useState<Date>(now)
+  const [pickedMonth, setAllMonth] = useState<Date | null>(null)
+  const allMonth = pickedMonth ?? now
   const firstLater = useMemo(() => firstLaterDue(assignments, now), [assignments, now])
 
   const empty = !loading && assignments.length === 0
@@ -101,7 +104,7 @@ export default function MockHomePage() {
     <Card>
       <EmptyState
         icon={CalendarCheck2}
-        title="未提出の課題はありません"
+        title="最近の課題はありません"
         description="新しい課題が届いたら、ここと通知でお知らせします。"
         action={
           <Button variant="secondary" onClick={() => setView("all")}>
@@ -144,15 +147,16 @@ export default function MockHomePage() {
                   rangeLabel={rangeLabel}
                   weekLabel={weekLabel}
                   isCurrentWeek={weekDiff === 0}
-                  onPrevWeek={() => setWeekAnchor((d) => addWeeks(d, -1))}
-                  onNextWeek={() => setWeekAnchor((d) => addWeeks(d, 1))}
+                  onPrevWeek={() => setWeekDiff((d) => d - 1)}
+                  onNextWeek={() => setWeekDiff((d) => d + 1)}
                   next={weekDiff === 0 ? next : null}
                   onOpenNext={(a) => setSelectedId(a.id)}
                 />
               </Appear>
             )}
 
-            {showSetup && (
+            {/* SetupCard は通知の状態を取りに行くので、見えている側の1つだけ描く */}
+            {showSetup && !desktop && (
               <Appear delay={0.12} className="mt-4 lg:hidden">
                 <SetupCard />
               </Appear>
@@ -213,7 +217,7 @@ export default function MockHomePage() {
                 </Card>
               ) : (
                 <>
-                  {showSetup && <SetupCard />}
+                  {showSetup && desktop && <SetupCard />}
                   <Card className="p-4">
                     <div className="flex items-baseline justify-between px-1 pb-3">
                       <p className="text-[14px] font-semibold">{format(allMonth, "M月")}</p>
@@ -226,7 +230,7 @@ export default function MockHomePage() {
                     </div>
                     <MonthGrid
                       month={allMonth}
-                      selected={calDay}
+                      selected={calDay ?? now}
                       onSelect={setCalDay}
                       list={assignments}
                       now={now}

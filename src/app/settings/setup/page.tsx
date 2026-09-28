@@ -10,7 +10,7 @@ import type { NotificationPreset } from "@/lib/notification-store"
 import { disablePush, enablePush, getPushSubscription } from "@/lib/push-client"
 import { buildBookmarkletCode } from "@/lib/webclass-script"
 import { sendTestNotification } from "@/lib/notification-scheduler"
-import { MobileHeader, PageBody } from "@/components/app/shell"
+import { MobileHeader, PageBody, WEBCLASS_URL_ANCHOR } from "@/components/app/shell"
 import {
   Button,
   ButtonLink,
@@ -71,6 +71,7 @@ function Step({
   status,
   done,
   optional,
+  anchor,
   children,
 }: {
   n: number
@@ -78,9 +79,19 @@ function Step({
   status: string
   done: boolean
   optional?: boolean
+  /** URL の # がこれなら、閉じていても開いてその id の要素まで送る */
+  anchor?: string
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(!done)
+  useEffect(() => {
+    if (!anchor || window.location.hash !== `#${anchor}`) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpen(true)
+    // 開くアニメーション（0.2秒）のあとに送る
+    const t = setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "center" }), 250)
+    return () => clearTimeout(t)
+  }, [anchor])
   return (
     <Card className="overflow-hidden">
       <button
@@ -194,6 +205,12 @@ export default function SetupPage() {
   }
   const [device, setDevice] = useState<Device>("pc")
   const [url, setUrl] = useState(webclassUrl)
+  // 保存済みの URL は端末からマウント後に読まれる。この画面を直接開いたときも欄に入るようにする
+  const [loadedUrl, setLoadedUrl] = useState(webclassUrl)
+  if (loadedUrl !== webclassUrl) {
+    setLoadedUrl(webclassUrl)
+    setUrl(webclassUrl)
+  }
   const [token, setToken] = useState("")
 
   const steps = [loggedIn, syncedAt.webclass != null, settings.enabled && (push || email)]
@@ -269,6 +286,7 @@ export default function SetupPage() {
             title="WebClass をつなぐ"
             done={syncedAt.webclass != null}
             status={syncedAt.webclass ? `${timeAgo(syncedAt.webclass, now)}に取り込み` : "ブックマークを1つ登録すると取り込めます"}
+            anchor={WEBCLASS_URL_ANCHOR}
           >
             <p className="text-[14px] leading-relaxed text-muted-foreground">
               WebClass には通知も課題一覧もありません。UnionFetch に取り込むことで、締切の通知ができるようになります。
@@ -357,7 +375,7 @@ export default function SetupPage() {
               {!loggedIn && <p className="text-[13px] text-muted-foreground">自動取り込みにはログインが必要です。</p>}
             </div>
 
-            <div className="border-t border-border pt-4">
+            <div id={WEBCLASS_URL_ANCHOR} className="border-t border-border pt-4">
               <Field label="C. WebClass の URL" hint="「WebClass を開く」ボタンの行き先です。この端末にだけ保存します。">
                 <div className="flex gap-2">
                   <input

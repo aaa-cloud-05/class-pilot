@@ -34,12 +34,19 @@ const RECENT_ORDER: GroupKey[] = ["recent", "today", "tomorrow", "thisWeek", "no
 
 const WEEK = { weekStartsOn: 1 as const }
 
-/** hidden＝「最近」には出さないもの（過去の提出済み・期限なしの提出済み） */
+/** 「直近の未提出」に出すのは、締切を過ぎてからこの時間まで */
+const RECENT_MS = 24 * 60 * 60 * 1000
+
+/** hidden＝「最近」には出さないもの（過去の提出済み・期限なしの提出済み・先週以前の未提出） */
 type Bucket = GroupKey | "later" | "hidden"
 
 function bucketOf(a: ViewAssignment, now: Date): Bucket {
   if (!a.dueDate) return a.submissionState === "submitted" ? "hidden" : "noDue"
-  if (a.dueDate < now && a.submissionState !== "submitted") return "recent"
+  if (a.dueDate < now && a.submissionState !== "submitted") {
+    if (now.getTime() - a.dueDate.getTime() <= RECENT_MS) return "recent"
+    // 24時間より前に落としたものは、今週のうちなら「今週」に残す。それより前は「すべて」で見る
+    return isSameWeek(a.dueDate, now, WEEK) ? "thisWeek" : "hidden"
+  }
   if (isSameDay(a.dueDate, now)) return "today"
   if (isSameDay(a.dueDate, addDays(now, 1))) return "tomorrow"
   if (isSameWeek(a.dueDate, now, WEEK)) return "thisWeek"
@@ -68,7 +75,7 @@ const byDue = (x: ViewAssignment, y: ViewAssignment) =>
 
 /**
  * 「最近」タブ。今日・明日・今週は提出済みも含めた全部を出す。
- * 直近の未提出と期限なしだけは、やることだけに絞る。
+ * 直近の未提出（締切から24時間以内）と期限なしだけは、やることだけに絞る。
  */
 export function groupRecent(
   list: ViewAssignment[],

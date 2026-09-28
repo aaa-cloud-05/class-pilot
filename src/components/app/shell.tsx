@@ -19,14 +19,18 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import { timeAgo } from "@/lib/assignment-format"
+import { getPushSubscription } from "@/lib/push-client"
 import { AddAssignmentSheet } from "./assignment"
 import { SPRING } from "@/components/app/motion"
 import { useApp } from "@/components/app/provider"
-import { Button, ButtonLink, Card, IconButton, INPUT, Sheet } from "@/components/app/ui"
+import { Button, ButtonLink, Card, IconButton, Sheet } from "@/components/app/ui"
+
+/** セットアップ画面の「WebClass の URL」欄。同期シートからここへ飛ばす */
+export const WEBCLASS_URL_ANCHOR = "webclass-url"
 
 /* ───────── ブランド ───────── */
 
@@ -124,10 +128,8 @@ function SourceBlock({
 }
 
 export function SyncSheet() {
-  const { syncOpen, setSyncOpen, syncedAt, now, syncError, loggedIn, webclassUrl, setWebclassUrl, refresh, syncing } =
-    useApp()
+  const { syncOpen, setSyncOpen, syncedAt, now, syncError, loggedIn, webclassUrl, refresh, syncing } = useApp()
   const { classroom, webclass } = useSyncSummary()
-  const [urlDraft, setUrlDraft] = useState(webclassUrl)
   const close = () => setSyncOpen(false)
 
   return (
@@ -164,52 +166,35 @@ export function SyncSheet() {
               {syncing ? "取り込み中…" : "もう一度試す"}
             </Button>
           )}
+          <ButtonLink href="https://classroom.google.com/" variant="secondary" size="sm" target="_blank" rel="noopener noreferrer">
+            Classroom を開く
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+          </ButtonLink>
         </SourceBlock>
 
+        {/* URL の入力はセットアップ画面の1か所だけ。ここは開くか、設定しに行くか */}
         <SourceBlock
           icon={Globe}
           name="WebClass"
           freshness={webclass}
           status={syncedAt.webclass ? `${timeAgo(syncedAt.webclass, now)}に取り込み` : "まだ取り込んでいません"}
         >
-          <ButtonLink
-            href={webclassUrl || "#"}
-            size="sm"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-disabled={!webclassUrl}
-            className={cn(!webclassUrl && "pointer-events-none opacity-50")}
-          >
-            WebClass を開く
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-          </ButtonLink>
-          <ButtonLink href="/settings/setup" variant="ghost" size="sm" onClick={close}>
-            取り込み方法
-          </ButtonLink>
+          {webclassUrl ? (
+            <>
+              <ButtonLink href={webclassUrl} size="sm" target="_blank" rel="noopener noreferrer">
+                WebClass を開く
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </ButtonLink>
+              <ButtonLink href="/settings/setup" variant="ghost" size="sm" onClick={close}>
+                取り込み方法
+              </ButtonLink>
+            </>
+          ) : (
+            <ButtonLink href={`/settings/setup#${WEBCLASS_URL_ANCHOR}`} size="sm" onClick={close}>
+              WebClass の URL を設定
+            </ButtonLink>
+          )}
         </SourceBlock>
-
-        <div className="rounded-card border border-border p-4">
-          <label className="block">
-            <span className="mb-1.5 block text-[13px] font-semibold text-muted-foreground">WebClass の URL</span>
-            <span className="flex gap-2">
-              <input
-                type="url"
-                inputMode="url"
-                aria-label="WebClass の URL"
-                className={INPUT}
-                value={urlDraft}
-                onChange={(e) => setUrlDraft(e.target.value)}
-                placeholder="https://…/webclass/"
-              />
-              <Button size="md" className="shrink-0" onClick={() => setWebclassUrl(urlDraft.trim())} disabled={urlDraft.trim() === webclassUrl}>
-                保存
-              </Button>
-            </span>
-            <span className="mt-1.5 block text-[12px] text-muted-foreground">
-              上の「WebClass を開く」の行き先です。この端末にだけ保存します。
-            </span>
-          </label>
-        </div>
 
         <p className="px-1 pt-1 text-[13px] leading-relaxed text-muted-foreground">
           WebClass は、WebClass を開いた状態でブックマークレットを押すと取り込まれます（PC は自動同期も使えます）。{" "}
@@ -267,8 +252,34 @@ export function Toast() {
 
 /* ───────── はじめの設定 ───────── */
 
+/**
+ * 通知の手順は「プッシュかメールが本当に届く状態」で完了にする（セットアップ画面と同じ判定）。
+ * settings.enabled は初期値が true なので、それだけで見ると未ログインでも完了に数えてしまう。
+ * プッシュもメールもログインが要るので、未ログインなら取りに行かない。
+ * null＝まだ分からない（メールの設定を取りに行っている最中）。
+ */
+function useNotifReachable(loggedIn: boolean): boolean | null {
+  const [email, setEmail] = useState<boolean | null>(null)
+  const [push, setPush] = useState(false)
+  useEffect(() => {
+    if (!loggedIn) return
+    fetch("/api/notifications/settings")
+      .then((r) => r.json())
+      .then((d) => setEmail(d.settings?.emailEnabled ?? false))
+      .catch(() => setEmail(false))
+    // Service Worker が無い端末ではずっと返らないので、これは待たない
+    getPushSubscription()
+      .then((s) => setPush(s != null))
+      .catch(() => {})
+  }, [loggedIn])
+  if (!loggedIn) return false
+  if (email || push) return true
+  return email
+}
+
 export function useSetupSteps() {
   const { loggedIn, syncedAt, settings } = useApp()
+  const reachable = useNotifReachable(loggedIn)
   return [
     {
       key: "login",
@@ -289,7 +300,8 @@ export function useSetupSteps() {
       title: "締切の通知をオンにする",
       desc: "プッシュかメールで受け取れます",
       href: "/settings/notifications",
-      done: settings.enabled,
+      done: settings.enabled && reachable === true,
+      pending: reachable === null,
     },
   ]
 }
@@ -299,7 +311,8 @@ export function SetupCard({ dismissible = true }: { dismissible?: boolean }) {
   const steps = useSetupSteps()
   const done = steps.filter((s) => s.done).length
   const next = steps.find((s) => !s.done)
-  if (!next) return null
+  // 通知の状態が分かるまでは出さない（設定済みの人に一瞬出てから消えるのを防ぐ）
+  if (!next || steps.some((s) => s.pending)) return null
   return (
     <Card className="p-4">
       <div className="flex items-start gap-3">
@@ -537,50 +550,60 @@ export function MobileHeader({
   const router = useRouter()
   const { notifications } = useApp()
   const unread = notifications.filter((n) => !n.read).length
+  // 下タブの画面（ホーム・カレンダー・設定）は、どれも左上にブランドを出す
+  const brand = (
+    <Link href="/" className="ml-2 flex-1 rounded-control outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+      <Brand />
+    </Link>
+  )
 
   return (
-    <header className="sticky top-0 z-20 bg-background/85 backdrop-blur-xl lg:hidden">
-      <div className="mx-auto flex min-h-[52px] max-w-xl items-center gap-1 px-2 pt-[env(safe-area-inset-top)]">
-        {variant === "home" && (
-          <>
-            <Link href="/" className="ml-2 flex-1 rounded-control outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
-              <Brand />
-            </Link>
-            <SyncButton />
-            <Link
-              href="/activity"
-              aria-label={unread ? `通知（未読${unread}件）` : "通知"}
-              className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
-            >
-              <Bell className="h-[19px] w-[19px]" strokeWidth={1.75} aria-hidden />
-              {unread > 0 && (
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" aria-hidden />
-              )}
-            </Link>
-          </>
-        )}
-        {variant === "title" && (
-          <>
-            <h1 className="ml-2 flex-1 text-[22px] font-semibold tracking-[-0.02em]">{title}</h1>
-            {actions}
-          </>
-        )}
-        {variant === "back" && (
-          <>
-            <button
-              type="button"
-              onClick={() => (backHref ? router.push(backHref) : router.back())}
-              aria-label="戻る"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
-            >
-              <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden />
-            </button>
-            <h1 className="min-w-0 flex-1 truncate text-[16px] font-semibold">{title}</h1>
-            {actions}
-          </>
-        )}
-      </div>
-    </header>
+    <>
+      <header className="sticky top-0 z-20 bg-background/85 backdrop-blur-xl lg:hidden">
+        <div className="mx-auto flex min-h-[52px] max-w-xl items-center gap-1 px-2 pt-[env(safe-area-inset-top)]">
+          {variant === "home" && (
+            <>
+              {brand}
+              <SyncButton />
+              <Link
+                href="/activity"
+                aria-label={unread ? `通知（未読${unread}件）` : "通知"}
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
+              >
+                <Bell className="h-[19px] w-[19px]" strokeWidth={1.75} aria-hidden />
+                {unread > 0 && (
+                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" aria-hidden />
+                )}
+              </Link>
+            </>
+          )}
+          {variant === "title" && (
+            <>
+              {brand}
+              {actions}
+            </>
+          )}
+          {variant === "back" && (
+            <>
+              <button
+                type="button"
+                onClick={() => (backHref ? router.push(backHref) : router.back())}
+                aria-label="戻る"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40"
+              >
+                <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden />
+              </button>
+              <h1 className="min-w-0 flex-1 truncate text-[16px] font-semibold">{title}</h1>
+              {actions}
+            </>
+          )}
+        </div>
+      </header>
+      {/* 画面名はヘッダーの下に大きく出す（スクロールで流れる） */}
+      {variant === "title" && (
+        <h1 className="mx-auto max-w-xl px-5 pb-1 pt-2 text-[22px] font-bold tracking-[-0.02em] lg:hidden">{title}</h1>
+      )}
+    </>
   )
 }
 
