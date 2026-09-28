@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { addMonths, addWeeks, format, isSameDay, isSameMonth, isSameWeek, startOfMonth, startOfWeek } from "date-fns"
 import { ja } from "date-fns/locale"
-import { CalendarX2, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { AssignmentDetail, AssignmentList, AssignmentSheet } from "@/components/app/assignment"
 import { itemsOn, MonthGrid, WeekColumns, WeekStrip, weekRangeLabel } from "@/components/app/calendar-parts"
 import { Appear } from "@/components/app/motion"
@@ -11,7 +11,7 @@ import { useApp } from "@/components/app/provider"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import { StatusBar } from "@/components/app/status-bar"
-import { Button, Card, IconButton, SectionHeader, Segmented } from "@/components/app/ui"
+import { Button, Card, IconButton, NoDeadlineCard, SectionHeader, Segmented } from "@/components/app/ui"
 
 type Mode = "week" | "month"
 
@@ -96,10 +96,7 @@ export default function MockCalendarPage() {
       {dayItems.length ? (
         <AssignmentList items={dayItems} onOpen={(a) => setOpenId(a.id)} selectedId={desktop ? openId : null} />
       ) : (
-        <Card className="flex items-center gap-3 px-4 py-5 text-muted-foreground">
-          <CalendarX2 className="h-5 w-5 shrink-0" aria-hidden />
-          <p className="text-[15px]">この日が締切の課題はありません</p>
-        </Card>
+        <NoDeadlineCard />
       )}
     </section>
     </Appear>

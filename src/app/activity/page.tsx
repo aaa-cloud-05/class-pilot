@@ -9,12 +9,14 @@ import { MobileHeader, PageBody } from "@/components/app/shell"
 import { Button, Card, EmptyState, SectionHeader } from "@/components/app/ui"
 import type { NotificationRecord } from "@/lib/notification-store"
 import { timeAgo } from "@/lib/assignment-format"
+import { minutesOfType } from "@/lib/reminders"
 
 /** 締切までの近さで見た目を変える。1時間前だけは強く出す */
-const KIND: Record<NotificationRecord["type"], { icon: LucideIcon; className: string }> = {
-  "24h": { icon: AlarmClock, className: "text-muted-foreground" },
-  "3h": { icon: AlarmClock, className: "text-[var(--ui-warn-fill)]" },
-  "1h": { icon: AlertTriangle, className: "text-destructive" },
+function kindOf(type: string): { icon: LucideIcon; className: string } {
+  const m = minutesOfType(type)
+  if (m <= 60) return { icon: AlertTriangle, className: "text-destructive" }
+  if (m < 1440) return { icon: AlarmClock, className: "text-[var(--ui-warn-fill)]" }
+  return { icon: AlarmClock, className: "text-muted-foreground" }
 }
 
 /** 保存しているのは数値なので、表示のたびに Date に直す */
@@ -60,7 +62,7 @@ export default function ActivityPage() {
                 <SectionHeader title={g.label} />
                 <ul className="overflow-hidden rounded-card bg-card shadow-card">
                   {g.items.map((n, i) => {
-                    const { icon: Icon, className } = KIND[n.type]
+                    const { icon: Icon, className } = kindOf(n.type)
                     return (
                       <li key={n.id} className={cn(i > 0 && "border-t border-border")}>
                         <button

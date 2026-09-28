@@ -5,7 +5,10 @@ export type NotificationPreset = "relaxed" | "standard" | "urgent";
 export interface NotificationSettings {
   id: "global";
   enabled: boolean;
+  /** 以前のプリセット。reminderMinutes が空のときだけ読み替えに使う（src/lib/reminders.ts） */
   preset: NotificationPreset;
+  /** 締切の何分前に知らせるか（最大2つ） */
+  reminderMinutes: number[];
   mutedCourses: string[];
   mutedAssignments: string[];
   hiddenCourses: string[];
@@ -14,7 +17,8 @@ export interface NotificationSettings {
 export interface NotificationRecord {
   id: string;
   assignmentId: string;
-  type: "24h" | "3h" | "1h";
+  /** 「24h」「3h」「1h」「360m」など（src/lib/reminders.ts の reminderType） */
+  type: string;
   sentAt: number;
   title: string;
   body: string;
@@ -25,6 +29,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   id: "global",
   enabled: true,
   preset: "standard",
+  reminderMinutes: [],
   mutedCourses: [],
   mutedAssignments: [],
   hiddenCourses: [],

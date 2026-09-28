@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/server/prisma";
+import { cancelAllScheduledEmails } from "@/lib/server/notify";
 
 /**
  * ログイン中ユーザーのアカウントとサーバー上の全データを削除する。
@@ -11,6 +12,9 @@ export async function DELETE() {
   if (!session?.user?.id) {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
+
+  // Resend に預けた予約メールは DB を消しても残るので、先に取り消す（失敗しても削除は続ける）
+  await cancelAllScheduledEmails(session.user.id).catch((e) => console.error("[ACCOUNT] 予約メールの取り消しに失敗:", e));
 
   try {
     await prisma.user.delete({ where: { id: session.user.id } });

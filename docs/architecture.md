@@ -167,24 +167,46 @@ WebClass の任意のページで実行（ブックマークレットは手動�
 
 ## データフロー⑥ 通知
 
-**クライアント通知**（ブラウザ・PWA）: `NotificationScheduler` が起動時/可視化時に `checkAndNotify()`
-を実行。**IndexedDB のキャッシュ課題**とローカル通知設定を突き合わせ、プリセットのタイミングで
-`Notification`/Service Worker 通知を出す。送信済みは `notification-history`（IndexedDB）で重複防止。
+**通知はメール一本**（2026-09-29）。Web Push とブラウザの OS 通知は、アプリを開かないと役に立たないので画面から外した。
+
+**端末側**: `NotificationScheduler` が起動時/可視化時に `checkAndNotify()` を実行し、
+「通知」画面に出す履歴（`notification-history`・IndexedDB）を**記録するだけ**。OS の通知は出さない。
+
+**送るタイミング**: 利用者が「1時間前〜3日前」の7つから2つまで選ぶ（`src/lib/reminders.ts`、
+`NotificationSetting.reminderMinutes`）。未設定の人は以前の `preset` から読み替える。
 
 **サーバ通知（メール / Web Push）**: 送信の実体は `notifyUser(userId)`（`src/lib/server/notify.ts`）に
-集約され、**2つの経路から呼ばれる**。
+集約され、**次の経路から呼ばれる**。何度呼んでも「いまの状態に合わせ直す」だけなので安全。
 
 1. **cron**: `vercel.json` の cron（毎日 21:00 UTC = 06:00 JST）が `GET /api/cron/notify` を叩く。
    `CRON_SECRET` で認証。対象ユーザーを5人ずつ並列処理（`maxDuration = 60`）。
 2. **同期・取り込みの直後**: `POST /api/classroom/sync` と `POST /api/import/webclass` が成功したとき、
    `after()` でレスポンス送出後に同じ関数を呼ぶ。**cron だけでは「cron 後に取り込んだ、その日が締切の
    課題」に通知が出ない**ため（WebClass の取り込みは日中に手動で行われる＝本製品が最も救いたいケース）。
+3. **課題の追加・編集・削除、通知設定の変更の直後**: 同じく `after()`。提出済みにした・締切を直した・
+   通知を切った、を予約済みのメールにすぐ反映するため。
+
+**cron とそれ以外で振る舞いを分ける**（`notifyUser(userId, { fromCron })`）。cron 以外は利用者が画面を
+見ている最中なので、(a) 送り時を過ぎたものの救済（即時送信）をしない、(b) この先30分以内の送信時刻も予約しない。
+こうしないと「課題を追加した直後に『あと2時間』が来る」「初めて取り込んだ瞬間に何通も届く」
+「通知をオンにした・タイミングを変えた瞬間に届く」が起きる。救済は次の朝の cron が判断する。
 
 処理は DB ベース（全ソース対応・Google 再取得もトークンも不要）:
-`getUserAssignments()` → `computePendingNotifications()` → Resend で予約 or 即時送信。
+`getUserAssignments()` → **要らなくなった予約の取り消し** → `computePendingNotifications()` → Resend で予約 or 即時送信。
+
+- **予約の取り消し**: 予約したメールは Resend の ID・送信時刻・そのときの締切を履歴に残す
+  （`providerId / scheduledAt / dueAt`）。提出した・締切が変わった・ミュートした・課題が消えた・
+  タイミングを変えた・通知を切った、のどれかなら `emails.cancel` で取り消して履歴を消す。
+  締切が変わった課題は**送り済みの履歴も消す**（残すと、延びた締切の「1日前」が同じキーで弾かれて届かない）。
+  判断は純粋関数 `planHistoryCleanup`（`notification-logic.ts`）。アカウント削除の前にも全部取り消す。
+- **シナリオ試験**: 通知まわりを変えたら `npm run test:notify`（`scripts/notify-scenarios.mts`）。
+  追加直後・初回取り込み・提出・延長・通知オフ/オン・タイミング変更などで「どのメールがいつ届くか」を、
+  本物の `computePendingNotifications` / `planHistoryCleanup` で確かめる（DB と Resend は手元で真似る）。
+- **先読み幅**: いま予約するのは**送信時刻が30時間以内**のもの（cron は1日1回・最大59分ずれるため）。
+  以前は締切で測っていたので、夜が締切の課題の「24時間前」が予約されないまま過ぎていた。
 
 - **取りこぼしの扱い**: 予約時刻（締切のN時間前）が既に過去でも、締切前ならまだ間に合う。
-  予約できるタイミングが1つも無いときに限り、**締切に最も近い1件だけ**を実際の残り時間ラベルで
+  **cron のときだけ**、この先のタイミング（いま予約するもの・次の実行で予約するもの）が1つも無ければ、**締切に最も近い1件だけ**を実際の残り時間ラベルで
   即時送信する。送らなかった取りこぼしは履歴だけ閉じ、次の同期で蒸し返さない。
 - **重複防止**: `NotificationHistory`（`userId+assignmentId+type+channel` の unique）。
   **送信前に履歴行を作って枠を予約**し、作成できたものだけ送る。同期が同時に走っても二重送信しない。

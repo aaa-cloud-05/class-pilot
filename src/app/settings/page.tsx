@@ -12,13 +12,13 @@ import {
   LogIn,
   LogOut,
   Mail,
-  Pencil,
   Trash2,
   Wrench,
 } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
 import { useApp, type ThemeMode } from "@/components/app/provider"
-import { Avatar, AvatarPicker } from "@/components/app/avatar"
+import { useEmailNotification } from "@/hooks/useEmailNotification"
+import { reminderLabel, remindersOf } from "@/lib/reminders"
 import { clearAllClientData } from "@/lib/debug-clear"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import {
@@ -35,7 +35,6 @@ import {
 } from "@/components/app/ui"
 import { timeAgo } from "@/lib/assignment-format"
 
-const PRESET_LABEL = { relaxed: "早め", standard: "標準", urgent: "直前" } as const
 
 export default function MockSettingsPage() {
   const { loggedIn, mode, setMode, syncedAt, now, settings, courses, showToast } = useApp()
@@ -43,7 +42,7 @@ export default function MockSettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [confirmText, setConfirmText] = useState("")
   const [clearOpen, setClearOpen] = useState(false)
-  const [avatarOpen, setAvatarOpen] = useState(false)
+  const { on: emailOn } = useEmailNotification()
 
   const visibleCourses = courses.filter((c) => !c.hidden).length
 
@@ -54,18 +53,9 @@ export default function MockSettingsPage() {
         <div className="space-y-7">
           {loggedIn ? (
             <Card className="flex items-center gap-4 p-4">
-              {/* アイコンを押すと選び直せる */}
-              <button
-                type="button"
-                onClick={() => setAvatarOpen(true)}
-                aria-label="アイコンを変える"
-                className="relative shrink-0 rounded-[24%] outline-none transition-transform active:scale-95 focus-visible:ring-3 focus-visible:ring-ring/40"
-              >
-                <Avatar size={48} />
-                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-card text-muted-foreground shadow-card">
-                  <Pencil className="h-3 w-3" aria-hidden />
-                </span>
-              </button>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-[18px] font-semibold text-muted-foreground">
+                {(session?.user?.name ?? session?.user?.email ?? "?").trim().charAt(0)}
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[17px] font-bold">{session?.user?.name ?? "ログイン中"}</p>
                 <p className="truncate text-[14px] text-muted-foreground">{session?.user?.email ?? ""}</p>
@@ -76,7 +66,7 @@ export default function MockSettingsPage() {
             <Card className="p-5">
               <p className="text-[18px] font-bold">Google でログイン</p>
               <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">
-                Classroom の自動取り込み、メールとプッシュの通知、ほかの端末との同期が使えるようになります。
+                Classroom の自動取り込み、締切のメール通知、ほかの端末との同期が使えるようになります。
               </p>
               <ButtonLink href="/login" size="lg" className="mt-4 w-full">
                 <LogIn className="h-5 w-5" aria-hidden />
@@ -104,7 +94,7 @@ export default function MockSettingsPage() {
               icon={BellRing}
              
               label="通知"
-              detail={settings.enabled ? `オン・${PRESET_LABEL[settings.preset]}` : "オフ"}
+              detail={emailOn ? `オン・${remindersOf(settings).map(reminderLabel).join("・")}` : emailOn === false ? "オフ" : ""}
             />
             <RowLink href="/settings/courses" icon={Layers} label="コース" detail={`${visibleCourses} コース`} />
           </ListGroup>
@@ -182,8 +172,6 @@ export default function MockSettingsPage() {
           </ListGroup>
         </div>
       </PageBody>
-
-      <AvatarPicker open={avatarOpen} onClose={() => setAvatarOpen(false)} />
 
       <Sheet open={clearOpen} onClose={() => setClearOpen(false)} title="この端末のデータを消去">
         <div className="space-y-4 pt-2">

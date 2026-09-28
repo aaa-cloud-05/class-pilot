@@ -9,6 +9,7 @@ import {
   Bell,
   CalendarDays,
   ChevronLeft,
+  ChevronRight,
   ExternalLink,
   GraduationCap,
   Globe,
@@ -19,13 +20,11 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react"
-import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import { timeAgo } from "@/lib/assignment-format"
-import { getPushSubscription } from "@/lib/push-client"
+import { useEmailNotification } from "@/hooks/useEmailNotification"
 import { AddAssignmentSheet } from "./assignment"
-import { Avatar } from "./avatar"
 import { SPRING } from "@/components/app/motion"
 import { useApp } from "@/components/app/provider"
 import { Button, ButtonLink, Card, IconButton, Sheet } from "@/components/app/ui"
@@ -251,92 +250,63 @@ export function Toast() {
   )
 }
 
-/* ───────── はじめの設定 ───────── */
+/* ───────── セットアップへの入口（ホーム） ───────── */
+
+/** セットアップ画面の3つの手順。判定はセットアップ画面と同じ（メール通知は useEmailNotification） */
+export function useSetupSteps() {
+  const { loggedIn, syncedAt } = useApp()
+  const { on: emailOn } = useEmailNotification()
+  return {
+    steps: [
+      { key: "login", title: "Google でログイン", done: loggedIn },
+      { key: "webclass", title: "WebClass をつなぐ", done: syncedAt.webclass != null },
+      { key: "notif", title: "メール通知をオンにする", done: emailOn === true },
+    ],
+    /** メールの設定を取りに行っている最中 */
+    pending: emailOn === null,
+  }
+}
 
 /**
- * 通知の手順は「プッシュかメールが本当に届く状態」で完了にする（セットアップ画面と同じ判定）。
- * settings.enabled は初期値が true なので、それだけで見ると未ログインでも完了に数えてしまう。
- * プッシュもメールもログインが要るので、未ログインなら取りに行かない。
- * null＝まだ分からない（メールの設定を取りに行っている最中）。
+ * ホームに出すセットアップへの入口。カードを押すとセットアップ画面へ行く。
+ * 3つの手順が終わるか、×で閉じると出なくなる。
  */
-function useNotifReachable(loggedIn: boolean): boolean | null {
-  const [email, setEmail] = useState<boolean | null>(null)
-  const [push, setPush] = useState(false)
-  useEffect(() => {
-    if (!loggedIn) return
-    fetch("/api/notifications/settings")
-      .then((r) => r.json())
-      .then((d) => setEmail(d.settings?.emailEnabled ?? false))
-      .catch(() => setEmail(false))
-    // Service Worker が無い端末ではずっと返らないので、これは待たない
-    getPushSubscription()
-      .then((s) => setPush(s != null))
-      .catch(() => {})
-  }, [loggedIn])
-  if (!loggedIn) return false
-  if (email || push) return true
-  return email
-}
-
-export function useSetupSteps() {
-  const { loggedIn, syncedAt, settings } = useApp()
-  const reachable = useNotifReachable(loggedIn)
-  return [
-    {
-      key: "login",
-      title: "Google でログイン",
-      desc: "Classroom の課題が自動で入ります",
-      href: "/login",
-      done: loggedIn,
-    },
-    {
-      key: "webclass",
-      title: "WebClass をつなぐ",
-      desc: "ブックマークに1つ登録するだけ",
-      href: "/settings/setup",
-      done: syncedAt.webclass != null,
-    },
-    {
-      key: "notif",
-      title: "締切の通知をオンにする",
-      desc: "プッシュかメールで受け取れます",
-      href: "/settings/notifications",
-      done: settings.enabled && reachable === true,
-      pending: reachable === null,
-    },
-  ]
-}
-
 export function SetupCard({ dismissible = true }: { dismissible?: boolean }) {
   const { dismissSetup } = useApp()
-  const steps = useSetupSteps()
+  const { steps, pending } = useSetupSteps()
   const done = steps.filter((s) => s.done).length
   const next = steps.find((s) => !s.done)
-  // 通知の状態が分かるまでは出さない（設定済みの人に一瞬出てから消えるのを防ぐ）
-  if (!next || steps.some((s) => s.pending)) return null
+  // メールの状態が分かるまでは出さない（設定済みの人に一瞬出てから消えるのを防ぐ）
+  if (!next || pending) return null
   return (
-    <Card className="p-4">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-semibold tabular-nums text-muted-foreground">
-            はじめの設定 {done} / {steps.length}
-          </p>
-          <p className="mt-1 text-[15px] font-semibold">{next.title}</p>
-          <p className="mt-0.5 text-[13px] text-muted-foreground">{next.desc}</p>
+    <Card className="relative">
+      <Link
+        href="/settings/setup"
+        className="block rounded-card p-4 outline-none transition-colors hover:bg-accent/60 focus-visible:ring-3 focus-visible:ring-ring/40"
+      >
+        <p className="text-[12px] font-semibold tabular-nums text-muted-foreground">
+          セットアップ {done} / {steps.length}
+        </p>
+        <p className="mt-1 pr-8 text-[15px] font-semibold">{done === 0 ? "セットアップをはじめる" : "セットアップを続ける"}</p>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">
+          {done === 0 ? "まずは" : "次は"}「{next.title}」
+        </p>
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            initial={{ width: 0 }}
+            animate={{ width: `${(done / steps.length) * 100}%` }}
+            transition={SPRING}
+          />
         </div>
-        {dismissible && <IconButton icon={X} label="はじめの設定を閉じる" onClick={dismissSetup} className="-mr-2 -mt-2 h-9 w-9" />}
-      </div>
-      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
-        <motion.div
-          className="h-full rounded-full bg-primary"
-          initial={{ width: 0 }}
-          animate={{ width: `${(done / steps.length) * 100}%` }}
-          transition={SPRING}
-        />
-      </div>
-      <ButtonLink href={next.href} size="md" className="mt-3.5 w-full">
-        {next.title}
-      </ButtonLink>
+        <span className="mt-3 inline-flex items-center gap-0.5 text-[14px] font-medium text-primary">
+          セットアップを開く
+          <ChevronRight className="h-4 w-4" aria-hidden />
+        </span>
+      </Link>
+      {dismissible && (
+        <IconButton icon={X} label="セットアップの案内を閉じる" onClick={dismissSetup} className="absolute right-2 top-2 h-9 w-9" />
+      )}
     </Card>
   )
 }
@@ -513,8 +483,14 @@ function Sidebar() {
           href="/settings"
           className="flex items-center gap-2.5 rounded-control px-2 py-2 outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/40"
         >
-          {/* 未ログインは灰色。アイコンは 設定 のアカウント欄で変える */}
-          <Avatar size={32} />
+          {user?.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.image} alt="" aria-hidden className="h-8 w-8 shrink-0 rounded-full object-cover" />
+          ) : (
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-muted-foreground">
+              {loggedIn ? (user?.name ?? user?.email ?? "?").trim().charAt(0) : "?"}
+            </span>
+          )}
           <span className="min-w-0">
             <span className="block truncate text-[13px] font-medium">
               {loggedIn ? user?.name ?? "ログイン中" : "ログインしていません"}

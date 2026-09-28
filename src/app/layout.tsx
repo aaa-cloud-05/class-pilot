@@ -17,7 +17,7 @@ const APP_URL = getAppUrl();
 // LINE・X・Slack などで共有したとき、OG 画像と一緒に出るタイトルと説明文。売りは /login の3点に揃える
 const TITLE = "UnionFetch — 課題の締切を、ひとつの場所で。";
 const DESCRIPTION =
-  "WebClass と Google Classroom の課題を、締切順にひとつのリストへ。通知機能のない WebClass の課題も、締切の前にプッシュとメールでお知らせします。1週間の忙しさもひと目で。";
+  "WebClass と Google Classroom の課題を、締切順にひとつのリストへ。通知機能のない WebClass の課題も、締切の前にメールでお知らせします。1週間の忙しさもひと目で。";
 
 export const metadata: Metadata = {
   // 相対パスの OG 画像などを絶対URLに解決するための基準。未設定だとビルドが警告を出し、

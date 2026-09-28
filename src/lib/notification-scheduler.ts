@@ -1,30 +1,6 @@
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
 import { getCachedAssignments } from "./cache";
-import {
-  getNotificationSettings,
-  hasBeenNotified,
-  recordNotification,
-  type NotificationPreset,
-  type NotificationRecord,
-} from "./notification-store";
-
-interface PresetTiming {
-  minutes: number;
-  type: NotificationRecord["type"];
-}
-
-const PRESETS: Record<NotificationPreset, PresetTiming[]> = {
-  relaxed: [{ minutes: 24 * 60, type: "24h" }],
-  standard: [
-    { minutes: 24 * 60, type: "24h" },
-    { minutes: 3 * 60, type: "3h" },
-  ],
-  urgent: [
-    { minutes: 3 * 60, type: "3h" },
-    { minutes: 60, type: "1h" },
-  ],
-};
+import { getNotificationSettings, hasBeenNotified, recordNotification } from "./notification-store";
+import { remainingLabel, reminderType, remindersOf } from "./reminders";
 
 export async function checkAndNotify(): Promise<number> {
   if (typeof window === "undefined") return 0;
@@ -37,115 +13,41 @@ export async function checkAndNotify(): Promise<number> {
 
   const assignments = await getCachedAssignments();
   const now = Date.now();
-  const timings = PRESETS[settings.preset];
+  // サーバのメールと同じタイミング（src/lib/reminders.ts）
+  const timings = remindersOf(settings).map((m) => ({ minutes: m, type: reminderType(m), label: remainingLabel(m) }));
   let sent = 0;
 
-  console.log(`[通知] チェック開始: ${assignments.length}件, preset=${settings.preset}`);
+  console.log(`[通知] チェック開始: ${assignments.length}件, ${timings.map((t) => t.type).join("/")}`);
 
   for (const assignment of assignments) {
     if (!assignment.dueDate) continue;
-    if (assignment.submissionState === "submitted" || assignment.submissionState === "unknown") continue;
+    // 「不明」は画面と同じく未提出として扱う（サーバのメールと同じ）
+    if (assignment.submissionState === "submitted") continue;
     if (settings.mutedCourses.includes(assignment.courseId)) continue;
     if (settings.mutedAssignments.includes(assignment.id)) continue;
 
     const minutesLeft = (assignment.dueDate.getTime() - now) / (1000 * 60);
     if (minutesLeft <= 0) continue;
 
-    for (const timing of timings) {
-      if (minutesLeft <= timing.minutes) {
-        const alreadySent = await hasBeenNotified(assignment.id, timing.type);
-        if (alreadySent) {
-          console.log(`[通知] スキップ(送信済み): ${assignment.title} ${timing.type}`);
-        } else {
-          console.log(`[通知] 送信: ${assignment.title} (残り${Math.round(minutesLeft)}分, ${timing.type})`);
-          const timeLabel = timing.type === "24h" ? "24時間" : timing.type === "3h" ? "3時間" : "1時間";
-          const notifTitle = `締切まであと${timeLabel}`;
-          const notifBody = `「${assignment.title}」（${assignment.courseName}）`;
-          await recordNotification(assignment.id, timing.type, notifTitle, notifBody);
-          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-            await showDeadlineNotification(assignment, timing.type);
-          }
-          sent++;
-        }
-      }
-    }
+    // 過ぎたタイミングのうち、締切にいちばん近いものだけを記録する。
+    // しばらく開かなかったあとに開くと「あと1日」「あと3時間」が同時に並ぶのを防ぐ
+    const passed = timings.filter((t) => minutesLeft <= t.minutes).sort((x, y) => x.minutes - y.minutes);
+    const timing = passed[0];
+    if (!timing) continue;
+    if (await hasBeenNotified(assignment.id, timing.type)) continue;
+
+    console.log(`[通知] 記録: ${assignment.title} (残り${Math.round(minutesLeft)}分, ${timing.type})`);
+    // OS の通知は出さない（アプリを開いたときしか出ず役に立たないため。通知はメール一本）。
+    // 「通知」の画面に出す履歴だけ残す
+    await recordNotification(
+      assignment.id,
+      timing.type,
+      `締切まであと${timing.label}`,
+      `「${assignment.title}」（${assignment.courseName}）`,
+    );
+    sent++;
   }
 
-  console.log(`[通知] 完了: ${sent}件送信`);
+  console.log(`[通知] 完了: ${sent}件記録`);
   return sent;
-}
-
-const TEST_TITLE = "通知のテスト";
-const TEST_BODY = "締切が近づくと、このように課題名と締切日時をお知らせします。";
-
-export async function sendTestNotification(): Promise<void> {
-  console.log(`[通知テスト] permission=${Notification.permission}`);
-  try {
-    const reg = await navigator.serviceWorker.getRegistration();
-    console.log(`[通知テスト] SW登録=${!!reg}, active=${!!reg?.active}`);
-    if (reg?.active) {
-      await reg.showNotification(TEST_TITLE, {
-        body: TEST_BODY,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
-        tag: "test",
-        data: { url: "/" },
-      });
-      console.log("[通知テスト] SW通知送信成功");
-      return;
-    }
-  } catch (e) {
-    console.log("[通知テスト] SW通知エラー:", e);
-  }
-
-  try {
-    const n = new Notification(TEST_TITLE, {
-      body: TEST_BODY,
-      icon: "/icons/icon-192.png",
-    });
-    console.log("[通知テスト] Notification API送信成功");
-    n.onclick = () => window.focus();
-  } catch (e) {
-    console.log("[通知テスト] Notification APIエラー:", e);
-  }
-}
-
-async function showDeadlineNotification(
-  assignment: { id: string; title: string; courseName: string; link: string; dueDate: Date | null },
-  type: NotificationRecord["type"]
-): Promise<void> {
-  const timeLabel = type === "24h" ? "24時間" : type === "3h" ? "3時間" : "1時間";
-  const title = `締切まであと${timeLabel}`;
-  // サーバのプッシュ（src/lib/server/notify.ts）と同じ2行の形
-  const due = assignment.dueDate ? `・${format(assignment.dueDate, "M月d日(E) HH:mm", { locale: ja })} まで` : "";
-  const body = `${assignment.title}\n${assignment.courseName}${due}`;
-
-  try {
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (reg?.active) {
-      await reg.showNotification(title, {
-        body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
-        tag: `${assignment.id}:${type}`,
-        data: { url: assignment.link || "/" },
-      });
-      console.log(`[通知] SW通知成功: ${assignment.title}`);
-      return;
-    }
-    console.log(`[通知] SW未アクティブ, Notification APIにフォールバック`);
-  } catch (e) {
-    console.log(`[通知] SW通知エラー:`, e);
-  }
-
-  try {
-    new Notification(title, {
-      body,
-      icon: "/icons/icon-192.png",
-      tag: `${assignment.id}:${type}`,
-    });
-    console.log(`[通知] Notification API成功: ${assignment.title}`);
-  } catch (e) {
-    console.log(`[通知] Notification APIエラー:`, e);
-  }
 }
