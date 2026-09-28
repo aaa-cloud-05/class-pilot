@@ -114,8 +114,8 @@ export function renderDeadlineEmail({ assignmentTitle, courseName, timeLabel, du
         ${button}
 
         <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid ${C.line};font-size:13px;line-height:1.7;color:${C.sub};">
-          ほかの締切もまとめて見るなら
-          <a href="${appUrl}" style="color:${C.primary};text-decoration:none;font-weight:600;">UnionFetch を開く</a>
+          もう提出していたら、<a href="${appUrl}" style="color:${C.primary};text-decoration:none;font-weight:600;">UnionFetch</a>
+          で提出済みにすると、この課題のメールは止まります（WebClass は取り込み直しでも反映されます）。
         </p>
       </td></tr>
 
@@ -138,7 +138,8 @@ export function renderDeadlineEmail({ assignmentTitle, courseName, timeLabel, du
     courseName,
     `締切: ${due}`,
     ...(link ? ["", `課題を開く: ${link}`] : []),
-    `UnionFetch を開く: ${appUrl}`,
+    "",
+    `もう提出していたら、UnionFetch（${appUrl}）で提出済みにすると、この課題のメールは止まります（WebClass は取り込み直しでも反映されます）。`,
     "",
     "―",
     "WebClass と Google Classroom の締切を、UnionFetch がお知らせしています。",

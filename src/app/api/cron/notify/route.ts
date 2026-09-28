@@ -32,7 +32,8 @@ export async function GET(request: Request) {
   for (let i = 0; i < targets.length; i += CONCURRENCY) {
     const chunk = targets.slice(i, i + CONCURRENCY);
     const settled = await Promise.allSettled(
-      chunk.map((t) => notifyUser(t.userId, now)),
+      // cron のときだけ、送り時を過ぎたものの救済（即時送信）をする
+      chunk.map((t) => notifyUser(t.userId, { now, fromCron: true })),
     );
     settled.forEach((r, idx) => {
       const userId = chunk[idx].userId;

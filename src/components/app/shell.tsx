@@ -288,7 +288,9 @@ export function SetupCard({ dismissible = true }: { dismissible?: boolean }) {
           セットアップ {done} / {steps.length}
         </p>
         <p className="mt-1 pr-8 text-[15px] font-semibold">{done === 0 ? "セットアップをはじめる" : "セットアップを続ける"}</p>
-        <p className="mt-0.5 text-[13px] text-muted-foreground">次は「{next.title}」</p>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">
+          {done === 0 ? "まずは" : "次は"}「{next.title}」
+        </p>
         <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
           <motion.div
             className="h-full rounded-full bg-primary"
