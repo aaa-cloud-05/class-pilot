@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
-import { BellOff, Check, ChevronRight, ExternalLink, GraduationCap, Globe, PenLine, Trash2 } from "lucide-react"
+import { BellOff, Check, ChevronDown, ChevronRight, ExternalLink, GraduationCap, Globe, PenLine, Trash2 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import type { SubmissionState } from "@/lib/types"
@@ -146,6 +146,30 @@ export function AssignmentList({
         ))}
       </AnimatePresence>
     </ul>
+  )
+}
+
+/** 長くなりがちなリスト（期限なし）。先頭だけ出し、「もっと見る」で全部を開く */
+const CLAMP = 5
+
+export function ClampedList(props: React.ComponentProps<typeof AssignmentList>) {
+  const [open, setOpen] = useState(false)
+  const rest = props.items.length - CLAMP
+  return (
+    <>
+      <AssignmentList {...props} items={open ? props.items : props.items.slice(0, CLAMP)} />
+      {rest > 0 && (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="mt-2 flex h-11 w-full items-center justify-center gap-1 rounded-control text-[14px] font-medium text-primary outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/40"
+        >
+          {open ? "閉じる" : <span className="tabular-nums">もっと見る（あと {rest} 件）</span>}
+          <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} aria-hidden />
+        </button>
+      )}
+    </>
   )
 }
 

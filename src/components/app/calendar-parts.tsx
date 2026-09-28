@@ -115,7 +115,10 @@ export function WeekStrip({
   )
 }
 
-/** 月カレンダー。compact=スマホ（ドット）、それ以外=PC（課題名のチップ） */
+/**
+ * 月カレンダー。compact=スマホ（ドット）、それ以外=PC（課題名のチップ）。
+ * onSelect を渡さない compact は表示だけ（PC ホームのミニカレンダー）。塗りの丸は今日に付く。
+ */
 export function MonthGrid({
   month,
   selected,
@@ -126,8 +129,8 @@ export function MonthGrid({
   compact,
 }: {
   month: Date
-  selected: Date
-  onSelect: (d: Date) => void
+  selected?: Date
+  onSelect?: (d: Date) => void
   onOpen?: (a: ViewAssignment) => void
   list: ViewAssignment[]
   now: Date
@@ -151,16 +154,37 @@ export function MonthGrid({
         {days.map((day, dayIndex) => {
           const items = itemsOn(day, list)
           const inMonth = isSameMonth(day, month)
-          const isSel = isSameDay(day, selected)
           const isToday = isSameDay(day, now)
+          const isSel = selected ? isSameDay(day, selected) : isToday
           const label = `${format(day, "M月d日(E)", { locale: ja })}、締切${items.length}件`
+
+          if (compact && !onSelect) {
+            return (
+              <div
+                key={day.toISOString()}
+                className={cn("flex h-[58px] flex-col items-center justify-center gap-1", !inMonth && "opacity-35")}
+              >
+                <span className="sr-only">{label}</span>
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full text-[15px] font-semibold tabular-nums",
+                    isToday ? "bg-primary text-primary-foreground" : "text-foreground",
+                  )}
+                >
+                  {format(day, "d")}
+                </span>
+                <Dots items={items} now={now} dayIndex={dayIndex} />
+              </div>
+            )
+          }
 
           if (compact) {
             return (
               <button
                 key={day.toISOString()}
                 type="button"
-                onClick={() => onSelect(day)}
+                onClick={() => onSelect?.(day)}
                 aria-pressed={isSel}
                 aria-label={label}
                 className={cn(
@@ -192,7 +216,7 @@ export function MonthGrid({
             >
               <button
                 type="button"
-                onClick={() => onSelect(day)}
+                onClick={() => onSelect?.(day)}
                 aria-pressed={isSel}
                 aria-label={label}
                 className="mb-1 flex h-8 items-center rounded-[8px] px-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
@@ -211,7 +235,7 @@ export function MonthGrid({
                   <motion.button
                     key={a.id}
                     type="button"
-                    onClick={() => (onOpen ? onOpen(a) : onSelect(day))}
+                    onClick={() => (onOpen ? onOpen(a) : onSelect?.(day))}
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.55, delay: itemDelay(dayIndex, i), ease: [0.16, 1, 0.3, 1] }}
@@ -229,7 +253,7 @@ export function MonthGrid({
                 {items.length > 2 && (
                   <motion.button
                     type="button"
-                    onClick={() => onSelect(day)}
+                    onClick={() => onSelect?.(day)}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.55, delay: itemDelay(dayIndex, 2), ease: [0.16, 1, 0.3, 1] }}

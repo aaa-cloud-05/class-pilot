@@ -18,19 +18,43 @@ import { Card } from "@/components/app/ui"
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"]
 const BAR_MAX = 66
 
-/** 曜日ごとの負荷。棒の高さ＝その日の課題数、色＝提出状況（積み上げ） */
-function LoadBars({ week, items, now }: { week: WeekState; items: ViewAssignment[]; now: Date }) {
+/**
+ * 曜日ごとの負荷。棒の高さ＝その日の課題数、色＝提出状況（積み上げ）。
+ * 棒を押すとその日を選ぶ（ホームの「最近」にその日の課題が出る）。もう一度押すと外す。
+ */
+function LoadBars({
+  week,
+  items,
+  now,
+  picked,
+  onPick,
+}: {
+  week: WeekState
+  items: ViewAssignment[]
+  now: Date
+  picked: Date | null
+  onPick: (d: Date) => void
+}) {
   // いちばん多い日を満杯にする。1件ぶんの高さは週によって変わるが、
   // 件数が少ない週でも棒が育つので寂しくならない
   const peak = Math.max(1, ...week.days.map((d) => d.total))
   return (
-    <div className="flex items-end gap-1.5" aria-hidden>
+    <div className="-mx-[3px] flex items-end" role="group" aria-label="曜日ごとの締切">
       {week.days.map((d, i) => {
         const dayItems = items.filter((a) => a.dueDate && isSameDay(a.dueDate, d.date))
         const counts = countByCat(dayItems, now)
         const h = d.total === 0 ? 3 : Math.max(8, Math.round((d.total / peak) * BAR_MAX))
+        const on = picked != null && isSameDay(picked, d.date)
         return (
-          <div key={d.date.toISOString()} className="flex w-7 flex-col items-center gap-1.5">
+          // 棒は幅28px・間隔6pxのまま、押せる幅だけ左右に3pxずつ広げる
+          <button
+            key={d.date.toISOString()}
+            type="button"
+            onClick={() => onPick(d.date)}
+            aria-pressed={on}
+            aria-label={`${format(d.date, "M月d日(E)", { locale: ja })}、締切${d.total}件`}
+            className="flex w-[34px] flex-col items-center gap-1.5 rounded-control px-[3px] pb-0.5 outline-none transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div className="flex h-[66px] w-full items-end justify-center">
               <motion.div
                 initial={{ height: 3, opacity: 0 }}
@@ -51,13 +75,19 @@ function LoadBars({ week, items, now }: { week: WeekState; items: ViewAssignment
             </div>
             <span
               className={cn(
-                "text-[11px] font-medium tabular-nums",
-                d.isToday ? "text-primary" : d.isPast ? "text-muted-foreground/60" : "text-muted-foreground",
+                "flex h-5 w-6 items-center justify-center rounded-full text-[11px] font-medium tabular-nums transition-colors",
+                on
+                  ? "bg-primary text-primary-foreground"
+                  : d.isToday
+                    ? "text-primary"
+                    : d.isPast
+                      ? "text-muted-foreground/60"
+                      : "text-muted-foreground",
               )}
             >
               {WEEKDAYS[i]}
             </span>
-          </div>
+          </button>
         )
       })}
     </div>
@@ -73,6 +103,8 @@ export function WeekHero({
   isCurrentWeek,
   next,
   onOpenNext,
+  pickedDay,
+  onPickDay,
 }: {
   week: WeekState
   rangeLabel: string
@@ -82,6 +114,8 @@ export function WeekHero({
   isCurrentWeek: boolean
   next: ViewAssignment | null
   onOpenNext: (a: ViewAssignment) => void
+  pickedDay: Date | null
+  onPickDay: (d: Date) => void
 }) {
   const { now, courseById, assignments } = useApp()
   // 今週以外を見ているときは、いまの状況を語る文ではなく、その週の中身を出す
@@ -132,7 +166,7 @@ export function WeekHero({
               <span className="text-[15px] font-medium text-muted-foreground">件</span>
             </p>
           </div>
-          <LoadBars week={week} items={assignments} now={now} />
+          <LoadBars week={week} items={assignments} now={now} picked={pickedDay} onPick={onPickDay} />
         </div>
 
         <div className="mt-4">

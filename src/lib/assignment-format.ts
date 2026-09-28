@@ -20,37 +20,38 @@ import { catOf, type StatusCat } from "@/lib/status"
 
 /* ───────── 「最近」タブの分類 ───────── */
 
-export type GroupKey = "recent" | "today" | "tomorrow" | "thisWeek" | "noDue"
+/**
+ * 「最近」のグループ。今週の残り（明後日以降・過ぎた日）はリストにせず、
+ * 「今週の課題を見る」から「すべて」の今週へ送る。棒グラフで選んだ日はホーム側で差し込む。
+ */
+export type GroupKey = "recent" | "today" | "tomorrow" | "noDue"
 
 export const GROUP_LABEL: Record<GroupKey, string> = {
   recent: "直近の未提出",
   today: "今日",
   tomorrow: "明日",
-  thisWeek: "今週",
   noDue: "期限なしの未提出",
 }
 
-const RECENT_ORDER: GroupKey[] = ["recent", "today", "tomorrow", "thisWeek", "noDue"]
+const RECENT_ORDER: GroupKey[] = ["recent", "today", "tomorrow", "noDue"]
 
 const WEEK = { weekStartsOn: 1 as const }
 
 /** 「直近の未提出」に出すのは、締切を過ぎてからこの時間まで */
 const RECENT_MS = 24 * 60 * 60 * 1000
 
-/** hidden＝「最近」には出さないもの（過去の提出済み・期限なしの提出済み・先週以前の未提出） */
+/** hidden＝「最近」のリストには出さないもの（今週の残り・過去の提出済み・24時間より前の未提出・期限なしの提出済み） */
 type Bucket = GroupKey | "later" | "hidden"
 
 function bucketOf(a: ViewAssignment, now: Date): Bucket {
   if (!a.dueDate) return a.submissionState === "submitted" ? "hidden" : "noDue"
   if (a.dueDate < now && a.submissionState !== "submitted") {
-    if (now.getTime() - a.dueDate.getTime() <= RECENT_MS) return "recent"
-    // 24時間より前に落としたものは、今週のうちなら「今週」に残す。それより前は「すべて」で見る
-    return isSameWeek(a.dueDate, now, WEEK) ? "thisWeek" : "hidden"
+    return now.getTime() - a.dueDate.getTime() <= RECENT_MS ? "recent" : "hidden"
   }
   if (isSameDay(a.dueDate, now)) return "today"
   if (isSameDay(a.dueDate, addDays(now, 1))) return "tomorrow"
-  if (isSameWeek(a.dueDate, now, WEEK)) return "thisWeek"
-  return a.submissionState === "submitted" ? "hidden" : "later"
+  if (isSameWeek(a.dueDate, now, WEEK) || a.submissionState === "submitted") return "hidden"
+  return "later"
 }
 
 /** 来週以降の未提出の件数。リストには出さず、件数だけ下に出す */
@@ -66,22 +67,14 @@ export function firstLaterDue(list: ViewAssignment[], now: Date): Date | null {
   return later[0]?.dueDate ?? null
 }
 
-const STATUS_RANK: Record<SubmissionState, number> = { not_submitted: 0, unknown: 1, submitted: 2 }
-
-export type SortMode = "due" | "status"
-
 const byDue = (x: ViewAssignment, y: ViewAssignment) =>
   (x.dueDate?.getTime() ?? Number.POSITIVE_INFINITY) - (y.dueDate?.getTime() ?? Number.POSITIVE_INFINITY)
 
 /**
- * 「最近」タブ。今日・明日・今週は提出済みも含めた全部を出す。
+ * 「最近」タブ。今日・明日は提出済みも含めた全部を出す。
  * 直近の未提出（締切から24時間以内）と期限なしだけは、やることだけに絞る。
  */
-export function groupRecent(
-  list: ViewAssignment[],
-  now: Date,
-  weekSort: SortMode,
-): { key: GroupKey; items: ViewAssignment[] }[] {
+export function groupRecent(list: ViewAssignment[], now: Date): { key: GroupKey; items: ViewAssignment[] }[] {
   const buckets = new Map<GroupKey, ViewAssignment[]>()
   for (const a of list) {
     const k = bucketOf(a, now)
@@ -91,16 +84,15 @@ export function groupRecent(
   }
   return RECENT_ORDER.filter((k) => buckets.has(k)).map((key) => {
     const items = [...buckets.get(key)!]
-    if (key === "recent") {
-      // 直近＝いちばん近くで落としたものを上に
-      items.sort((x, y) => (y.dueDate?.getTime() ?? 0) - (x.dueDate?.getTime() ?? 0))
-    } else if (key === "thisWeek" && weekSort === "status") {
-      items.sort((x, y) => STATUS_RANK[x.submissionState] - STATUS_RANK[y.submissionState] || byDue(x, y))
-    } else {
-      items.sort(byDue)
-    }
+    // 直近＝いちばん近くで落としたものを上に。ほかは締切順
+    items.sort(key === "recent" ? (x, y) => (y.dueDate?.getTime() ?? 0) - (x.dueDate?.getTime() ?? 0) : byDue)
     return { key, items }
   })
+}
+
+/** 今週が締切の課題の件数（提出済みも含む）。「今週の課題を見る」に添える */
+export function countThisWeek(list: ViewAssignment[], now: Date): number {
+  return list.filter((a) => a.dueDate && isSameWeek(a.dueDate, now, WEEK)).length
 }
 
 /* ───────── 「すべて」タブの分類 ───────── */

@@ -1,13 +1,13 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { addMonths, format, isSameMonth } from "date-fns"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { addMonths, format, isSameMonth, startOfWeek } from "date-fns"
 import { CalendarX2, ChevronLeft, ChevronRight, Inbox } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { SubmissionState } from "@/lib/types"
 import type { ViewAssignment } from "@/lib/assignment-view"
 import { noDueByStatus, weekBlockLabel, weeksOfMonth } from "@/lib/assignment-format"
-import { AssignmentList } from "@/components/app/assignment"
+import { AssignmentList, ClampedList } from "@/components/app/assignment"
 import { Appear } from "@/components/app/motion"
 import { useApp } from "@/components/app/provider"
 import { Button, Card, SectionHeader, Segmented } from "@/components/app/ui"
@@ -16,6 +16,12 @@ const NO_DUE_TABS: { value: SubmissionState; label: string }[] = [
   { value: "not_submitted", label: "未提出" },
   { value: "submitted", label: "提出済み" },
 ]
+
+/** 週の塊の目印。ホームから「この週を見せて」と頼まれたときに探す */
+const weekKey = (d: Date) => format(startOfWeek(d, { weekStartsOn: 1 }), "yyyy-MM-dd")
+
+/** ホームから「すべて」に来たときに見せたい週。n は同じ週をもう一度頼まれたときにも動かすための通し番号 */
+export type FocusWeek = { date: Date; n: number }
 
 /**
  * 「すべて」タブ。月で切り替えて、その月にかかる週を1週ずつの塊で出す。
@@ -26,14 +32,25 @@ export function AllList({
   selectedId,
   month,
   onMonthChange,
+  focusWeek,
 }: {
   onOpen: (a: ViewAssignment) => void
   selectedId: string | null
   month: Date
   onMonthChange: (d: Date) => void
+  focusWeek?: FocusWeek | null
 }) {
   const { now, assignments } = useApp()
   const [noDueTab, setNoDueTab] = useState<SubmissionState>("not_submitted")
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  // 頼まれた週までスクロールする。課題の無い週は塊が無いので、月の先頭まで
+  useEffect(() => {
+    if (!focusWeek) return
+    const root = rootRef.current
+    const el = root?.querySelector(`[data-week="${weekKey(focusWeek.date)}"]`) ?? root
+    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [focusWeek])
 
   const weeks = useMemo(() => weeksOfMonth(assignments, month), [assignments, month])
   const monthItems = useMemo(() => weeks.flatMap((w) => w.items), [weeks])
@@ -46,7 +63,7 @@ export function AllList({
   const noDueItems = noDue[noDueTab]
 
   return (
-    <div>
+    <div ref={rootRef} className="scroll-mt-[calc(env(safe-area-inset-top)+6.5rem)] lg:scroll-mt-8">
       {/* 月の切り替え。スクロールしてもタブのすぐ下に残る */}
       <div className="sticky top-[calc(env(safe-area-inset-top)+6.875rem)] z-[9] -mx-4 flex items-center gap-1 bg-background/85 px-4 py-1.5 backdrop-blur-xl lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
           <button
@@ -95,7 +112,11 @@ export function AllList({
             const weekDone = w.items.filter((a) => a.submissionState === "submitted").length
             return (
               <Appear key={`${monthKey}-${range}`} delay={Math.min(0.06 * i, 0.3)}>
-                <section>
+                {/* スマホは上に貼り付くヘッダー・タブ・月の切り替えの下に来るよう余白を取る */}
+                <section
+                  data-week={weekKey(w.start)}
+                  className="scroll-mt-[calc(env(safe-area-inset-top)+10.25rem)] lg:scroll-mt-8"
+                >
                   {/* 今週はバッジを足さず、日付そのものを青くして示す */}
                   <SectionHeader
                     title={<span className={cn("tabular-nums", isCurrentWeek && "text-primary")}>{range}</span>}
@@ -134,7 +155,7 @@ export function AllList({
           }))}
         />
         {noDueItems.length ? (
-          <AssignmentList key={noDueTab} items={noDueItems} onOpen={onOpen} selectedId={selectedId} />
+          <ClampedList key={noDueTab} items={noDueItems} onOpen={onOpen} selectedId={selectedId} />
         ) : (
           <Card className="flex items-center gap-3 px-4 py-5 text-muted-foreground">
             <Inbox className="h-5 w-5 shrink-0" aria-hidden />

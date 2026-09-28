@@ -2,19 +2,21 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { addWeeks, endOfWeek, format, startOfWeek } from "date-fns"
-import { ArrowDownUp, CalendarCheck2, Inbox, X } from "lucide-react"
+import { addDays, addWeeks, endOfWeek, format, isSameDay, startOfWeek } from "date-fns"
+import { ja } from "date-fns/locale"
+import { CalendarCheck2, CalendarRange, CalendarX2, ChevronRight, Inbox, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { AllList } from "@/components/app/all-list"
-import { AssignmentDetail, AssignmentList, AssignmentSheet } from "@/components/app/assignment"
-import { MonthGrid } from "@/components/app/calendar-parts"
+import type { ViewAssignment } from "@/lib/assignment-view"
+import { AllList, type FocusWeek } from "@/components/app/all-list"
+import { AssignmentDetail, AssignmentList, AssignmentSheet, ClampedList } from "@/components/app/assignment"
+import { itemsOn, MonthGrid } from "@/components/app/calendar-parts"
 import { Appear } from "@/components/app/motion"
 import { useApp } from "@/components/app/provider"
 import { DESKTOP_QUERY, useMediaQuery } from "@/hooks/useMediaQuery"
 import { MobileHeader, PageBody, ReauthOrErrorBanner, SetupCard } from "@/components/app/shell"
 import { Button, ButtonLink, Card, EmptyState, IconButton, SectionHeader, Segmented, Skeleton } from "@/components/app/ui"
 import { WeekHero } from "@/components/app/week-hero"
-import { countLater, firstLaterDue, groupRecent, GROUP_LABEL, type SortMode } from "@/lib/assignment-format"
+import { countLater, countThisWeek, firstLaterDue, groupRecent, GROUP_LABEL } from "@/lib/assignment-format"
 import { buildWeekState, nextUp } from "@/lib/week-view"
 
 function ListSkeleton() {
@@ -41,19 +43,21 @@ function ListSkeleton() {
   )
 }
 
+type View = "recent" | "all"
+
 export default function MockHomePage() {
   const { now, assignments, loading, setupDismissed, setAddOpen } = useApp()
   const desktop = useMediaQuery(DESKTOP_QUERY)
-  const [view, setView] = useState<"recent" | "all">("recent")
-  const [sort, setSort] = useState<SortMode>("due")
+  const [view, setView] = useState<View>("recent")
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  // 日付の状態は「選んでいなければ now」で持つ。開いたときの日付で固定すると、
-  // 開きっぱなしで日をまたいだときに昨日以前を「今日」のように指し続ける
-  const [calDay, setCalDay] = useState<Date | null>(null)
+  // 棒グラフで選んだ日。「最近」の直近の未提出のすぐ下に、その日の課題を出す
+  const [pickedDay, setPickedDay] = useState<Date | null>(null)
+  // 「すべて」に切り替えたときにスクロールして見せる週
+  const [focusWeek, setFocusWeek] = useState<FocusWeek | null>(null)
 
-  const groups = useMemo(() => groupRecent(assignments, now, sort), [assignments, now, sort])
+  const groups = useMemo(() => groupRecent(assignments, now), [assignments, now])
   const selected = assignments.find((a) => a.id === selectedId) ?? null
-  // ヒーローの週は < > で動かせる（リストは「いま」を基準のまま）。今週からのずれで持つ
+  // ヒーローの週は今週からのずれで持つ。開いたときの日付で固定すると、開きっぱなしで日をまたいだときに古い週を指し続ける
   const [weekDiff, setWeekDiff] = useState(0)
   const weekAnchor = useMemo(() => addWeeks(now, weekDiff), [now, weekDiff])
   const week = useMemo(() => buildWeekState(assignments, now, weekAnchor), [assignments, now, weekAnchor])
@@ -62,7 +66,9 @@ export default function MockHomePage() {
   const weekLabel =
     weekDiff === 0 ? "今週" : weekDiff === 1 ? "来週" : weekDiff === -1 ? "先週" : weekDiff > 0 ? `${weekDiff}週間後` : `${-weekDiff}週間前`
   const laterCount = useMemo(() => countLater(assignments, now), [assignments, now])
-  // 「すべて」で最初に開く月。来週以降を見にいくときは、その課題がある月から始める
+  const thisWeekCount = useMemo(() => countThisWeek(assignments, now), [assignments, now])
+  const pickedItems = useMemo(() => (pickedDay ? itemsOn(pickedDay, assignments) : []), [pickedDay, assignments])
+  // 「すべて」で開く月。選んでいなければ今月
   const [pickedMonth, setAllMonth] = useState<Date | null>(null)
   const allMonth = pickedMonth ?? now
   const firstLater = useMemo(() => firstLaterDue(assignments, now), [assignments, now])
@@ -70,17 +76,145 @@ export default function MockHomePage() {
   const empty = !loading && assignments.length === 0
   const showSetup = !setupDismissed
 
-  const sortToggle = (
-    <button
-      type="button"
-      onClick={() => setSort(sort === "due" ? "status" : "due")}
-      aria-label={`今週の並び順：${sort === "due" ? "締切順" : "状態順"}（押すと切り替え）`}
-      className="flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
-    >
-      <ArrowDownUp className="h-3.5 w-3.5" aria-hidden />
-      {sort === "due" ? "締切順" : "状態順"}
-    </button>
+  /** 「すべて」に切り替えて、その日を含む週までスクロールする */
+  const showWeekInAll = (d: Date) => {
+    setAllMonth(d)
+    setView("all")
+    setFocusWeek((f) => ({ date: d, n: (f?.n ?? 0) + 1 }))
+  }
+  // ヒーローの週を動かしたら、その週を「すべて」で見せる
+  const moveWeek = (delta: number) => {
+    const diff = weekDiff + delta
+    setWeekDiff(diff)
+    setPickedDay(null)
+    showWeekInAll(addWeeks(now, diff))
+  }
+  // 棒を押したら「最近」にその日の課題を出す。同じ日をもう一度押すと外す
+  const pickDay = (d: Date) => {
+    setPickedDay((p) => (p && isSameDay(p, d) ? null : d))
+    setView("recent")
+  }
+  const changeView = (v: View) => {
+    setView(v)
+    // 自分でタブを切り替えたときは、前に頼んだ週へはスクロールしない
+    setFocusWeek(null)
+    // 「最近」はいまが基準なので、ヒーローも今週に戻す
+    if (v === "recent" && weekDiff !== 0) {
+      setWeekDiff(0)
+      setPickedDay(null)
+    }
+  }
+
+  const openItem = (a: ViewAssignment) => setSelectedId(a.id)
+  const listSelectedId = desktop ? selectedId : null
+  const plainList = (items: ViewAssignment[]) => (
+    <AssignmentList items={items} onOpen={openItem} selectedId={listSelectedId} />
   )
+  const group = (
+    key: string,
+    title: React.ReactNode,
+    body: React.ReactNode,
+    opts: { count?: number; tone?: "danger"; action?: React.ReactNode } = {},
+  ) => (
+    <section aria-labelledby={`group-${key}`}>
+      <SectionHeader id={`group-${key}`} title={title} count={opts.count} tone={opts.tone} action={opts.action} />
+      {body}
+    </section>
+  )
+
+  // 並び: 直近の未提出 → 棒グラフで選んだ日 → 今日 → 明日 → 今週の課題を見る → 期限なしの未提出
+  const recent = groups.find((g) => g.key === "recent")
+  const today = groups.find((g) => g.key === "today")
+  const tomorrow = groups.find((g) => g.key === "tomorrow")
+  const noDue = groups.find((g) => g.key === "noDue")
+  // 選んだ日が今日・明日なら、そのグループは選んだ日の側にまとめる（同じ課題を2回出さない）
+  const pickedIsToday = pickedDay != null && isSameDay(pickedDay, now)
+  const pickedIsTomorrow = pickedDay != null && isSameDay(pickedDay, addDays(now, 1))
+
+  const blocks: { key: string; node: React.ReactNode }[] = []
+  if (recent) {
+    blocks.push({
+      key: "recent",
+      node: group("recent", GROUP_LABEL.recent, plainList(recent.items), { count: recent.items.length, tone: "danger" }),
+    })
+  }
+  if (pickedDay) {
+    const title = `${pickedIsToday ? "今日 " : pickedIsTomorrow ? "明日 " : ""}${format(pickedDay, "M月d日(E)", { locale: ja })}`
+    blocks.push({
+      key: `picked-${format(pickedDay, "yyyy-MM-dd")}`,
+      node: group(
+        "picked",
+        title,
+        pickedItems.length ? (
+          plainList(pickedItems)
+        ) : (
+          <Card className="flex items-center gap-3 px-4 py-5 text-muted-foreground">
+            <CalendarX2 className="h-5 w-5 shrink-0" aria-hidden />
+            <p className="text-[15px]">この日が締切の課題はありません</p>
+          </Card>
+        ),
+        {
+          count: pickedItems.length,
+          action: (
+            <button
+              type="button"
+              onClick={() => setPickedDay(null)}
+              className="flex h-7 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden />
+              閉じる
+            </button>
+          ),
+        },
+      ),
+    })
+  }
+  if (today && !pickedIsToday) {
+    blocks.push({ key: "today", node: group("today", GROUP_LABEL.today, plainList(today.items), { count: today.items.length }) })
+  }
+  if (tomorrow && !pickedIsTomorrow) {
+    blocks.push({
+      key: "tomorrow",
+      node: group("tomorrow", GROUP_LABEL.tomorrow, plainList(tomorrow.items), { count: tomorrow.items.length }),
+    })
+  }
+  if (blocks.length === 0 && !noDue) {
+    blocks.push({
+      key: "none",
+      node: (
+        <Card>
+          <EmptyState icon={CalendarCheck2} title="最近の課題はありません" description="新しい課題が届いたら、ここと通知でお知らせします。" />
+        </Card>
+      ),
+    })
+  }
+  // 今週の残りはリストにせず、「すべて」の今週へ送る
+  blocks.push({
+    key: "week",
+    node: (
+      <button
+        type="button"
+        onClick={() => showWeekInAll(now)}
+        className="flex min-h-[52px] w-full items-center gap-3 rounded-card bg-card px-4 text-left shadow-card outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/40"
+      >
+        <CalendarRange className="h-[18px] w-[18px] shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+        <span className="flex-1 text-[15px] font-medium">今週の課題を見る</span>
+        <span className="text-[13px] tabular-nums text-muted-foreground">{thisWeekCount} 件</span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />
+      </button>
+    ),
+  })
+  if (noDue) {
+    blocks.push({
+      key: "noDue",
+      node: group(
+        "noDue",
+        GROUP_LABEL.noDue,
+        <ClampedList items={noDue.items} onOpen={openItem} selectedId={listSelectedId} />,
+        { count: noDue.items.length },
+      ),
+    })
+  }
 
   const list = loading ? (
     <ListSkeleton />
@@ -100,33 +234,11 @@ export default function MockHomePage() {
         }
       />
     </Card>
-  ) : groups.length === 0 ? (
-    <Card>
-      <EmptyState
-        icon={CalendarCheck2}
-        title="最近の課題はありません"
-        description="新しい課題が届いたら、ここと通知でお知らせします。"
-        action={
-          <Button variant="secondary" onClick={() => setView("all")}>
-            すべてを見る
-          </Button>
-        }
-      />
-    </Card>
   ) : (
     <div className="space-y-6">
-      {groups.map((g, i) => (
-        <Appear key={g.key} delay={Math.min(0.06 * i, 0.24)}>
-          <section aria-labelledby={`group-${g.key}`}>
-            <SectionHeader
-              id={`group-${g.key}`}
-              title={GROUP_LABEL[g.key]}
-              count={g.items.length}
-              tone={g.key === "recent" ? "danger" : undefined}
-              action={g.key === "thisWeek" ? sortToggle : undefined}
-            />
-            <AssignmentList items={g.items} onOpen={(a) => setSelectedId(a.id)} selectedId={desktop ? selectedId : null} />
-          </section>
+      {blocks.map((b, i) => (
+        <Appear key={b.key} delay={Math.min(0.06 * i, 0.24)}>
+          {b.node}
         </Appear>
       ))}
     </div>
@@ -147,10 +259,12 @@ export default function MockHomePage() {
                   rangeLabel={rangeLabel}
                   weekLabel={weekLabel}
                   isCurrentWeek={weekDiff === 0}
-                  onPrevWeek={() => setWeekDiff((d) => d - 1)}
-                  onNextWeek={() => setWeekDiff((d) => d + 1)}
+                  onPrevWeek={() => moveWeek(-1)}
+                  onNextWeek={() => moveWeek(1)}
                   next={weekDiff === 0 ? next : null}
-                  onOpenNext={(a) => setSelectedId(a.id)}
+                  onOpenNext={openItem}
+                  pickedDay={pickedDay}
+                  onPickDay={pickDay}
                 />
               </Appear>
             )}
@@ -166,7 +280,7 @@ export default function MockHomePage() {
               <Segmented
                 label="表示する課題"
                 value={view}
-                onChange={setView}
+                onChange={changeView}
                 className="flex-1 sm:max-w-[13rem]"
                 options={[
                   { value: "recent", label: "最近" },
@@ -178,10 +292,11 @@ export default function MockHomePage() {
             <div className="mt-3">
               {view === "all" && !loading && !empty ? (
                 <AllList
-                  onOpen={(a) => setSelectedId(a.id)}
-                  selectedId={desktop ? selectedId : null}
+                  onOpen={openItem}
+                  selectedId={listSelectedId}
                   month={allMonth}
                   onMonthChange={setAllMonth}
+                  focusWeek={focusWeek}
                 />
               ) : (
                 list
@@ -193,10 +308,7 @@ export default function MockHomePage() {
                 来週以降の課題が <span className="font-semibold tabular-nums text-foreground">{laterCount}</span> 件あります。
                 <button
                   type="button"
-                  onClick={() => {
-                    if (firstLater) setAllMonth(firstLater)
-                    setView("all")
-                  }}
+                  onClick={() => (firstLater ? showWeekInAll(firstLater) : setView("all"))}
                   className="ml-1 rounded-control font-medium text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/40"
                 >
                   すべてで見る
@@ -228,14 +340,8 @@ export default function MockHomePage() {
                         カレンダー
                       </Link>
                     </div>
-                    <MonthGrid
-                      month={allMonth}
-                      selected={calDay ?? now}
-                      onSelect={setCalDay}
-                      list={assignments}
-                      now={now}
-                      compact
-                    />
+                    {/* 表示だけ。日付は選べない（塗りの丸は今日） */}
+                    <MonthGrid month={allMonth} list={assignments} now={now} compact />
                   </Card>
                   <p className="px-2 text-[13px] leading-relaxed text-muted-foreground">
                     課題をクリックすると、ここに詳細が出ます。
