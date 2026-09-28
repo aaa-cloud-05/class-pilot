@@ -12,13 +12,11 @@ import {
   LogIn,
   LogOut,
   Mail,
-  Pencil,
   Trash2,
   Wrench,
 } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
 import { useApp, type ThemeMode } from "@/components/app/provider"
-import { Avatar, AvatarPicker } from "@/components/app/avatar"
 import { clearAllClientData } from "@/lib/debug-clear"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import {
@@ -43,7 +41,6 @@ export default function MockSettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [confirmText, setConfirmText] = useState("")
   const [clearOpen, setClearOpen] = useState(false)
-  const [avatarOpen, setAvatarOpen] = useState(false)
 
   const visibleCourses = courses.filter((c) => !c.hidden).length
 
@@ -54,18 +51,9 @@ export default function MockSettingsPage() {
         <div className="space-y-7">
           {loggedIn ? (
             <Card className="flex items-center gap-4 p-4">
-              {/* アイコンを押すと選び直せる */}
-              <button
-                type="button"
-                onClick={() => setAvatarOpen(true)}
-                aria-label="アイコンを変える"
-                className="relative shrink-0 rounded-[24%] outline-none transition-transform active:scale-95 focus-visible:ring-3 focus-visible:ring-ring/40"
-              >
-                <Avatar size={48} />
-                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-card text-muted-foreground shadow-card">
-                  <Pencil className="h-3 w-3" aria-hidden />
-                </span>
-              </button>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-[18px] font-semibold text-muted-foreground">
+                {(session?.user?.name ?? session?.user?.email ?? "?").trim().charAt(0)}
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[17px] font-bold">{session?.user?.name ?? "ログイン中"}</p>
                 <p className="truncate text-[14px] text-muted-foreground">{session?.user?.email ?? ""}</p>
@@ -182,8 +170,6 @@ export default function MockSettingsPage() {
           </ListGroup>
         </div>
       </PageBody>
-
-      <AvatarPicker open={avatarOpen} onClose={() => setAvatarOpen(false)} />
 
       <Sheet open={clearOpen} onClose={() => setClearOpen(false)} title="この端末のデータを消去">
         <div className="space-y-4 pt-2">
