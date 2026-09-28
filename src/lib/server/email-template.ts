@@ -41,8 +41,9 @@ const C = {
   soonText: "#b7791f",
 };
 
-export function renderDeadlineEmail({ assignmentTitle, courseName, timeLabel, dueDate, link, appUrl }: DeadlineEmailContent) {
-  const due = dueDate.toLocaleString("ja-JP", {
+/** 締切日時を日本時間の「9月30日(水) 23:59」にする。メールとプッシュで同じ書き方にする */
+export function formatDueJst(d: Date): string {
+  return d.toLocaleString("ja-JP", {
     timeZone: "Asia/Tokyo",
     month: "long",
     day: "numeric",
@@ -50,6 +51,10 @@ export function renderDeadlineEmail({ assignmentTitle, courseName, timeLabel, du
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+export function renderDeadlineEmail({ assignmentTitle, courseName, timeLabel, dueDate, link, appUrl }: DeadlineEmailContent) {
+  const due = formatDueJst(dueDate);
   // 通知の止め方を必ず本文に置く。受信者が止め方を見つけられないと「迷惑メール」報告に直結し、
   // 送信ドメインの評判が落ちて他のユーザーにも届かなくなる。
   const settingsUrl = `${appUrl}/settings/notifications`;

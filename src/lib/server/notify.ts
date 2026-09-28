@@ -5,6 +5,7 @@ import {
   type PendingNotification,
 } from "@/lib/server/notification-logic";
 import { sendDeadlineEmail } from "@/lib/server/email";
+import { formatDueJst } from "@/lib/server/email-template";
 import { sendPushToUser, isPushConfigured } from "@/lib/server/push";
 import type { NotificationPreset } from "@/lib/notification-store";
 import type { Assignment } from "@/lib/types";
@@ -73,7 +74,8 @@ export async function notifyUser(
       ? deliver(userId, "push", false, assignments, ns, alreadySentKeys, now, async (p) => {
           const ok = await sendPushToUser(userId, {
             title: `締切まであと${p.label}`,
-            body: `${p.assignmentTitle}（${p.courseName}）`,
+            // ロック画面で「どの課題が・いつまでか」まで読めるように、課題名と「科目・締切日時」の2行にする
+            body: `${p.assignmentTitle}\n${p.courseName}・${formatDueJst(p.dueDate)} まで`,
             // 通知をタップしたらアプリを開く。課題ページ自体はログインが要るため
             url: "/",
             tag: `deadline-${p.assignmentId}`,
