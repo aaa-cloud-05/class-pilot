@@ -1,0 +1,20 @@
+{
+  "name": "unionfetch-video",
+  "private": true,
+  "description": "UnionFetch の OG 画像・紹介動画を Remotion で作る（アプリとは別の依存。Vercel のビルドには含まれない）",
+  "scripts": {
+    "studio": "remotion studio",
+    "og": "remotion still og ../public/og.png"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.529",
+    "@remotion/google-fonts": "4.0.529",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "remotion": "4.0.529"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
+}

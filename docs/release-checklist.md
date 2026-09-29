@@ -109,6 +109,7 @@
       無料プランは月5万イベント・保存1か月・カスタムイベント不可。北極星の「3h救済数」は
       画面ではなくサーバで起きるので、Analytics では測れない（NotificationHistory から数える）
 - [x] OG 画像を `public/og.png`（1672×941）に置き、`layout.tsx` の OG / X カードを差し替え（2026-09-15）
+- [x] OG 画像を作り直し（2026-09-29）。`video/` の Remotion で 1200×630 に。新しいキャッチコピー・実際のホーム画面・メールのカード。**他社のロゴは入れない**
       `twitter.card` は `summary_large_image`。16:9 なので X（2:1）では上下が少し切れる。
       **Google Classroom のロゴが入っている**点は backlog の「商標/ロゴ」を参照
 - [x] アイコンを UnionFetch のマーク（カラフルな U）に差し替え（2026-09-15）

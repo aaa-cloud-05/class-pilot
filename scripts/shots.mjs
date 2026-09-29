@@ -29,7 +29,13 @@ const SHOTS = [
   { name: "home-desktop", path: "/", viewport: DESKTOP, wait: "あと" },
   { name: "calendar-desktop", path: "/calendar", viewport: DESKTOP, wait: "この月" },
   { name: "settings-desktop", path: "/settings/notifications", viewport: DESKTOP, wait: "締切をメールで知らせる" },
+  // OG 画像（video/）に入れるホーム。セットアップの案内は閉じておく
+  { name: "home-mobile", dir: "video/public", path: "/", viewport: MOBILE, wait: "あと", click: 'button[aria-label="セットアップの案内を閉じる"]', key: "og-home" },
 ];
+
+/** ONLY=og-home のように名前（key か name）を渡すと、それだけ撮る */
+const ONLY = process.env.ONLY?.split(",");
+const TARGETS = ONLY ? SHOTS.filter((s) => ONLY.includes(s.key ?? s.name)) : SHOTS.filter((s) => !s.key);
 
 /** 未ログイン時の一次ストア（IndexedDB）にデモ用の課題を書き込む */
 const SEED = async () => {
@@ -109,7 +115,7 @@ const SEED = async () => {
 const browser = await chromium.launch({ executablePath: CHROME });
 await mkdir(OUT, { recursive: true });
 
-for (const s of SHOTS) {
+for (const s of TARGETS) {
   const ctx = await browser.newContext({
     viewport: s.viewport,
     deviceScaleFactor: 2,
@@ -132,7 +138,8 @@ for (const s of SHOTS) {
   // Next.js の開発インジケータは製品の一部ではないので隠す
   await page.addStyleTag({ content: "nextjs-portal,[data-nextjs-dev-tools-button],#__next-build-watcher{display:none!important}" });
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: `${OUT}/${s.name}.png` });
+  await mkdir(s.dir ?? OUT, { recursive: true });
+  await page.screenshot({ path: `${s.dir ?? OUT}/${s.name}.png` });
   console.log("撮影:", s.name, `${s.viewport.width}x${s.viewport.height}`);
   await ctx.close();
 }
