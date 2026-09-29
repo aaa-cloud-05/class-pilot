@@ -1,11 +1,25 @@
 "use client"
 
-import { Eye, FileText, Mail, MessageSquare, RefreshCw, Shield } from "lucide-react"
+import { Eye, FileText, Info, Mail, MessageSquare, RefreshCw, Shield } from "lucide-react"
+import { useApp } from "@/components/app/provider"
 import { MobileHeader, PageBody } from "@/components/app/shell"
-import { ListGroup, RowLink } from "@/components/app/ui"
+import { ListGroup, RowButton, RowLink } from "@/components/app/ui"
+import { VERSION_LABEL } from "@/lib/app-info"
 import { FEEDBACK_FORM_URL, SUPPORT_EMAIL } from "@/lib/links"
 
 export default function MockHelpIndexPage() {
+  const { showToast } = useApp()
+
+  // 問い合わせに貼れるよう、押すとバージョンをコピーする
+  const copyVersion = async () => {
+    try {
+      await navigator.clipboard.writeText(`UnionFetch ${VERSION_LABEL}`)
+      showToast("バージョンをコピーしました")
+    } catch {
+      showToast("コピーできませんでした")
+    }
+  }
+
   return (
     <>
       <MobileHeader variant="back" title="ヘルプ" backHref="/settings" />
@@ -32,7 +46,10 @@ export default function MockHelpIndexPage() {
             />
           </ListGroup>
 
-          <ListGroup title="ご意見・お問い合わせ" footer="不具合やご意見はフォームから気軽にどうぞ。返事が必要なときはメールでも受け付けます。">
+          <ListGroup
+            title="ご意見・お問い合わせ"
+            footer="不具合やご意見はフォームから気軽にどうぞ。返事が必要なときはメールでも受け付けます。どちらも、下のバージョンを書いてもらえると調べやすくなります。"
+          >
             <RowLink
               href={FEEDBACK_FORM_URL}
               external
@@ -43,9 +60,19 @@ export default function MockHelpIndexPage() {
             <RowLink href={`mailto:${SUPPORT_EMAIL}`} icon={Mail} label="お問い合わせ" detail={SUPPORT_EMAIL} />
           </ListGroup>
 
-          <ListGroup title="規約">
+          <ListGroup
+            title="このアプリについて"
+            footer="UnionFetch は Google・WebClass とは関係のない非公式ツールです。課題は読み取り専用で取得し、パスワードは扱いません。"
+          >
             <RowLink href="/privacy" icon={FileText} label="プライバシーポリシー" />
             <RowLink href="/terms" icon={FileText} label="利用規約" />
+            <RowButton
+              icon={Info}
+              label="バージョン"
+              description="押すとコピーします"
+              detail={<span className="tabular-nums">{VERSION_LABEL}</span>}
+              onClick={copyVersion}
+            />
           </ListGroup>
         </div>
       </PageBody>
