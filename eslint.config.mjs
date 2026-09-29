@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Remotion（OG 画像・動画）は別の依存で動かす
+    "video/**",
   ]),
 ]);
 

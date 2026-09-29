@@ -14,7 +14,7 @@
 - [x] 🟠 **成績の非保持**：Classroom の `assignedGrade`/`maxPoints`、WebClass の最高点はいずれも**取得も保存もしていない**（`transform.ts` / `webclass.ts` で除外）。プライバシーポリシーの記載と実装が一致していることを確認済み。
   - 残：`Assignment` テーブルに未使用の `grade` / `maxPoints` カラムだけが残っている。混乱の元なので、いずれ削除してよい。
 - [ ] 🟠 商標/ロゴ：公式に見える装飾は避ける。「Sign in with Google」は Google ブランドガイド順守。アプリ名 "UnionFetch" の商標衝突を一応確認。
-  - OG 画像（`public/og.png`）に **Google Classroom のロゴアイコン**と WebClass のロゴ風の文字が入っている。非提携の注記はあるが、Google は製品ロゴの無断使用を認めていないので、広く配る前に**サービス名の文字だけに差し替える**のが安全。
+  - ~~OG 画像（`public/og.png`）に Google Classroom のロゴアイコンと WebClass のロゴ風の文字が入っている~~ → **2026-09-29 に作り直して解消**（サービス名は文字だけ）。
 - [ ] 🟠 WebClass 規程の「定められた目的以外の利用」が唯一のやわらかい論点。CSV取込の方が更に安全。多数配布前に情報基盤へ一報が無難。
 
 ## コア機能

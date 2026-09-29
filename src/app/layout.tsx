@@ -43,13 +43,14 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/",
     locale: "ja_JP",
-    images: [{ url: "/og.png", width: 1672, height: 941, alt: TITLE }],
+    // 画像は video/（Remotion）で作る。差し替えたら ?v= を上げる（LINE・X が古い画像をキャッシュするため）
+    images: [{ url: "/og.png?v=2", width: 1200, height: 630, alt: TITLE }],
   },
   twitter: {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["/og.png"],
+    images: ["/og.png?v=2"],
   },
 };
 
