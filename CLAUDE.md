@@ -19,6 +19,7 @@ Google Classroom + WebClass の課題を集約し、締切をメール/ブラウ
 - `docs/backlog.md` — 未実装機能・セキュリティ/法務/使用量の課題（実装現況に同期済み）
 - `docs/ui-playbook.md` — **UI の作り方・アンチパターン・確定値（v1〜v5 の学び）**。画面を触る前に読む
 - `docs/ui-v5-migration.md` — **v5 を本番 UI にするときの差分・矛盾・実装計画**
+- `docs/video-plan.md` — 動画2本（X 用の紹介・詳しい使い方）の構成案（未実装）。OG 画像と動画は `video/`（Remotion。アプリとは別の依存）
 - `docs/ui-redesign.md` — UI リデザインの作業メモ（**過去の記録**。モックは削除済み）。新しい画面構成・機能の対応表・スキルの使い分け。モックは `/mock`（本番では 404）、参考 DESIGN.md は `docs/design-refs/`
 - ※ `docs/phase-plan.md` / `phase2-implementation.md` / `known-issues.md` は**過去の記録**（各ファイル冒頭に明記）。現行は architecture.md 参照。
 
@@ -35,4 +36,5 @@ Google Classroom + WebClass の課題を集約し、締切をメール/ブラウ
 - **複雑すぎる実装は避ける**（ユーザーの明示的な好み）。
 - コミットメッセージ/PR本文に**メールアドレスを書かない**。公開連絡先は `support@unionfetch.com`（個人の Gmail アドレスは docs・コード・画面のどこにも書かない）。
 - ユーザーの代理ログインはしない（認証情報を入力しない）。
+- **通知まわり（`src/lib/server/notification-logic.ts` / `notify.ts`）を変えたら `npm run test:notify`** を流す（21のシナリオで「どのメールがいつ届くか」を確かめる）。
 - **本番に出すときは `package.json` の version を上げる**（ふだんはパッチ `npm version patch --no-git-tag-version`、区切りの大きい変更はマイナー）。`CHANGELOG.md` に1行足す。画面の「バージョン」は `next.config.ts` の `env` で埋め込む。
