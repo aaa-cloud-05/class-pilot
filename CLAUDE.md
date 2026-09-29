@@ -19,7 +19,7 @@ Google Classroom + WebClass の課題を集約し、締切をメール/ブラウ
 - `docs/backlog.md` — 未実装機能・セキュリティ/法務/使用量の課題（実装現況に同期済み）
 - `docs/ui-playbook.md` — **UI の作り方・アンチパターン・確定値（v1〜v5 の学び）**。画面を触る前に読む
 - `docs/ui-v5-migration.md` — **v5 を本番 UI にするときの差分・矛盾・実装計画**
-- `docs/video-plan.md` — 動画2本（X 用の紹介・詳しい使い方）の構成案（未実装）。OG 画像と動画は `video/`（Remotion。アプリとは別の依存）
+- `docs/video-plan.md` — 動画2本（X 用の紹介・詳しい使い方）の構成案（紹介は作成済み、使い方は未実装）。OG 画像と動画は `video/`（Remotion。アプリとは別の依存）
 - `docs/ui-redesign.md` — UI リデザインの作業メモ（**過去の記録**。モックは削除済み）。新しい画面構成・機能の対応表・スキルの使い分け。モックは `/mock`（本番では 404）、参考 DESIGN.md は `docs/design-refs/`
 - ※ `docs/phase-plan.md` / `phase2-implementation.md` / `known-issues.md` は**過去の記録**（各ファイル冒頭に明記）。現行は architecture.md 参照。
 

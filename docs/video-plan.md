@@ -1,6 +1,6 @@
-# 動画の構成案（2本・未実装）
+# 動画の構成案（2本）
 
-最終更新: 2026-09-29 ／ ステータス: **構成案。まだ作っていない。**
+最終更新: 2026-09-29 ／ ステータス: **A（X 用の紹介）は作った**（`video/` の `teaser`）。B（詳しい使い方）は構成案のまま。
 
 作るのは2本。どちらも `video/`（Remotion）で組み、アプリの画面は Playwright でデモデータを撮る（`scripts/shots.mjs` と同じ種データ）。
 **他社のロゴ（Google Classroom・WebClass）は使わない**。実在の氏名・学籍番号・大学名・コース名は映さない。
@@ -8,6 +8,13 @@
 ---
 
 ## A. 紹介動画（X に貼る用）
+
+**作ったもの（2026-09-29）**: `cd video && npm run teaser`（1080×1080）/ `npm run teaser:wide`（1920×1080）。約25秒・無音。
+
+- アプリの画面は**本物の UI**（デモデータで撮影）。カメラで寄り、マウスのカーソルと押した波紋・囲み枠で見る場所を示す
+- 下の表の 8–15秒（リストと棒グラフ）は、スマホ1台の中で続けて見せる1つの場面にまとめた（リストへスクロール → 今週のカードに寄る → 木曜の棒を押す → その日の課題へ）
+- メールは本物のテンプレート（`src/lib/server/email-template.ts`）で撮った本文に、通知のカードが降りてくる
+- 撮り直し: dev サーバを起動して `node --experimental-strip-types scripts/teaser-shots.mjs`（手順は `video/README.md`）
 
 | 項目 | 内容 |
 |---|---|
@@ -69,8 +76,8 @@
 - **撮れないもの**: ブラウザ自体の画面（ブックマークの編集・拡張機能・iPhone の Safari）は Playwright では撮れない。
   ユーザーに画面録画してもらう（PC は Xbox Game Bar か OBS、iPhone は画面収録）
 - **WebClass の画面**: 大学名・氏名・コース名が映るので、Remotion でぼかすか、「WebClass のページ」として図に置き換える
-- **アプリの画面**: `scripts/shots.mjs` を動画用に広げる（Playwright の `recordVideo`、2倍の解像度、`reducedMotion` は外して入場アニメーションも撮る）。
-  UI が変わったら同じ台本で撮り直せるようにしておく
-- **Remotion**: `video/src/Root.tsx` に `teaser`（1080×1080 / 1920×1080）と `guide`（1920×1080）を足す。
-  端末の枠・ズーム・カーソルの強調・字幕の部品は OG（`video/src/og/Og.tsx`）と色と書体を揃える
+- **アプリの画面**: A と同じく、ページ全体を静止画で撮ってカメラ・カーソルで動かす（`scripts/teaser-shots.mjs` のやり方）。
+  Playwright の `recordVideo` は画質が低いので使わない。押す前と後を2枚撮って重ねて切り替える。UI が変わったら撮り直す
+- **Remotion**: `video/src/Root.tsx` に `guide`（1920×1080）を足す。端末の枠（`parts/Phone.tsx`）・カメラとカーソル（`teaser/camera.tsx`）・
+  見出し（`teaser/stage.tsx`）は A のものを使い回す
 - 撮った動画ファイルは大きいので、リポジトリには入れない（`video/public/clips/` を ignore する想定）
