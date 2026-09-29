@@ -32,7 +32,19 @@ export default function MockNotificationSettingsPage() {
             />
           </ListGroup>
 
-          <ListGroup title="タイミング" className={cn(!on && "pointer-events-none opacity-50")}>
+          <ListGroup
+            title="タイミング"
+            footer={
+              <>
+                課題を追加・取り込んだ直後や設定を変えた直後の30分以内に来るはずのメールは送りません。詳しくは{" "}
+                <Link href="/settings/help/safety" className="font-semibold text-primary hover:underline">
+                  ヘルプ
+                </Link>
+                。
+              </>
+            }
+            className={cn(!on && "pointer-events-none opacity-50")}
+          >
             <div className="p-4">
               <ReminderPicker disabled={!on} />
             </div>

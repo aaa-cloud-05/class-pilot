@@ -1,9 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { FileText, Mail } from "lucide-react"
+import { FileText, Mail, MessageSquare } from "lucide-react"
 import { Article, ArticleSection, Faq } from "@/components/app/article"
 import { Card, ListGroup, RowLink } from "@/components/app/ui"
+import { FEEDBACK_FORM_URL, SUPPORT_EMAIL } from "@/lib/links"
 
 /** 箇条書き。太字の1文＋補足の形で揃える */
 function Points({ items }: { items: { head: string; body?: React.ReactNode }[] }) {
@@ -125,6 +126,20 @@ export default function SafetyGuidePage() {
             なければ未提出で、途中の状態はありません。WebClass で提出したあとは、取り込み直すと反映されます。手で追加した課題は、丸チェックで自分で切り替えてください。
           </Faq>
 
+          <Faq q="メールはいつ届く？">
+            <p>設定 › 通知 で選んだタイミング（初めは締切の1日前と3時間前）に届きます。そのうえで、次のように動きます。</p>
+            <ul className="mt-2 space-y-1.5">
+              <li>
+                課題を追加・取り込んだ直後や、設定を変えた直後の<strong>30分以内</strong>に来るはずのメールは送りません。いま画面で見ている課題に、すぐメールが届かないようにするためです
+              </li>
+              <li>
+                選んだタイミングがもう過ぎていて、この先のタイミングも残っていない課題は、締切がまだ先なら<strong>翌朝6時台</strong>に「あと○時間」のメールを1通送ります
+              </li>
+              <li>提出済みにした・締切が変わった・通知を切ったときは、予約していたメールを取り消します（締切が変わったものは新しい時刻で予約し直します）</li>
+              <li>WebClass で提出したことは、取り込み直すまで分かりません。提出したら取り込み直すか、アプリで提出済みにしてください</li>
+            </ul>
+          </Faq>
+
           <Faq q="通知が来ない">
             通知はメールで届きます。設定 › 通知 で「締切をメールで知らせる」がオンかを確認してください。
             オンなのに届かないときは、迷惑メールのフォルダも見てください。メール通知にはログインが必要です。
@@ -142,10 +157,17 @@ export default function SafetyGuidePage() {
         </Card>
       </ArticleSection>
 
-      <ListGroup title="規約とお問い合わせ" footer="解決しないときは、お問い合わせからご連絡ください。">
+      <ListGroup title="ご意見・お問い合わせ" footer="解決しないときは、フォームかメールでご連絡ください。">
+        <RowLink
+          href={FEEDBACK_FORM_URL}
+          external
+          icon={MessageSquare}
+          label="ご意見・不具合の報告"
+          description="Google フォームが開きます"
+        />
+        <RowLink href={`mailto:${SUPPORT_EMAIL}`} icon={Mail} label="お問い合わせ" detail={SUPPORT_EMAIL} />
         <RowLink href="/privacy" icon={FileText} label="プライバシーポリシー" />
         <RowLink href="/terms" icon={FileText} label="利用規約" />
-        <RowLink href="mailto:support@unionfetch.com" icon={Mail} label="お問い合わせ" detail="support@unionfetch.com" />
       </ListGroup>
     </Article>
   )

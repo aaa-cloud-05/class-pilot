@@ -10,9 +10,9 @@ URL : unionfetch.com
 
 大学の課題は複数の LMS に分かれて存在する。WebClass には通知機能がなく、自分で開かないと締切に気づけない。Google Classroom には通知があるが、WebClass の課題は含まれない。
 
-UnionFetch は両方の課題を1つのリストに統合し、締切の前にメールと Web Push で通知する。あわせて、1週間の課題量と進捗をホーム画面で可視化する。
+UnionFetch は両方の課題を1つのリストに統合し、締切の前にメールで通知する。あわせて、1週間の課題量と進捗をホーム画面で可視化する。
 
-開発期間は 2026年6月18日 から 2026年9月23日。コミット 203件、マージ済み PR 85件。
+開発は 2026年6月18日 から。コミット 222件、マージ済み PR 90件（2026年9月29日時点）。
 
 ---
 
@@ -64,7 +64,7 @@ UnionFetch は両方の課題を1つのリストに統合し、締切の前に�
 |---|---|
 | 課題の集約 | WebClass と Google Classroom の課題を1つのリストに統合 |
 | 今週の可視化 | 曜日ごとの課題数を積み上げ棒グラフで表示。状態別に色分けした進捗バーで週の構成を表示 |
-| 締切通知 | メールと Web Push。24時間前 / 3時間前 / 1時間前から選択。WebClass の課題にも通知する |
+| 締切通知 | メール。1時間前〜3日前の7つから2つまで選ぶ。WebClass の課題にも通知する。提出・締切の変更で予約を取り消す |
 | カレンダー | 月表示と週表示。日を選ぶとその日の課題を表示 |
 | 手動追加 | LMS に無い課題を自分で登録 |
 | コース管理 | コース単位で表示/非表示と通知のオン・オフを設定 |
@@ -77,7 +77,7 @@ UnionFetch は両方の課題を1つのリストに統合し、締切の前に�
 
 1. 朝アプリを開き、今週の残り件数と曜日ごとの負荷を確認する
 2. WebClass を開いたついでにブックマークレットで課題を取り込む。PC では Tampermonkey で自動取得
-3. 締切の前にメールまたはプッシュ通知を受け取る
+3. 締切の前にメールを受け取る
 4. 提出後、リストの丸チェックを押して提出済みにする
 5. 来週以降の課題を、すべてタブで月単位に切り替えて確認する
 
@@ -105,8 +105,9 @@ UnionFetch は両方の課題を1つのリストに統合し、締切の前に�
 | 認証 | NextAuth v5（Google OAuth） |
 | DB | Supabase（PostgreSQL・東京リージョン） / Prisma |
 | クライアント保存 | IndexedDB（`idb`） |
-| 通知 | Resend（メール・予約配信） / Web Push（VAPID） |
+| 通知 | Resend（メールの予約配信と取り消し） |
 | レートリミット | Upstash Redis |
+| アクセス解析 | Vercel Web Analytics（URL は `#`・`?` 以降を消してから送る） |
 | ホスティング | Vercel（Cron による通知バッチ） |
 | PWA | Service Worker |
 
@@ -145,7 +146,7 @@ IndexedDB は表示用のミラーとして扱う。未ログイン時のみ一�
 /calendar        カレンダー  月表示・週表示、選択日の課題
 /activity        通知        送信履歴と既読管理
 /settings        設定        アカウント・テーマ
-  /notifications             通知のオン・オフ、チャネル、タイミング、ミュート
+  /notifications             メール通知のオン・オフ、タイミング（2つまで）、ミュート
   /courses                   コースの表示/非表示と通知
   /setup                     WebClass 連携の手順
   /help/{screen,sync,safety} ヘルプ3画面
@@ -165,7 +166,7 @@ IndexedDB は表示用のミラーとして扱う。未ログイン時のみ一�
 User ─┬─ Account / Session          NextAuth
       ├─ Assignment                 課題本体
       ├─ NotificationSetting        通知設定（1:1）
-      ├─ PushSubscription           Web Push の購読
+      ├─ PushSubscription           Web Push の購読（画面からは外した。下の「通知」）
       └─ importTokenHash            自動同期用トークンのハッシュ
 ```
 
@@ -226,19 +227,21 @@ GET {BASE}/ip_mods.php/plugin/score_summary_table/contents?group_id=<id>
 
 ## 通知
 
-メールと Web Push の2チャネル。実装上の差は予約送信の可否にある。
+**メール一本**にしている。Web Push も実装したが、画面からは外した。
 
-| | メール（Resend） | Web Push |
-|---|---|---|
-| 予約送信 | できる | できない |
-| 送信タイミング | 事前に登録 | 送りたい時刻に誰かが実行する必要がある |
-| iOS | 届く | ホーム画面に追加した PWA のみ（16.4+） |
+外した理由は2つある。1つは、プッシュを予約できないこと。Vercel Hobby の Cron は1日1回しか動かないので、3時間前の通知が成り立たない。もう1つは、使ってみると通知がアプリを開いたときにしか出ず、役に立たなかったこと（本番では Web Push の鍵を設定しておらず、動いていたのはアプリを開いている間だけのブラウザ通知だった。iOS はホーム画面に追加しないと Web Push 自体が届かない）。サーバの送信処理と DB は残してある。
 
-Web Push は予約送信の仕組みがないため、Vercel Cron 前提の設計になる。Hobby プランの Cron は1日1回しか実行されず、3時間前通知が成立しない。このためメールを主、プッシュを従とした。
+| 仕様 | 内容 |
+|---|---|
+| タイミング | 1時間前・3時間前・6時間前・12時間前・1日前・2日前・3日前から2つまで（初期値 1日前＋3時間前） |
+| 送り方 | 送信時刻が30時間以内に来るものを Resend に予約する（分単位で正確）。それより先のものは次の判断のときに予約する |
+| 判断するとき | 毎朝6時台の Cron と、利用者の操作（同期・取り込み・課題の追加・編集・削除・設定変更）の直後 |
+| 取り消し | 提出・締切の変更・ミュート・削除・タイミング変更・通知オフで、予約済みのメールを取り消す。締切が変わったものは予約し直す |
+| 操作の直後 | 30分以内に来る予約も、送り時を過ぎたものの救済もしない（追加した直後にメールが飛ばないように）。救済は翌朝の Cron が判断する |
 
-送信対象の算出は `src/lib/server/notification-logic.ts` にあり、予約と取りこぼしの追いつきの両方を扱う。cron は DB を参照するため、Classroom・WebClass・手動追加のすべてが通知対象になる。
+送信対象の判断は `src/lib/server/notification-logic.ts` の純粋関数（`computePendingNotifications` / `planHistoryCleanup`）にまとめてある。`npm run test:notify` でその純粋関数に21のシナリオを流し、「どのメールがいつ届くか」を確かめる。追加の直後・初回の取り込み・提出・締切の延長と短縮・通知のオフとオン・タイミング変更などを含む。cron は DB を参照するため、Classroom・WebClass・手動追加のすべてが通知対象になる。
 
-経緯は [docs/notification-history.md](docs/notification-history.md)、今後の仕様案は [docs/notification-design.md](docs/notification-design.md)。
+経緯は [docs/notification-history.md](docs/notification-history.md)、構成は [docs/architecture.md](docs/architecture.md) のデータフロー⑥。
 
 ---
 
@@ -306,6 +309,7 @@ API の `answer_datetime` は必ず値か null のどちらかで、112行すべ
 | 9月上旬 | WebClass を DOM 解析から内部 JSON API へ全面移行。Tampermonkey による自動同期、Web Push を追加 |
 | 9月上旬 | アプリ名を UnionFetch に変更、独自ドメインへ移行 |
 | 9月中旬〜下旬 | UI をモック5世代で設計し直し、11本の PR に分割して本番へ移行 |
+| 9月下旬 | 通知をメール一本に。タイミングを選択式にし、予約メールの取りこぼしと取り消し漏れを直した。通知のシナリオ試験、Vercel Web Analytics を追加 |
 
 ### 印象に残った不具合
 
@@ -404,7 +408,7 @@ npm run dev
 | `AUTH_SECRET` | NextAuth |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth |
 | `RESEND_API_KEY` | メール送信 |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Web Push |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Web Push（任意。画面からは外したので本番では未設定） |
 | `CRON_SECRET` | 通知バッチの保護 |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | レートリミット |
 
@@ -418,7 +422,7 @@ npm run dev
 
 ## 今後
 
-- 通知仕様の見直し。現在のプリセット3種から [docs/notification-design.md](docs/notification-design.md) の構成へ
+- 通数が増えたら、朝に1通へまとめる方式（[docs/notification-design.md](docs/notification-design.md) の3本立て）を検討する。Resend の無料枠は全ユーザーで1日100通
 - 他大学への展開。ベース URL は自動解決するため、同じプラグインが導入されていれば動作する想定
 - 未実装項目は [docs/backlog.md](docs/backlog.md) に整理
 

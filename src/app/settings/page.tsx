@@ -12,6 +12,7 @@ import {
   LogIn,
   LogOut,
   Mail,
+  MessageSquare,
   Trash2,
   Wrench,
 } from "lucide-react"
@@ -19,6 +20,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useApp, type ThemeMode } from "@/components/app/provider"
 import { useEmailNotification } from "@/hooks/useEmailNotification"
 import { reminderLabel, remindersOf } from "@/lib/reminders"
+import { FEEDBACK_FORM_URL, SUPPORT_EMAIL } from "@/lib/links"
 import { clearAllClientData } from "@/lib/debug-clear"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import {
@@ -133,7 +135,8 @@ export default function MockSettingsPage() {
           >
             <RowLink href="/privacy" icon={FileText} label="プライバシーポリシー" />
             <RowLink href="/terms" icon={FileText} label="利用規約" />
-            <RowLink href="mailto:support@unionfetch.com" icon={Mail} label="お問い合わせ" detail="support@unionfetch.com" />
+            <RowLink href={FEEDBACK_FORM_URL} external icon={MessageSquare} label="ご意見・不具合の報告" />
+            <RowLink href={`mailto:${SUPPORT_EMAIL}`} icon={Mail} label="お問い合わせ" detail={SUPPORT_EMAIL} />
             <RowStatic icon={Info} label="バージョン" detail="0.1.0" />
           </ListGroup>
 

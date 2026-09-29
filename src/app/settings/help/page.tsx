@@ -1,8 +1,9 @@
 "use client"
 
-import { Eye, FileText, Mail, RefreshCw, Shield } from "lucide-react"
+import { Eye, FileText, Mail, MessageSquare, RefreshCw, Shield } from "lucide-react"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import { ListGroup, RowLink } from "@/components/app/ui"
+import { FEEDBACK_FORM_URL, SUPPORT_EMAIL } from "@/lib/links"
 
 export default function MockHelpIndexPage() {
   return (
@@ -31,10 +32,20 @@ export default function MockHelpIndexPage() {
             />
           </ListGroup>
 
-          <ListGroup title="規約とお問い合わせ" footer="解決しないときは、お問い合わせからご連絡ください。">
+          <ListGroup title="ご意見・お問い合わせ" footer="不具合やご意見はフォームから気軽にどうぞ。返事が必要なときはメールでも受け付けます。">
+            <RowLink
+              href={FEEDBACK_FORM_URL}
+              external
+              icon={MessageSquare}
+              label="ご意見・不具合の報告"
+              description="Google フォームが開きます"
+            />
+            <RowLink href={`mailto:${SUPPORT_EMAIL}`} icon={Mail} label="お問い合わせ" detail={SUPPORT_EMAIL} />
+          </ListGroup>
+
+          <ListGroup title="規約">
             <RowLink href="/privacy" icon={FileText} label="プライバシーポリシー" />
             <RowLink href="/terms" icon={FileText} label="利用規約" />
-            <RowLink href="mailto:support@unionfetch.com" icon={Mail} label="お問い合わせ" detail="support@unionfetch.com" />
           </ListGroup>
         </div>
       </PageBody>
