@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { NotificationScheduler } from "@/components/NotificationScheduler";
+import { VercelAnalytics } from "@/components/VercelAnalytics";
 import { AppProvider } from "@/components/app/provider";
 import { AppShell } from "@/components/app/shell";
 import { getAppUrl } from "@/lib/server/app-url";
@@ -69,6 +70,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans antialiased">
         <ServiceWorkerRegistrar />
         <NotificationScheduler />
+        <VercelAnalytics />
         <SessionProvider>
           <AppProvider>
             <AppShell>{children}</AppShell>

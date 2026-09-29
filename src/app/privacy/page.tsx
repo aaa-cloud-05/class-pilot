@@ -5,7 +5,7 @@ export const metadata = {
   title: "プライバシーポリシー",
 };
 
-const UPDATED = "2026年7月1日";
+const UPDATED = "2026年9月29日";
 // Cloudflare Email Routing で個人の Gmail に転送している（受信専用）
 const CONTACT = "support@unionfetch.com";
 
@@ -38,6 +38,11 @@ export default function PrivacyPage() {
             </li>
             <li>WebClass から取り込んだデータ（コース名、教材、締切、コースページへのリンク、状態）</li>
             <li>ユーザーが本サービス内で作成・編集した課題、および通知設定</li>
+            <li>
+              アクセス解析のための情報（閲覧したページのパス、参照元、国・地域、端末・OS・ブラウザの種類）。
+              Cookie は使わず、個人を特定しない集計データとして扱います。課題名などが入りうる URL の一部
+              （「#」「?」以降）は送信しません。
+            </li>
           </ul>
 
           <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
@@ -58,7 +63,8 @@ export default function PrivacyPage() {
           <h2 className="text-base font-semibold text-gray-900 mb-2">2. 利用目的</h2>
           <ul className="list-disc list-inside space-y-1">
             <li>課題を一覧・カレンダー・統計として表示するため</li>
-            <li>締切前のリマインダー（メール・ブラウザ通知）を送信するため</li>
+            <li>締切前のリマインダー（メール）を送信するため</li>
+            <li>どの画面がどのくらい使われているかを把握し、本サービスを改善するため</li>
           </ul>
           <p className="mt-2">
             取得した情報を、上記目的以外で利用したり、広告目的で第三者に販売・提供することはありません。
@@ -78,7 +84,7 @@ export default function PrivacyPage() {
           <p>本サービスは以下の外部サービスを利用します。各社のポリシーが適用されます。</p>
           <ul className="list-disc list-inside space-y-1 mt-1">
             <li>Google（認証・Google Classroom API）</li>
-            <li>Vercel（ホスティング）</li>
+            <li>Vercel（ホスティング・アクセス解析）</li>
             <li>Supabase（データベース）</li>
             <li>Resend（メール送信）</li>
           </ul>
