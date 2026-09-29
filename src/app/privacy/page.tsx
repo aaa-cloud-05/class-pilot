@@ -38,6 +38,7 @@ export default function PrivacyPage() {
             </li>
             <li>WebClass から取り込んだデータ（コース名、教材、締切、コースページへのリンク、状態）</li>
             <li>ユーザーが本サービス内で作成・編集した課題、および通知設定</li>
+            <li>ご意見・不具合の報告フォーム（Google フォーム）に入力された内容（任意で入力したメールアドレスを含む）</li>
             <li>
               アクセス解析のための情報（閲覧したページのパス、参照元、国・地域、端末・OS・ブラウザの種類）。
               Cookie は使わず、個人を特定しない集計データとして扱います。課題名などが入りうる URL の一部
@@ -65,6 +66,7 @@ export default function PrivacyPage() {
             <li>課題を一覧・カレンダー・統計として表示するため</li>
             <li>締切前のリマインダー（メール）を送信するため</li>
             <li>どの画面がどのくらい使われているかを把握し、本サービスを改善するため</li>
+            <li>ご意見・不具合の報告に対応し、本サービスを改善するため</li>
           </ul>
           <p className="mt-2">
             取得した情報を、上記目的以外で利用したり、広告目的で第三者に販売・提供することはありません。
@@ -83,7 +85,7 @@ export default function PrivacyPage() {
           <h2 className="text-base font-semibold text-gray-900 mb-2">4. 利用する外部サービス</h2>
           <p>本サービスは以下の外部サービスを利用します。各社のポリシーが適用されます。</p>
           <ul className="list-disc list-inside space-y-1 mt-1">
-            <li>Google（認証・Google Classroom API）</li>
+            <li>Google（認証・Google Classroom API・ご意見の受付フォーム）</li>
             <li>Vercel（ホスティング・アクセス解析）</li>
             <li>Supabase（データベース）</li>
             <li>Resend（メール送信）</li>

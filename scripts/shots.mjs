@@ -28,7 +28,7 @@ const SHOTS = [
   { name: "setup-mobile", path: "/settings/setup", viewport: MOBILE, wait: "WebClass をつなぐ" },
   { name: "home-desktop", path: "/", viewport: DESKTOP, wait: "あと" },
   { name: "calendar-desktop", path: "/calendar", viewport: DESKTOP, wait: "この月" },
-  { name: "settings-desktop", path: "/settings/notifications", viewport: DESKTOP, wait: "締切の通知" },
+  { name: "settings-desktop", path: "/settings/notifications", viewport: DESKTOP, wait: "締切をメールで知らせる" },
 ];
 
 /** 未ログイン時の一次ストア（IndexedDB）にデモ用の課題を書き込む */
@@ -73,9 +73,9 @@ const SEED = async () => {
     mk(23, "cd", "自己分析ワークシート", null, "not_submitted"),
   ];
   const hist = [
-    { id: "n1", assignmentId: "s6", type: "3h", sentAt: Date.now() - 40 * 60000, title: "あと3時間で締切", body: "情報理論「第4回 小テスト（エントロピー）」", read: false },
-    { id: "n2", assignmentId: "s8", type: "24h", sentAt: Date.now() - 5 * 3600000, title: "明日が締切", body: "データベース論「ER 図の作成レポート」", read: false },
-    { id: "n3", assignmentId: "s5", type: "24h", sentAt: Date.now() - 30 * 3600000, title: "明日が締切", body: "線形代数学 II「演習問題4（行列式）」", read: true },
+    { id: "n1", assignmentId: "s6", type: "3h", sentAt: Date.now() - 40 * 60000, title: "締切まであと3時間", body: "「第4回 小テスト（エントロピー）」（情報理論）", read: false },
+    { id: "n2", assignmentId: "s8", type: "24h", sentAt: Date.now() - 5 * 3600000, title: "締切まであと1日", body: "「ER 図の作成レポート」（データベース論）", read: false },
+    { id: "n3", assignmentId: "s5", type: "24h", sentAt: Date.now() - 30 * 3600000, title: "締切まであと1日", body: "「演習問題4（行列式）」（線形代数学 II）", read: true },
   ];
   // src/lib/db.ts と同じスキーマで開く。新しいプロファイルでも store を作れるようにする
   const open = (name) => new Promise((res, rej) => {

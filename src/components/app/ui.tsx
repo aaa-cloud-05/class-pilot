@@ -209,7 +209,15 @@ function RowInner({
 const ROW = "flex min-h-[52px] w-full items-center gap-3 px-4 text-left outline-none"
 const ROW_HOVER = "transition-colors hover:bg-accent focus-visible:bg-accent active:bg-accent"
 
-export function RowLink({ href, ...rest }: RowBase & { href: string }) {
+export function RowLink({ href, external, ...rest }: RowBase & { href: string; external?: boolean }) {
+  // アプリの外（フォームなど）は別タブで開く。ホーム画面に追加したアプリから抜けないように
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cn(ROW, ROW_HOVER)}>
+        <RowInner {...rest} chevron />
+      </a>
+    )
+  }
   return (
     <Link href={href} className={cn(ROW, ROW_HOVER)}>
       <RowInner {...rest} chevron />
