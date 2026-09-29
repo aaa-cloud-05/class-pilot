@@ -19,7 +19,7 @@
 ### 次にやること
 
 1. **新しい UI を実機で触る**（スマホ・PC）。移行直後なので、まずここ
-2. **B の残り**（任意・リリースは止めない）… Vercel Analytics、Upstash の本番 env 確認
+2. **B の残り**（任意・リリースは止めない）… Upstash の本番 env 確認（Vercel Analytics は 2026-09-29 に導入済み）
 3. **リリース** … 下の「リリース当日の手順」。友人3人に配って1週間
 3. **通知仕様の見直し** … 3本立て（[notification-design.md](./notification-design.md)）は
    **友人3人テストで通知洪水を実際に観測してから**着手する。
@@ -104,8 +104,10 @@
 - [x] `metadataBase` / OGP を設定（LINE・X で共有したときのカード）
 - [x] cron に `maxDuration = 60` とユーザー単位の並列化
 - [x] `.env.example` を実態に合わせる
-- [ ] **Vercel Analytics を入れる**（1行）。今は計測ゼロで、出した後に
-      北極星指標（起動回数・3h救済数）を後追いで測れない
+- [x] **Vercel Analytics を入れる**（2026-09-29）。`src/components/VercelAnalytics.tsx`。
+      送る URL は `#`・`?` 以降を消してパスだけにする（ブックマークレットは課題を `/import#…` に載せるため）。
+      無料プランは月5万イベント・保存1か月・カスタムイベント不可。北極星の「3h救済数」は
+      画面ではなくサーバで起きるので、Analytics では測れない（NotificationHistory から数える）
 - [x] OG 画像を `public/og.png`（1672×941）に置き、`layout.tsx` の OG / X カードを差し替え（2026-09-15）
       `twitter.card` は `summary_large_image`。16:9 なので X（2:1）では上下が少し切れる。
       **Google Classroom のロゴが入っている**点は backlog の「商標/ロゴ」を参照
