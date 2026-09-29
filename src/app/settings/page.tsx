@@ -6,13 +6,9 @@ import {
   BookOpen,
   Plug,
   Eraser,
-  FileText,
-  Info,
   Layers,
   LogIn,
   LogOut,
-  Mail,
-  MessageSquare,
   Trash2,
   Wrench,
 } from "lucide-react"
@@ -20,7 +16,6 @@ import { useSession, signOut } from "next-auth/react"
 import { useApp, type ThemeMode } from "@/components/app/provider"
 import { useEmailNotification } from "@/hooks/useEmailNotification"
 import { reminderLabel, remindersOf } from "@/lib/reminders"
-import { FEEDBACK_FORM_URL, SUPPORT_EMAIL } from "@/lib/links"
 import { clearAllClientData } from "@/lib/debug-clear"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import {
@@ -31,12 +26,10 @@ import {
   ListGroup,
   RowButton,
   RowLink,
-  RowStatic,
   Segmented,
   Sheet,
 } from "@/components/app/ui"
 import { timeAgo } from "@/lib/assignment-format"
-
 
 export default function MockSettingsPage() {
   const { loggedIn, mode, setMode, syncedAt, now, settings, courses, showToast } = useApp()
@@ -127,17 +120,6 @@ export default function MockSettingsPage() {
               label="ヘルプ"
               description="画面の見かた・同期のしくみ・安全性"
             />
-          </ListGroup>
-
-          <ListGroup
-            title="このアプリについて"
-            footer="UnionFetch は Google・WebClass とは関係のない非公式ツールです。課題は読み取り専用で取得し、パスワードは扱いません。"
-          >
-            <RowLink href="/privacy" icon={FileText} label="プライバシーポリシー" />
-            <RowLink href="/terms" icon={FileText} label="利用規約" />
-            <RowLink href={FEEDBACK_FORM_URL} external icon={MessageSquare} label="ご意見・不具合の報告" />
-            <RowLink href={`mailto:${SUPPORT_EMAIL}`} icon={Mail} label="お問い合わせ" detail={SUPPORT_EMAIL} />
-            <RowStatic icon={Info} label="バージョン" detail="0.1.0" />
           </ListGroup>
 
           {loggedIn && (
