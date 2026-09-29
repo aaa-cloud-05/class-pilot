@@ -22,7 +22,7 @@ export default function SyncGuidePage() {
             <li>赤：古い、または連携が切れている</li>
             <li>灰：まだつないでいない</li>
           </ul>
-          <p className="mt-3">点をタップすると、取り込みの状況と WebClass の URL 設定が開きます。</p>
+          <p className="mt-3">点をタップすると、取り込みの状況が開きます。WebClass の URL は 設定 › セットアップ で設定します。</p>
         </Faq>
 
         <Faq q="取り込める件数の上限">

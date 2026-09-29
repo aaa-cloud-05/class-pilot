@@ -133,7 +133,7 @@ export default function MockSettingsPage() {
           >
             <RowLink href="/privacy" icon={FileText} label="プライバシーポリシー" />
             <RowLink href="/terms" icon={FileText} label="利用規約" />
-            <RowStatic icon={Mail} label="お問い合わせ" detail="support@unionfetch.com" />
+            <RowLink href="mailto:support@unionfetch.com" icon={Mail} label="お問い合わせ" detail="support@unionfetch.com" />
             <RowStatic icon={Info} label="バージョン" detail="0.1.0" />
           </ListGroup>
 
