@@ -168,8 +168,9 @@ WebClass の任意のページで実行（ブックマークレット・手動�
 **端末側**: `NotificationScheduler` が起動時/可視化時に `checkAndNotify()` を実行し、
 「通知」画面に出す履歴（`notification-history`・IndexedDB）を**記録するだけ**。OS の通知は出さない。
 
-**送るタイミング**: 利用者が「1時間前〜3日前」の7つから2つまで選ぶ（`src/lib/reminders.ts`、
-`NotificationSetting.reminderMinutes`）。未設定の人は以前の `preset` から読み替える。
+**送るタイミング**: 利用者が「1時間前〜3日前」の7つから1つ選ぶ（`src/lib/reminders.ts`、
+`NotificationSetting.reminderMinutes`）。初期値は6時間前。1つに絞っているのは画面だけで、サーバは以前の
+「2つまで」の設定もそのまま扱う。未設定の人は以前の `preset` から読み替える（`standard` は初期値として読む）。
 
 **サーバ通知（メール / Web Push）**: 送信の実体は `notifyUser(userId)`（`src/lib/server/notify.ts`）に
 集約され、**次の経路から呼ばれる**。何度呼んでも「いまの状態に合わせ直す」だけなので安全。

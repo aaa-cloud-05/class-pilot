@@ -7,7 +7,7 @@ export interface NotificationSettings {
   enabled: boolean;
   /** 以前のプリセット。reminderMinutes が空のときだけ読み替えに使う（src/lib/reminders.ts） */
   preset: NotificationPreset;
-  /** 締切の何分前に知らせるか（最大2つ） */
+  /** 締切の何分前に知らせるか（画面では1つ。以前の設定では2つのことがある） */
   reminderMinutes: number[];
   mutedCourses: string[];
   mutedAssignments: string[];
