@@ -36,5 +36,5 @@ Google Classroom + WebClass の課題を集約し、締切をメール/ブラウ
 - **複雑すぎる実装は避ける**（ユーザーの明示的な好み）。
 - コミットメッセージ/PR本文に**メールアドレスを書かない**。公開連絡先は `support@unionfetch.com`（個人の Gmail アドレスは docs・コード・画面のどこにも書かない）。
 - ユーザーの代理ログインはしない（認証情報を入力しない）。
-- **通知まわり（`src/lib/server/notification-logic.ts` / `notify.ts`）を変えたら `npm run test:notify`** を流す（21のシナリオで「どのメールがいつ届くか」を確かめる）。
+- **通知まわり（`src/lib/server/notification-logic.ts` / `notify.ts`）を変えたら `npm run test:notify`** を流す（25のシナリオで「どのメールがいつ届くか」を確かめる）。
 - **本番に出すときは `package.json` の version を上げる**（ふだんはパッチ `npm version patch --no-git-tag-version`、区切りの大きい変更はマイナー）。`CHANGELOG.md` に1行足す。画面の「バージョン」は `next.config.ts` の `env` で埋め込む。
