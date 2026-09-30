@@ -4,11 +4,17 @@
   "description": "UnionFetch の OG 画像・紹介動画を Remotion で作る（アプリとは別の依存。Vercel のビルドには含まれない）",
   "scripts": {
     "studio": "remotion studio",
-    "og": "remotion still og ../public/og.png"
+    "og": "remotion still og ../public/og.png",
+    "teaser": "remotion render teaser out/teaser.mp4",
+    "teaser:wide": "remotion render teaser-wide out/teaser-wide.mp4",
+    "guide": "remotion render guide out/guide.mp4",
+    "audio": "node scripts/make-audio.mjs",
+    "guide:web": "npm run guide && remotion ffmpeg -loglevel error -y -i out/guide.mp4 -c:v libx264 -preset slow -crf 28 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 96k ../public/videos/guide.mp4 && remotion still guide --frame=110 --scale=0.5 --image-format=jpeg --jpeg-quality=82 ../public/videos/guide-poster.jpg"
   },
   "dependencies": {
     "@remotion/cli": "4.0.529",
     "@remotion/google-fonts": "4.0.529",
+    "@remotion/transitions": "4.0.529",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "remotion": "4.0.529"
