@@ -8,7 +8,8 @@
     "teaser": "remotion render teaser out/teaser.mp4",
     "teaser:wide": "remotion render teaser-wide out/teaser-wide.mp4",
     "guide": "remotion render guide out/guide.mp4",
-    "audio": "node scripts/make-audio.mjs"
+    "audio": "node scripts/make-audio.mjs",
+    "guide:web": "npm run guide && remotion ffmpeg -loglevel error -y -i out/guide.mp4 -c:v libx264 -preset slow -crf 28 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 96k ../public/videos/guide.mp4 && remotion still guide --frame=110 --scale=0.5 --image-format=jpeg --jpeg-quality=82 ../public/videos/guide-poster.jpg"
   },
   "dependencies": {
     "@remotion/cli": "4.0.529",

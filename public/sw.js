@@ -60,6 +60,8 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
+  // 動画は範囲指定（Range）で少しずつ読むので、SW を通さずブラウザに任せる（キャッシュにも入れない）
+  if (e.request.destination === "video" || url.pathname.startsWith("/videos/")) return;
 
   e.respondWith(
     fetch(e.request)

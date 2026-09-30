@@ -34,7 +34,7 @@ const BOOKMARK_STEPS: Record<Device, string[]> = {
     "下の「コードをコピー」を押す",
     "いま開いているページをブックマークする（Ctrl / ⌘ + D）",
     "そのブックマークを右クリック →「編集」",
-    "URL 欄にコードを貼り、名前を「WebClass を取り込む」にして保存",
+    "URL 欄にコードを貼って保存",
     "WebClass を開いた状態で、そのブックマークをクリック",
   ],
   iphone: [
@@ -48,7 +48,7 @@ const BOOKMARK_STEPS: Record<Device, string[]> = {
     "下の「コードをコピー」を押す",
     "Chrome の ☆ でこのページをブックマーク",
     "ブックマークを編集し、URL をコードに置き換える",
-    "WebClass を開き、アドレスバーにブックマーク名を入力して選ぶ",
+    "WebClass を開き、アドレスバーに「セットアップ」と入力して、そのブックマークを選ぶ",
   ],
 }
 
@@ -175,6 +175,25 @@ export default function SetupPage() {
       <MobileHeader variant="back" title="セットアップ" backHref="/settings" />
       <PageBody desktopTitle="セットアップ">
         <div className="space-y-4">
+          {/* 使い方の動画（video/ の guide を圧縮したもの）。開いただけでは読み込まず、再生を押したときに読み込む */}
+          <Card className="overflow-hidden">
+            <video
+              className="block aspect-video w-full bg-muted"
+              src="/videos/guide.mp4"
+              poster="/videos/guide-poster.jpg"
+              controls
+              playsInline
+              preload="none"
+              aria-label="使い方の動画"
+            />
+            <div className="px-4 py-3">
+              <p className="text-[15px] font-semibold">使い方の動画</p>
+              <p className="mt-0.5 text-[13px] text-muted-foreground">
+                Classroom と WebClass のつなぎ方（<span className="tabular-nums">1分30秒</span>）
+              </p>
+            </div>
+          </Card>
+
           <div>
             <p className="px-1 text-[13px] text-muted-foreground">
               {steps.length} つ中 <span className="font-semibold tabular-nums text-foreground">{doneCount}</span> つ完了
