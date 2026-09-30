@@ -195,6 +195,8 @@ WebClass の任意のページで実行（ブックマークレット・手動�
   タイミングを変えた・通知を切った、のどれかなら `emails.cancel` で取り消して履歴を消す。
   締切が変わった課題は**送り済みの履歴も消す**（残すと、延びた締切の「1日前」が同じキーで弾かれて届かない）。
   判断は純粋関数 `planHistoryCleanup`（`notification-logic.ts`）。アカウント削除の前にも全部取り消す。
+  **取り消しには Full access の API キーが要る**（Sending access だと 401 で失敗し、履歴だけ消えて同じメールを
+  予約し直す＝重複する。[domain-setup.md](./domain-setup.md)）。
 - **シナリオ試験**: 通知まわりを変えたら `npm run test:notify`（`scripts/notify-scenarios.mts`）。
   追加直後・初回取り込み・提出・延長・通知オフ/オン・タイミング変更などで「どのメールがいつ届くか」を、
   本物の `computePendingNotifications` / `planHistoryCleanup` で確かめる（DB と Resend は手元で真似る）。
