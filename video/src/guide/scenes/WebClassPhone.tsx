@@ -3,18 +3,17 @@ import { Phone } from "../../parts/Phone";
 import { Sfx } from "../../parts/Sfx";
 import { camStyle, Ripple } from "../../teaser/camera";
 import { ease } from "../../teaser/stage";
-import { GuideStage, typed } from "../GuideStage";
+import { GuideStage } from "../GuideStage";
 import { Finger, phoneCam, PHONE_W, pressAt, projectPhone, PX0, PY0, Shot, tween, usePop, window01 } from "../helpers";
 import shots from "../shots.json";
 import { AddedToast, bookmarkRow, EDIT_SCREEN, menuAt, PASTE, SAFARI_MORE, SafariBar, SafariBookmarks, SafariEditScreen, SafariMenu, SHEET_EDIT } from "../ui/safari";
 import { CODE } from "./WebClassPC";
 
-export const WEBCLASS_PHONE_FRAMES = 650;
+export const WEBCLASS_PHONE_FRAMES = 580;
 
 const OLD = "セットアップ | UnionFetch";
-const NEW = "WebClass を取り込む";
 const copy = { x: shots.phone.copyButton.x + shots.phone.copyButton.w / 2, y: shots.phone.copyButton.y + shots.phone.copyButton.h / 2 };
-const T = { copy: 36, more1: 110, add: 150, more2: 226, books: 256, edit: 296, row: 322, title: 356, url: 428, clear: 446, hold: 470, paste: 506, save: 540, end: 580 };
+const T = { copy: 36, more1: 110, add: 150, more2: 226, books: 256, edit: 296, row: 322, url: 356, clear: 374, hold: 398, paste: 434, save: 468, end: 508 };
 
 /**
  * WebClass（iPhone の Safari）: コードをコピー →「…」→ ブックマークに追加 →「…」→ ブックマーク → 編集 → 名前と URL を変えて保存。
@@ -48,7 +47,6 @@ export function WebClassPhone() {
     { at: T.books, p: menuAt("ブックマーク") },
     { at: T.edit, p: SHEET_EDIT },
     { at: T.row, p: bookmarkRow(1) },
-    { at: T.title, p: EDIT_SCREEN.title },
     { at: T.url, p: EDIT_SCREEN.url },
     { at: T.clear, p: EDIT_SCREEN.clear },
     { at: T.hold, p: EDIT_SCREEN.url, hold: 14 },
@@ -66,18 +64,17 @@ export function WebClassPhone() {
   const press = Math.max(...taps.map((t) => pressAt(frame, t.at, t.hold ?? 0)));
 
   const editOn = frame >= T.row + 2 && frame < T.save + 6;
-  const title = frame < T.title + 4 ? OLD : typed(NEW, frame, T.title + 8, 12);
   const url = frame < T.clear + 2 ? "https://unionfetch.com/settings/setup" : frame < T.paste + 2 ? "" : CODE;
 
   return (
     <GuideStage
-      chip="WebClass ・ iPhone（Safari）"
+      chip="WebClass ・ はじめの1回（iPhone）"
       chipColor="#3d4a5c"
       steps={[
         { at: 0, title: "① コードをコピー", body: "設定 › セットアップ の手順2で\n「iPhone」を選び、\n「コードをコピー」を押します。" },
         { at: T.more1 - 24, title: "② ブックマークに追加", body: "下のバーの「…」→\n「ブックマークに追加」。" },
         { at: T.more2 - 16, title: "③ ブックマークを\n編集する", body: "「…」→「ブックマーク」を開き、\n右下の「編集」→ 追加した項目。" },
-        { at: T.title - 16, title: "④ 名前を変えて、\nURL にコードを貼る", body: "URL は ✕ で消してから長押し →\n「ペースト」。最後に「保存」。" },
+        { at: T.url - 22, title: "④ URL にコードを貼る", body: "URL は ✕ で消してから長押し →\n「ペースト」。最後に「保存」。\n名前は変えなくて大丈夫です。" },
         { at: T.end, title: "これで準備は\n完了です", tip: "Android（Chrome）も同じ流れです。\n☆ で追加 → ブックマークを編集 →\nURL に貼って保存。" },
       ]}
     >
@@ -105,7 +102,7 @@ export function WebClassPhone() {
           )}
           {editOn && (
             <div style={{ position: "absolute", inset: 0, transform: `translateX(${(1 - edit) * 430}px) translateY(${ease(frame, T.save + 2, 6) * 900}px)` }}>
-              <SafariEditScreen title={title} url={url} focus={frame >= T.url ? "url" : frame >= T.title ? "title" : undefined} paste={frame >= T.hold + 12 && frame < T.paste + 2} />
+              <SafariEditScreen title={OLD} url={url} focus={frame >= T.url ? "url" : undefined} paste={frame >= T.hold + 12 && frame < T.paste + 2} />
             </div>
           )}
         </Phone>

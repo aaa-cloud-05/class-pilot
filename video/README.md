@@ -10,7 +10,7 @@ npm run studio       # ブラウザで見ながら直す
 npm run og           # ../public/og.png（1200×630）
 npm run teaser       # out/teaser.mp4（X 用の紹介動画・1080×1080・約29秒）
 npm run teaser:wide  # out/teaser-wide.mp4（同じ構成の横長・1920×1080）
-npm run guide        # out/guide.mp4（使い方の動画・1920×1080・約1分30秒）
+npm run guide        # out/guide.mp4（使い方の動画・1920×1080・約1分35秒）
 npm run audio        # public/audio/ の BGM と効果音を作り直す
 node scripts/stills.mjs guide 100 400   # 途中のコマを out/stills/ に PNG で書き出す（見た目の確認用）
 ```

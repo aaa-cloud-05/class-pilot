@@ -1,7 +1,7 @@
 import { linearTiming, TransitionSeries } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { Html5Audio, interpolate, staticFile, useVideoConfig } from "remotion";
-import { Intro, INTRO_FRAMES, Outro, OUTRO_FRAMES } from "./scenes/Bookends";
+import { CHAPTER_FRAMES, ChapterClassroom, ChapterWebClass, Intro, INTRO_FRAMES, Outro, OUTRO_FRAMES } from "./scenes/Bookends";
 import { Classroom, CLASSROOM_FRAMES } from "./scenes/Classroom";
 import { Import, IMPORT_FRAMES } from "./scenes/Import";
 import { WebClassPC, WEBCLASS_PC_FRAMES } from "./scenes/WebClassPC";
@@ -10,7 +10,9 @@ import { WebClassPhone, WEBCLASS_PHONE_FRAMES } from "./scenes/WebClassPhone";
 /** 章の順と長さ（30fps）。構成案は docs/video-plan.md の B */
 const SCENES = [
   { id: "intro", frames: INTRO_FRAMES, C: Intro },
+  { id: "chapter-classroom", frames: CHAPTER_FRAMES, C: ChapterClassroom },
   { id: "classroom", frames: CLASSROOM_FRAMES, C: Classroom },
+  { id: "chapter-webclass", frames: CHAPTER_FRAMES + 20, C: ChapterWebClass },
   { id: "webclass-pc", frames: WEBCLASS_PC_FRAMES, C: WebClassPC },
   { id: "webclass-phone", frames: WEBCLASS_PHONE_FRAMES, C: WebClassPhone },
   { id: "import", frames: IMPORT_FRAMES, C: Import },
@@ -40,7 +42,7 @@ function Bgm() {
 
 /**
  * 使い方の動画（YouTube の限定公開を想定・1920×1080）。字幕が主で、音は BGM と効果音だけ。
- * Classroom（Google でログイン）→ WebClass（PC の Chrome・iPhone の Safari）→ 次からの取り込み。
+ * 1. Classroom（Google でログイン。2回目からは何もしない）→ 2. WebClass（はじめの1回: PC の Chrome・iPhone の Safari → 2回目から: ブックマークを押す）→ まとめ。
  */
 export const Guide = () => (
   <>

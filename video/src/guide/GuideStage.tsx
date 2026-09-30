@@ -40,7 +40,7 @@ export function GuideStage({ chip, chipColor = C.primary, steps, children }: { c
           return (
             <div key={s.at} style={{ position: "absolute", inset: 0, opacity: p, transform: `translateY(${(1 - Math.min(1, ease(frame, s.at, 14))) * 24}px)` }}>
               <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1.35, letterSpacing: "-0.02em", color: C.fg, whiteSpace: "pre-line" }}>{s.title}</div>
-              {s.body && <div style={{ marginTop: 24, fontSize: 26, fontWeight: 500, lineHeight: 1.7, color: C.sub, whiteSpace: "pre-line" }}>{s.body}</div>}
+              {s.body && <div style={{ marginTop: 24, fontSize: 26, fontWeight: 600, lineHeight: 1.7, color: "#454b53", whiteSpace: "pre-line" }}>{s.body}</div>}
               {s.tip && (
                 <div style={{ marginTop: 34, display: "flex", gap: 14, padding: "18px 22px", borderRadius: 18, background: "#fff", boxShadow: "0 0 0 1px rgba(12,13,14,0.08)" }}>
                   <span style={{ fontSize: 21, fontWeight: 800, color: chipColor, whiteSpace: "nowrap" }}>ヒント</span>

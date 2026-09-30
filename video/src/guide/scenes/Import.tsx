@@ -16,11 +16,11 @@ const TOP = pageTop(true);
 const W = 1440;
 const H = 900;
 const BH = TOP + H;
-const NAME = "WebClass を取り込む";
+const NAME = "セットアップ | UnionFetch"; // 登録したブックマーク（名前は変えていない）
 const T = { click: 50, progress: [58, 138], done: 140, home: 204, swap: 290, more: 336, books: 366, row: 400, mProgress: [406, 452], mDone: 454, mHome: 506 };
 
 /**
- * 次からは: WebClass を開いてブックマークを押すだけ。PC → スマホの順に見せる。
+ * WebClass の2回目から: WebClass を開いてブックマークを押すだけ。PC → スマホの順に見せる。
  * 取り込み中の画面は一瞬で終わって撮れないので描いたもの。終わった画面とホームは本物
  */
 export function Import() {
@@ -75,13 +75,13 @@ export function Import() {
 
   return (
     <GuideStage
-      chip="次からは"
+      chip="WebClass ・ 2回目から"
       chipColor={"#2f6bff"}
       steps={[
-        { at: 0, title: "WebClass を開いて、\nブックマークを押す", body: "WebClass にログインした状態で\n「WebClass を取り込む」を押します。" },
+        { at: 0, title: "WebClass を開いて、\nブックマークを押す", body: "WebClass にログインした状態で、\n登録したブックマークを押します。" },
         { at: T.done - 10, title: "自動で取り込まれます", body: "数秒でホームに戻ります。" },
         { at: T.home, title: "取り込んだ課題が\nホームに並びます", body: "締切が変わったら、\nもう一度押せば更新されます。" },
-        { at: T.swap, title: "スマホは「…」→\n「ブックマーク」から", body: "WebClass を開いたまま、\n「WebClass を取り込む」を押します。" },
+        { at: T.swap, title: "スマホは「…」→\n「ブックマーク」から", body: "WebClass を開いたまま、\n登録したブックマークを押します。" },
       ]}
     >
       {pcOn > 0 && (

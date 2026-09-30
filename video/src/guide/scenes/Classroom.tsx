@@ -73,7 +73,7 @@ export function Classroom() {
         { at: 0, title: "① セットアップを開く", body: "ホームの「セットアップを開く」か、\n設定 › セットアップ から。" },
         { at: T.google - 14, title: "② 「Google で\nログイン」を押す" },
         { at: T.next1 - 10, title: "③ Classroom の\n読み取りを許可する", body: "「すべて選択」にチェックして\n「次へ」を押します。\n課題を読むだけで、書き込みはしません。" },
-        { at: T.reveal - 6, title: "これで Classroom は\n完了です", body: "次からは、開くたびに\n自動で更新されます。\nスマホでも同じ手順です。" },
+        { at: T.reveal - 6, title: "これで Classroom は\n完了です", body: "2回目からは、何もしなくて大丈夫。\n開くたびに自動で更新されます。\nスマホでも同じ手順です。" },
       ]}
     >
       <div style={{ position: "absolute", left: 0, top: 0, ...camStyle(cam), opacity: ease(frame, 0, 12) }}>
