@@ -4,32 +4,21 @@ import {
   syncWebClassAssignments,
   getUserAssignments,
 } from "@/lib/server/assignments";
-import { sanitizeImportedAssignments, transformWebClassPayload } from "@/lib/webclass";
+import { sanitizeImportedAssignments } from "@/lib/webclass";
 import { checkRateLimit } from "@/lib/server/ratelimit";
-import { resolveImportToken } from "@/lib/server/import-token";
 import { notifyUser } from "@/lib/server/notify";
 import { after } from "next/server";
 
 /**
- * WebClass の課題を取り込む。認証は2経路。
- *
- * 1. セッション Cookie … ブックマークレット（/import ページ経由の手動取り込み）
- * 2. `Authorization: Bearer <取り込みトークン>` … ユーザースクリプトによる自動同期
- *    WebClass のページからのクロスサイト送信になり Cookie が付かないため。
- *
- * **トークン経由では課題一覧を返さない。** 返すとトークンが読み取り能力まで持ってしまう。
- * 自動同期は書き込めれば十分で、表示はアプリ側が自分で取り直す。
+ * WebClass の課題を取り込む。/import ページ（ブックマークレットの取り込み先）から呼ばれる。
+ * 認証はセッション Cookie だけ。WebClass を開くだけで取り込む自動取り込み（トークン経由）は
+ * 検証中のため受け付けない（2026-09-30）。
  */
 export async function POST(request: Request) {
   // DB が遠い(実測1往復678ms)ため、どこで時間を使っているかをログに残す
   const t0 = Date.now();
-  const tokenUserId = await resolveImportToken(request);
-  let userId = tokenUserId;
-
-  if (!userId) {
-    const session = await auth();
-    userId = session?.user?.id ?? null;
-  }
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
   if (!userId) {
     return Response.json({ error: "未ログインです" }, { status: 401 });
   }
@@ -60,14 +49,8 @@ export async function POST(request: Request) {
   } catch {
     return Response.json({ error: "invalid_json" }, { status: 400 });
   }
-  // 受け取る形は2つ。
-  // - { assignments } … /import ページが変換済みの配列を送る（ブックマークレット経路）
-  // - { payload }     … WebClass API の生ペイロードをそのまま送る（ユーザースクリプト経路）
-  //   後者をサーバで変換することで、ユーザースクリプト側に変換ロジックを複製せずに済む。
-  const b = body as { assignments?: unknown; payload?: unknown };
-  const incoming = b?.payload != null
-    ? transformWebClassPayload(b.payload)
-    : b?.assignments;
+  // /import ページが変換済みの配列を { assignments } で送る
+  const incoming = (body as { assignments?: unknown })?.assignments;
 
   if (!Array.isArray(incoming)) {
     return Response.json({ error: "invalid_payload" }, { status: 400 });
@@ -96,11 +79,6 @@ export async function POST(request: Request) {
   });
 
   console.log(`[IMPORT] ${filtered.length}件 / ${Date.now() - t0}ms`);
-
-  // トークン経由（自動同期）には件数だけ返す
-  if (tokenUserId) {
-    return Response.json({ synced: filtered.length });
-  }
 
   const all = await getUserAssignments(userId, hiddenCourseIds);
   return Response.json({ assignments: all, synced: filtered.length });

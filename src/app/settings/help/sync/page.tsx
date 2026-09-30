@@ -12,7 +12,7 @@ export default function SyncGuidePage() {
         </Faq>
 
         <Faq q="WebClass はいつ更新される？">
-          WebClass を開いてブックマークを押したときに取り込まれます。PC では自動取り込みも使えます。つなぎ方は 設定 › セットアップ にあります。
+          WebClass を開いてブックマークを押したときに取り込まれます。つなぎ方は 設定 › セットアップ にあります。WebClass を開くだけで取り込む自動取り込みは、いまは検証中です。
         </Faq>
 
         <Faq q="点の色の意味">

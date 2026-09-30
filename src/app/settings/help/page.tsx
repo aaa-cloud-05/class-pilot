@@ -1,6 +1,6 @@
 "use client"
 
-import { Eye, FileText, Info, Mail, MessageSquare, RefreshCw, Shield } from "lucide-react"
+import { Eye, FileText, Globe, Info, Mail, MessageSquare, RefreshCw, Shield } from "lucide-react"
 import { useApp } from "@/components/app/provider"
 import { MobileHeader, PageBody } from "@/components/app/shell"
 import { ListGroup, RowButton, RowLink } from "@/components/app/ui"
@@ -37,6 +37,12 @@ export default function MockHelpIndexPage() {
               icon={RefreshCw}
               label="同期のしくみ"
               description="いつ更新されるか、点の色、取り込める件数"
+            />
+            <RowLink
+              href="/settings/help/webclass"
+              icon={Globe}
+              label="WebClass の取り込みについて"
+              description="ブックマークのコードが何をするか、取り扱う情報、WebClass への負荷"
             />
             <RowLink
               href="/settings/help/safety"

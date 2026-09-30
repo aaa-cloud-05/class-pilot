@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { Check, ChevronDown, Copy, ExternalLink, Minus } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
@@ -133,30 +134,8 @@ export default function SetupPage() {
     showToast,
   } = useApp()
   const { data: session } = useSession()
-  // メールとトークンは通知設定とは別の場所（サーバ）にある。通知はメール一本
-  const [tokenIssued, setTokenIssued] = useState(false)
+  // メールは通知設定とは別の場所（サーバ）にある。通知はメール一本
   const { on: emailOn, setOn: setEmailOn } = useEmailNotification()
-
-  useEffect(() => {
-    if (!loggedIn) return
-    // 発行済みかどうかはサーバが知っている。再発行で既存の設定を壊さないために出す
-    fetch("/api/import/token")
-      .then((r) => r.json())
-      .then((d) => setTokenIssued(!!d.issued))
-      .catch(() => {})
-  }, [loggedIn])
-
-  /** サーバで発行する。表示できるのは1度きりなので、返り値をそのまま出す */
-  const issueToken = async (): Promise<string> => {
-    const res = await fetch("/api/import/token", { method: "POST" }).catch(() => null)
-    if (!res?.ok) {
-      showToast("トークンを発行できませんでした")
-      return ""
-    }
-    const data = await res.json()
-    setTokenIssued(true)
-    return data.token ?? ""
-  }
   const [device, setDevice] = useState<Device>("pc")
   const [url, setUrl] = useState(webclassUrl)
   // 保存済みの URL は端末からマウント後に読まれる。この画面を直接開いたときも欄に入るようにする
@@ -165,7 +144,6 @@ export default function SetupPage() {
     setLoadedUrl(webclassUrl)
     setUrl(webclassUrl)
   }
-  const [token, setToken] = useState("")
 
   const steps = [loggedIn, syncedAt.webclass != null, emailOn === true]
   const doneCount = steps.filter(Boolean).length
@@ -268,7 +246,7 @@ export default function SetupPage() {
               head={["つなぎ方", "何のため", "端末", "自動か"]}
               rows={[
                 ["ブックマークレット", "課題を取り込む", "スマホ・PC", "手動（1タップ）"],
-                ["ユーザースクリプト", "自動で取り込む", "PC の Chrome", "自動"],
+                ["自動取り込み", "WebClass を開くだけで取り込む", "PC", "検証中"],
                 ["WebClass の URL", "「開く」ボタンの行き先", "共通", "取り込みには使わない"],
               ]}
             />
@@ -296,56 +274,31 @@ export default function SetupPage() {
                   </li>
                 ))}
               </ol>
-              <Button
-                onClick={async () => {
-                  // ブックマークレットは自分のドメインを埋め込んで作る
-                  await navigator.clipboard.writeText(buildBookmarkletCode(window.location.origin))
-                  showToast("コードをコピーしました")
-                }}
-              >
-                <Copy className="h-4 w-4" aria-hidden />
-                コードをコピー
-              </Button>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <Button
+                  onClick={async () => {
+                    // ブックマークレットは自分のドメインを埋め込んで作る
+                    await navigator.clipboard.writeText(buildBookmarkletCode(window.location.origin))
+                    showToast("コードをコピーしました")
+                  }}
+                >
+                  <Copy className="h-4 w-4" aria-hidden />
+                  コードをコピー
+                </Button>
+                <Link href="/settings/help/webclass" className="py-2 text-[14px] font-medium text-primary hover:underline">
+                  このコードは何をする？
+                </Link>
+              </div>
               <p className="rounded-control bg-muted/50 px-3 py-2 text-[13px] leading-relaxed text-muted-foreground">
-                読み取るのは課題名・締切・提出したかどうか・課題ページのリンクだけです。パスワードや氏名、学籍番号には触れません。
+                UnionFetch に送るのは、コース名・課題名・締切・提出したかどうか・課題ページのリンクだけです。パスワードは読み取らず、学籍番号・氏名・得点は取り出しません。
               </p>
             </div>
 
-            <div className="space-y-3 border-t border-border pt-4">
-              <p className="text-[14px] font-semibold">B. 自動で取り込む（PC・任意）</p>
+            <div className="space-y-2 border-t border-border pt-4">
+              <p className="text-[14px] font-semibold">B. 自動で取り込む（検証中）</p>
               <p className="text-[14px] leading-relaxed text-muted-foreground">
-                Chrome に Tampermonkey を入れ、発行したトークンを貼ると、WebClass を開くだけで取り込まれます。
+                WebClass を開くだけで自動で取り込む機能は、いまは検証中のため使えません。A のブックマークを使ってください。
               </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <ButtonLink href="/webclass.user.js" variant="secondary" size="md">
-                  スクリプトを追加
-                </ButtonLink>
-                <Button
-                  variant="secondary"
-                  disabled={!loggedIn}
-                  onClick={() => {
-                    // 再発行すると、いま動いているスクリプトのトークンが即座に使えなくなる
-                    if (tokenIssued && !confirm("いま使っているトークンは使えなくなります。スクリプトに貼り直しが必要です。続けますか？")) return
-                    issueToken().then(setToken)
-                  }}
-                >
-                  {tokenIssued ? "トークンを再発行" : "トークンを発行"}
-                </Button>
-                {tokenIssued && !token && (
-                  <span className="text-[13px] text-muted-foreground">
-                    発行済み。スクリプトが動いているなら、押す必要はありません
-                  </span>
-                )}
-              </div>
-              {token && (
-                <div className="flex items-center gap-2 rounded-control border border-border p-2">
-                  <code className="min-w-0 flex-1 truncate px-1 font-mono text-[12px]">{token}</code>
-                  <Button size="sm" variant="secondary" onClick={() => showToast("コピーしました")}>
-                    コピー
-                  </Button>
-                </div>
-              )}
-              {!loggedIn && <p className="text-[13px] text-muted-foreground">自動取り込みにはログインが必要です。</p>}
             </div>
 
             <div id={WEBCLASS_URL_ANCHOR} className="border-t border-border pt-4">

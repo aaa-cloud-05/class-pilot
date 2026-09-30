@@ -5,7 +5,7 @@ export const metadata = {
   title: "利用規約",
 };
 
-const UPDATED = "2026年7月1日";
+const UPDATED = "2026年9月30日";
 // Cloudflare Email Routing で個人の Gmail に転送している（受信専用）
 const CONTACT = "support@unionfetch.com";
 
@@ -17,13 +17,13 @@ export default function TermsPage() {
 
       <div className="space-y-7 text-sm leading-relaxed text-gray-700">
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
-          <strong>本サービスは個人が開発・運営する非公式のツールです。</strong>
+          <strong>本サービスは非公式のツールです。</strong>
           Google LLC、日本データパシフィック株式会社（WebClass 提供元）その他いかなる組織とも
           提携・関係していません。各サービスの名称・商標は各権利者に帰属します。
         </div>
 
         <p>
-          本規約は、個人開発アプリ UnionFetch（以下「本サービス」）の利用条件を定めるものです。
+          本規約は、UnionFetch（以下「本サービス」）の利用条件を定めるものです。
           本サービスを利用することで、本規約に同意したものとみなされます。
         </p>
 
@@ -31,7 +31,14 @@ export default function TermsPage() {
           <h2 className="text-base font-semibold text-gray-900 mb-2">1. サービス内容</h2>
           <p>
             本サービスは、Google Classroom および WebClass の課題を集約して表示し、締切リマインダーを
-            提供します。個人が無償で提供するものであり、機能の継続・正常動作を保証しません。
+            提供します。無償で提供するものであり、機能の継続・正常動作を保証しません。
+          </p>
+          <p className="mt-2">
+            WebClass の課題を取り込む機能には、本規約とあわせて
+            <Link href="/settings/help/webclass" className="text-blue-600 underline">
+              「WebClass の取り込みについて」
+            </Link>
+            が適用されます。
           </p>
         </section>
 
@@ -41,7 +48,7 @@ export default function TermsPage() {
             表示される課題・締切は Google Classroom や WebClass から取得した時点の情報、またはユーザー
             入力に基づきます。取得漏れ・遅延・誤りが生じる可能性があるため、
             <strong>提出期限は必ず公式の情報源で確認してください</strong>。本サービスの情報に起因する
-            提出遅れ等について、開発者は責任を負いません。
+            提出遅れ等について、本サービスは責任を負いません。
           </p>
         </section>
 
@@ -58,14 +65,14 @@ export default function TermsPage() {
           <h2 className="text-base font-semibold text-gray-900 mb-2">4. 免責</h2>
           <p>
             本サービスは「現状有姿」で提供され、明示・黙示を問わずいかなる保証も行いません。
-            本サービスの利用または利用不能から生じた損害について、開発者は一切の責任を負いません。
+            本サービスの利用または利用不能から生じた損害について、本サービスは一切の責任を負いません。
           </p>
         </section>
 
         <section>
           <h2 className="text-base font-semibold text-gray-900 mb-2">5. 変更・終了</h2>
           <p>
-            開発者は、事前の通知なく本サービスの内容を変更・中断・終了できるものとします。
+            本サービスは、事前の通知なく内容を変更・中断・終了できるものとします。
           </p>
         </section>
 

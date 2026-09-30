@@ -1,39 +1,24 @@
-// WebClass から課題を取り出すクライアント側コードの生成。
+// WebClass から課題を取り出すクライアント側コード（ブックマークレット）の生成。
 //
-// 出口は2つあるが、**取得ロジックは COLLECT 1か所**にまとめてある。
-//   - ブックマークレット   … 手動。iOS Safari を含む全環境で動く（フォールバック）
-//   - ユーザースクリプト   … Tampermonkey。WebClass を開くと自動で走る（PCの本命）
-//
-// どちらも「学生自身のブラウザの、学生自身のログイン済みセッション」で WebClass の
-// 内部 JSON API を叩くだけ。資格情報は預からない。仕様は docs/webclass-api.md を参照。
+// 「学生自身のブラウザの、学生自身のログイン済みセッション」で WebClass の内部 JSON API を
+// 呼ぶだけ。資格情報は預からない。仕様は docs/webclass-api.md、利用者向けの説明は
+// 設定 › ヘルプ ›「WebClass の取り込みについて」（src/app/settings/help/webclass）。
+// WebClass を開くだけで取り込む自動取り込みは検証中のため、配信をやめた（2026-09-30）。
 //
 // WebClass サーバへの配慮:
-// - fetch のキャッシュを無効化しない。ブラウザが If-Modified-Since を自動で付けるので、
-//   変化が無いコースは 304（ボディ無し）で返る。no-store やキャッシュバスターは付けない。
-// - コースごとの取得は直列＋250ms間隔。年度が2年以上前のコースはそもそも叩かない。
+// - コースごとの取得は直列（並列にしない）＋250ms間隔。年度が2年以上前のコースはそもそも読まない。
+//   公式の「課題実施状況一覧」の画面は、開くたびに全コースの課題一覧を並列で読む。ここで読むのはその一部。
 // - 締切がある課題は直近半年ぶん。締切が無い課題は「直近半年に更新されたもの」だけ。
-// - ユーザースクリプトは60分のスロットルを持つ（タブを何枚開いても1回）。
+// - fetch のキャッシュは無効化しない。ただし WebClass は Last-Modified を毎回いまの時刻で返すため、
+//   条件付きリクエスト（304）にはならない（2026-09-30 に確認）。
 //
-// 所要時間（13コースで実測）:
-//   前面のタブ … 約5秒（通信1.7秒＋待機3.25秒）
+// 所要時間の目安（13コースの場合）:
+//   前面のタブ … 約5秒（通信と、コース間の待ち 3.25秒）
 //   背面のタブ … 約13秒。Chrome が setTimeout を1秒以上に間引くため
-//   5分以上隠れたタブ … さらに遅い（間引きが1分間隔になる）
 //   どれも完走はする。途中でタブを閉じると中断されるだけ。
 
 /** ペイロードを URL ハッシュに載せられる上限。超えたら締切の古いものから間引く。 */
 const MAX_URL = 60000;
-
-/** 自動同期の最短間隔（ミリ秒）。 */
-const THROTTLE_MS = 60 * 60 * 1000;
-
-/**
- * ユーザースクリプトの版。
- *
- * **Tampermonkey は @version が上がったときだけ更新を取りに来る。**
- * ここを上げ忘れると、`/webclass.user.js` を直しても、すでに入れた人には永久に届かない。
- * 取得ロジック（COLLECT）や送信まわりを変えたら、必ずここも上げること。
- */
-const USERSCRIPT_VERSION = "1.3.0";
 
 /**
  * 収集の本体。`unionfetchCollect(onProgress)` を定義する。
@@ -100,7 +85,7 @@ async function unionfetchCollect(onProgress){
 }
 `;
 
-/** エラーコードを日本語にする（両方の出口で同じ文言を使う）。 */
+/** エラーコードを日本語にする。 */
 const MESSAGES = `
 var unionfetchMessage=function(code){
   if(code==='NOT_WEBCLASS')return 'WebClass のページで実行してください。\\n（いま開いているのは WebClass ではありません）';
@@ -154,158 +139,4 @@ export function buildBookmarkletCode(origin: string): string {
   }
 })()`;
   return inline(src);
-}
-
-/**
- * Tampermonkey 用ユーザースクリプト。WebClass を開くと自動で同期する。
- *
- * `/import` を経由せず API へ直接 POST するので、タブが開かず URL 長の制約も無い。
- * ただしクロスサイト送信になりセッション Cookie が付かないため、
- * 設定画面で発行した取り込みトークンを一度だけ貼ってもらう。
- */
-export function buildUserscriptCode(origin: string): string {
-  const host = new URL(origin).host;
-  return `// ==UserScript==
-// @name         UnionFetch — WebClass 自動同期
-// @namespace    ${origin}
-// @version      ${USERSCRIPT_VERSION}
-// @description  WebClass を開くと、締切のある課題を UnionFetch へ自動で取り込みます
-// @updateURL    ${origin}/webclass.user.js
-// @downloadURL  ${origin}/webclass.user.js
-// @match        https://*/webclass/*
-// @include      /^https?:\\/\\/webclass\\.[^\\/]+\\//
-// @noframes
-// @run-at       document-idle
-// @grant        GM_xmlhttpRequest
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_registerMenuCommand
-// @connect      ${host}
-// ==/UserScript==
-
-/*
- * 何をするか:
- *   WebClass にログインしているあなた自身の権限で、WebClass の内部APIから
- *   「課題名・締切・提出したかどうか」だけを読み取り、UnionFetch へ送ります。
- *   氏名・学籍番号・点数は読み取りません。パスワードにも触れません。
- *
- * WebClass サーバへの負担:
- *   同期は最短60分に1回。コースごとに直列＋250ms間隔で、
- *   ブラウザのキャッシュを活かすため変化が無ければ 304 が返ります。
- */
-(function () {
-  "use strict";
-
-  var ORIGIN = ${JSON.stringify(origin)};
-  var TOKEN_KEY = "unionfetch:token";
-  var LAST_KEY = "unionfetch:lastSync";
-  var DECLINED_KEY = "unionfetch:declined";
-  var THROTTLE_MS = ${THROTTLE_MS};
-
-${COLLECT.split("\n").map((l) => (l ? "  " + l : l)).join("\n")}
-
-  /** 保存済みのトークン。一度入れたら二度と聞かない */
-  function savedToken() {
-    return GM_getValue(TOKEN_KEY, "");
-  }
-
-  /** 貼り付けてもらう。断られたら覚えて、次から自動では聞かない */
-  function promptToken() {
-    var token = (prompt(
-      "UnionFetch の取り込みトークンを貼り付けてください。\\n" +
-      "（UnionFetch の 設定 → セットアップ で発行できます）\\n\\n" +
-      "一度入れれば、次からは聞きません。"
-    ) || "").trim();
-    if (token) {
-      GM_setValue(TOKEN_KEY, token);
-      GM_setValue(DECLINED_KEY, "");
-    } else {
-      GM_setValue(DECLINED_KEY, "1");
-    }
-    return token;
-  }
-
-  /**
-   * 同期に使うトークンを得る。
-   * 保存済みがあればそれを返す（**手動実行でも聞き直さない**）。
-   * 無いときだけ聞く。自動実行では、一度断られていたら黙って諦める。
-   */
-  function tokenFor(manual) {
-    var token = savedToken();
-    if (token) return token;
-    if (!manual && GM_getValue(DECLINED_KEY, "")) return "";
-    return promptToken();
-  }
-
-  GM_registerMenuCommand("UnionFetch: トークンを設定し直す", function () {
-    promptToken();
-  });
-  GM_registerMenuCommand("UnionFetch: 今すぐ同期する", function () {
-    run(true);
-  });
-
-  function send(payload, token) {
-    GM_xmlhttpRequest({
-      method: "POST",
-      url: ORIGIN + "/api/import/webclass",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
-      },
-      data: JSON.stringify({ payload: payload }),
-      onload: function (res) {
-        if (res.status === 401) {
-          // トークンが失効・再発行された。保存を消して次回に入れ直してもらう。
-          GM_setValue(TOKEN_KEY, "");
-          GM_setValue(DECLINED_KEY, "");
-          console.warn("[UnionFetch] トークンが無効です。メニューから入れ直してください。");
-          return;
-        }
-        if (res.status < 200 || res.status >= 300) {
-          console.warn("[UnionFetch] 送信に失敗:", res.status, res.responseText);
-          return;
-        }
-        console.log("[UnionFetch] 同期しました:", res.responseText);
-      },
-      onerror: function (e) {
-        console.warn("[UnionFetch] 送信に失敗:", e);
-      },
-    });
-  }
-
-  async function run(force) {
-    var last = parseInt(GM_getValue(LAST_KEY, "0"), 10) || 0;
-    if (!force && Date.now() - last < THROTTLE_MS) {
-      var mins = Math.ceil((THROTTLE_MS - (Date.now() - last)) / 60000);
-      console.log("[UnionFetch] 前回から1時間経っていないので見送り。次は約" + mins + "分後");
-      return;
-    }
-
-    var token = tokenFor(force);
-    if (!token) return;
-    console.log("[UnionFetch] 取り込みを開始します");
-
-    // 収集する前に時刻を記録する。送信に失敗しても、WebClass を開くたびに
-    // 取り直して大学のサーバを叩き続けることがないようにするため。
-    GM_setValue(LAST_KEY, String(Date.now()));
-
-    try {
-      var started = Date.now();
-      var r = await unionfetchCollect(null);
-      console.log(
-        "[UnionFetch] " + r.cs.length + "コース / " + r.t.length + "件を " +
-        Math.round((Date.now() - started) / 1000) + "秒で読み終えました"
-      );
-      send({ v: 2, b: r.b, cs: r.cs, t: r.t }, token);
-    } catch (e) {
-      // 自動実行なので alert は出さない。手動実行(メニュー)のときだけ知らせる。
-      var code = e && e.message ? e.message : String(e);
-      if (force) alert("UnionFetch: 取り込みに失敗しました (" + code + ")");
-      else console.log("[UnionFetch] スキップ:", code);
-    }
-  }
-
-  run(false);
-})();
-`;
 }
