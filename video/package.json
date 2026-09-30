@@ -6,7 +6,9 @@
     "studio": "remotion studio",
     "og": "remotion still og ../public/og.png",
     "teaser": "remotion render teaser out/teaser.mp4",
-    "teaser:wide": "remotion render teaser-wide out/teaser-wide.mp4"
+    "teaser:wide": "remotion render teaser-wide out/teaser-wide.mp4",
+    "guide": "remotion render guide out/guide.mp4",
+    "audio": "node scripts/make-audio.mjs"
   },
   "dependencies": {
     "@remotion/cli": "4.0.529",

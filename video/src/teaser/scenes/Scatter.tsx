@@ -1,23 +1,31 @@
 import { Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { Sfx } from "../../parts/Sfx";
+import { SourceTag } from "../../parts/SourceTag";
 import { C, FLOAT, jakarta } from "../../theme";
 import { Caption, clamp, ease, Rise, Stage, useLayout } from "../stage";
 
-/** 課題（scripts/demo-seed.mjs のデモデータと同じもの）。from は散らばっているときの位置、order は締切順 */
+/**
+ * 課題（scripts/demo-seed.mjs のデモデータと同じもの）。src はどちらから来たか、
+ * from は散らばっているときの位置（WebClass は左の窓、Classroom は右の窓）、order は締切順
+ */
 const TASKS = [
-  { title: "レポート2 ソートアルゴリズムの比較", course: "アルゴリズムとデータ構造", due: "今日 19:59", left: "あと1時間", soon: true, from: [30, 120, -4], order: 0 },
-  { title: "ER 図の作成レポート", course: "データベース", due: "明日 15:30", left: "あと20時間", soon: true, from: [48, 300, 2], order: 2 },
-  { title: "課題3 パケットキャプチャ", course: "コンピュータネットワーク", due: "10/1 17:00", left: "あと2日", soon: false, from: [26, 482, -1.5], order: 4 },
-  { title: "課題7 連結リストの実装", course: "プログラミング演習", due: "今日 23:30", left: "あと4時間", soon: true, from: [502, 160, 3], order: 1 },
-  { title: "Unit 5 Speaking Log", course: "英語コミュニケーション", due: "明日 23:30", left: "あと1日", soon: false, from: [512, 342, -2.5], order: 3 },
-  { title: "演習問題6（対角化）", course: "線形代数学 II", due: "10/1 18:00", left: "あと2日", soon: false, from: [498, 524, 1.5], order: 5 },
+  { title: "レポート2 ソートアルゴリズムの比較", course: "アルゴリズムとデータ構造", due: "今日 19:59", left: "あと1時間", soon: true, src: "webclass", from: [30, 120, -4], order: 0 },
+  { title: "ER 図の作成レポート", course: "データベース", due: "明日 15:30", left: "あと20時間", soon: true, src: "webclass", from: [48, 300, 2], order: 2 },
+  { title: "演習問題6（対角化）", course: "線形代数学 II", due: "10/1 18:00", left: "あと2日", soon: false, src: "webclass", from: [26, 482, -1.5], order: 5 },
+  { title: "課題7 連結リストの実装", course: "プログラミング演習", due: "今日 23:30", left: "あと4時間", soon: true, src: "classroom", from: [502, 160, 3], order: 1 },
+  { title: "Unit 5 Speaking Log", course: "英語コミュニケーション", due: "明日 23:30", left: "あと1日", soon: false, src: "classroom", from: [512, 342, -2.5], order: 3 },
+  { title: "課題3 パケットキャプチャ", course: "コンピュータネットワーク", due: "10/1 17:00", left: "あと2日", soon: false, src: "classroom", from: [498, 524, 1.5], order: 4 },
 ] as const;
 
+export const SCATTER_FRAMES = 160;
 const CARD_W = 430;
-const MERGE = 80; // この フレームから1列に集まる
+const MERGE = 72; // この フレームから1列に集まる
 
 function TaskCard({ t }: { t: (typeof TASKS)[number] }) {
   return (
-    <div style={{ width: CARD_W, padding: "18px 22px", borderRadius: 18, background: C.card, boxShadow: FLOAT }}>
+    <div style={{ position: "relative", width: CARD_W, padding: "18px 22px", borderRadius: 18, background: C.card, boxShadow: FLOAT }}>
+      {/* どちらから来たかの札。1列に並んでも混ざっているのが分かるよう、カードの角に付けたまま動かす */}
+      <SourceTag source={t.src} size={14} style={{ position: "absolute", right: 14, top: -13, boxShadow: "0 0 0 3px #fff" }} />
       <div style={{ fontSize: 21, fontWeight: 700, color: C.fg, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</div>
       <div style={{ marginTop: 6, display: "flex", gap: 12, fontSize: 17, fontWeight: 500, color: C.sub, whiteSpace: "nowrap" }}>
         <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{t.course}</span>
@@ -86,8 +94,9 @@ function Window({ name, x, y, rot }: { name: string; x: number; y: number; rot: 
 const SKELETON = [78, 62, 90, 55, 70, 84, 60, 74, 66];
 
 /**
- * 2–8秒: 課題が2つの窓に散らばっている → 締切順の1列に集まる → キャッチコピー。
- * 見出しは途中で「2か所に分かれてる」からブランドとキャッチコピーに入れ替わる。
+ * 5–10秒: 課題が WebClass と Classroom の窓に散らばっている → 締切順の1列に集まる → キャッチコピー。
+ * 見出しは「UnionFetch なら、WebClass と Classroom をまとめて取り込み。」→ 集まったらキャッチコピーに入れ替わる
+ * （UnionFetch のロゴと名前はそのまま残す）。
  */
 export function Scatter() {
   const frame = useCurrentFrame();
@@ -96,19 +105,21 @@ export function Scatter() {
   const firstOut = ease(frame, MERGE - 8, 12);
 
   const caption = (
-    <div style={{ position: "relative" }}>
-      <div style={{ opacity: 1 - firstOut }}>
-        <Caption lines={["課題が、", "2か所に分かれてる。"]} at={6} />
-      </div>
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: wide ? "center" : "flex-start" }}>
-        <Rise at={MERGE + 22}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: wide ? "flex-start" : "center", gap: 12, marginTop: wide ? 0 : -24 }}>
-            <Img src={staticFile("mark.png")} style={{ width: 46, height: 46 }} />
-            <span style={{ fontFamily: jakarta, fontWeight: 800, fontSize: 32, letterSpacing: "-0.02em", color: C.fg }}>UnionFetch</span>
-          </div>
-        </Rise>
-        <div style={{ marginTop: 14 }}>
-          <Caption lines={["課題の締切を、", "ひとつの場所で。"]} at={MERGE + 28} />
+    <div>
+      {/* ロゴと名前は場面のあいだ出したまま。「なら、」だけ、集まったら消す */}
+      <Rise at={2}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: wide ? "flex-start" : "center", gap: 14, marginTop: wide ? 0 : -14 }}>
+          <Img src={staticFile("mark.png")} style={{ width: 54, height: 54 }} />
+          <span style={{ fontFamily: jakarta, fontWeight: 800, fontSize: 48, letterSpacing: "-0.02em", color: C.fg }}>UnionFetch</span>
+          <span style={{ fontSize: 46, fontWeight: 800, color: C.fg, opacity: 1 - firstOut }}>なら、</span>
+        </div>
+      </Rise>
+      <div style={{ position: "relative", marginTop: 10 }}>
+        <div style={{ opacity: 1 - firstOut }}>
+          <Caption lines={["WebClass と Classroom を、", "まとめて取り込み。"]} wideLines={["WebClass と", "Classroom を、", "まとめて取り込み。"]} at={8} />
+        </div>
+        <div style={{ position: "absolute", left: 0, right: 0, top: 0 }}>
+          <Caption lines={["課題の締切を、", "ひとつの場所で。"]} at={MERGE + 24} />
         </div>
       </div>
     </div>
@@ -131,6 +142,7 @@ export function Scatter() {
               position: "absolute",
               left: interpolate(m, [0, 1], [fx, tx]),
               top: interpolate(m, [0, 1], [fy, ty]),
+              zIndex: t.order + 1,
               opacity: interpolate(pop, [0, 0.4], [0, 1], clamp),
               transform: `rotate(${interpolate(m, [0, 1], [fr, 0])}deg) scale(${interpolate(pop, [0, 1], [0.82, 1])})`,
             }}
@@ -139,6 +151,8 @@ export function Scatter() {
           </div>
         );
       })}
+      <Sfx at={MERGE} name="whoosh" volume={0.4} />
+      <Sfx at={MERGE + 24} name="pop" volume={0.35} />
     </Stage>
   );
 }

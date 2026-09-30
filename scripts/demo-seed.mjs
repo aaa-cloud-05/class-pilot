@@ -3,8 +3,10 @@
 // 未ログイン時の一次ストア（IndexedDB）に課題を書き込む。page.evaluate(SEED) で渡すので、
 // この関数の中だけで完結させる（外の変数は使えない）。
 //
-// 日付は「いま」からの相対。撮影では時計を DEMO_CLOCK に止めるので、画面は毎回同じになる。
+// 日付は「いま」からの相対。撮影では時計を DEMO_CLOCK に合わせるので、画面は毎回同じになる。
 // 今週（月〜日）の締切は 2・3・2・4・3・1・2 件にして、棒グラフに山と谷ができるようにしてある。
+// どちらから来た課題かは科目で決める（プログラミング演習・英語・ネットワークは Classroom、ほかは WebClass）。
+// 月のカレンダーが寂しくならないよう、今月の前半にも提出済みの課題を置いてある。
 
 /** 撮影するときの時刻（火曜の夕方）。動画の文字（あと1時間・9/28 - 10/4 など）もこれに合わせてある */
 export const DEMO_CLOCK = "2026-09-29T18:52:00+09:00";
@@ -12,19 +14,31 @@ export const DEMO_CLOCK = "2026-09-29T18:52:00+09:00";
 export const SEED = async () => {
   const now = new Date();
   const D = (d, h, m) => { const x = new Date(now); x.setDate(x.getDate() + d); x.setHours(h, m, 0, 0); return x.toISOString(); };
+  // [id, 科目名, 色, 出どころ]
   const C = {
-    al: ["c1", "アルゴリズムとデータ構造", "#5856D6"], la: ["c2", "線形代数学 II", "#007AFF"],
-    pg: ["c3", "プログラミング演習", "#FF9500"], en: ["c4", "英語コミュニケーション", "#FF2D55"],
-    db: ["c5", "データベース", "#5AC8FA"], nw: ["c6", "コンピュータネットワーク", "#AF52DE"],
-    os: ["c7", "オペレーティングシステム", "#34C759"],
+    al: ["c1", "アルゴリズムとデータ構造", "#5856D6", "webclass"], la: ["c2", "線形代数学 II", "#007AFF", "webclass"],
+    pg: ["c3", "プログラミング演習", "#FF9500", "classroom"], en: ["c4", "英語コミュニケーション", "#FF2D55", "classroom"],
+    db: ["c5", "データベース", "#5AC8FA", "webclass"], nw: ["c6", "コンピュータネットワーク", "#AF52DE", "classroom"],
+    os: ["c7", "オペレーティングシステム", "#34C759", "webclass"],
   };
   const mk = (i, c, t, due, st, late) => ({
     id: "s" + i, courseId: C[c][0], courseName: C[c][1], courseColor: C[c][2],
     title: t, dueDate: due, link: "https://example.com/", submissionState: st,
-    isLate: !!late, source: i % 3 === 0 ? "classroom" : "webclass",
+    isLate: !!late, source: C[c][3],
   });
   const N = "not_submitted", S = "submitted";
   const rows = [
+    // 今月の前半（提出済み）
+    mk(26, "al", "課題1 アルゴリズムの計算量", D(-27, 23, 59), S),
+    mk(27, "pg", "課題1 開発環境の準備", D(-25, 17, 0), S),
+    mk(28, "la", "演習問題1（行列の積）", D(-21, 18, 0), S),
+    mk(29, "en", "Unit 1 Vocabulary Quiz", D(-20, 19, 30), S),
+    mk(30, "db", "第1回 演習（関係モデル）", D(-19, 21, 30), S),
+    mk(31, "nw", "第1回 小テスト", D(-14, 15, 30), S),
+    mk(32, "os", "第1回 演習（OS の役割）", D(-13, 12, 0), S),
+    mk(33, "pg", "課題3 配列と文字列", D(-12, 23, 30), S, true),
+    mk(34, "al", "課題1-2 整列の実装", D(-7, 23, 59), S),
+    mk(35, "en", "Unit 3 Reading Log", D(-6, 23, 59), S),
     // 先週
     mk(1, "en", "Unit 4 Vocabulary Quiz", D(-3, 19, 30), N),
     mk(2, "al", "課題2 計算量の見積もり", D(-6, 11, 30), S),

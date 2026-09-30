@@ -21,18 +21,22 @@ export function Rise({ at, children, dy = 28, style }: { at: number; children: R
   return <div style={{ opacity: p, transform: `translateY(${(1 - p) * dy}px)`, ...style }}>{children}</div>;
 }
 
-/** 場面の見出し。無音で見られる前提なので、言いたいことはここに全部書く */
-export function Caption({ lines, sub, at = 4 }: { lines: string[]; sub?: ReactNode; at?: number }) {
+/**
+ * 場面の見出し。無音で見られる前提なので、言いたいことはここに全部書く。
+ * 横長は見出しの幅が狭いので、長い行は wideLines で折り返し位置を決める
+ */
+export function Caption({ lines, wideLines, sub, at = 4 }: { lines: string[]; wideLines?: string[]; sub?: ReactNode; at?: number }) {
   const { wide } = useLayout();
+  const rows = wide && wideLines ? wideLines : lines;
   return (
     <div>
-      {lines.map((l, i) => (
+      {rows.map((l, i) => (
         <Rise key={l} at={at + i * 5}>
           <div style={{ fontSize: wide ? 68 : 64, fontWeight: 800, lineHeight: 1.25, letterSpacing: "-0.03em", color: C.fg }}>{l}</div>
         </Rise>
       ))}
       {sub && (
-        <Rise at={at + lines.length * 5 + 6}>
+        <Rise at={at + rows.length * 5 + 6}>
           <div style={{ marginTop: wide ? 24 : 16, fontSize: wide ? 36 : 31, fontWeight: 700, color: C.sub }}>{sub}</div>
         </Rise>
       )}

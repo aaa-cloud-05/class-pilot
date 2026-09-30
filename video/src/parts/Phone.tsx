@@ -54,7 +54,7 @@ export function Phone({
             <Img src={staticFile(src)} style={img} />
             {src2 && <Img src={staticFile(src2)} style={{ ...img, position: "absolute", left: 0, top: 0, opacity: mix }} />}
             {children && (
-              <div style={{ position: "absolute", left: 0, top: 0, width: 430, transform: `scale(${q})`, transformOrigin: "0 0" }}>{children}</div>
+              <div style={{ position: "absolute", left: 0, top: 0, width: 430, height: screen, transform: `scale(${q})`, transformOrigin: "0 0" }}>{children}</div>
             )}
           </div>
         </div>

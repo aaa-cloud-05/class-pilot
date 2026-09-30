@@ -4,7 +4,7 @@
 //   2. node scripts/shots.mjs
 //
 // デモ用の課題（scripts/demo-seed.mjs）を IndexedDB に入れてから撮るので、未ログイン・実データなしの状態で
-// 画面を再現できる。時計は DEMO_CLOCK に止めるので、いつ撮っても同じ画面になる。公開ディレクトリには何も置かない。
+// 画面を再現できる。時計は DEMO_CLOCK から始めるので、いつ撮っても同じ画面になる。公開ディレクトリには何も置かない。
 //
 // 既にインストールされている Chrome を使うため、ブラウザのダウンロードは発生しない。
 
@@ -49,7 +49,7 @@ for (const s of TARGETS) {
     timezoneId: "Asia/Tokyo",
     reducedMotion: "reduce", // 入場アニメーションの途中で撮らないため
   });
-  await ctx.clock.setFixedTime(new Date(DEMO_CLOCK));
+  await ctx.clock.install({ time: new Date(DEMO_CLOCK) });
   const page = await ctx.newPage();
 
   // デモデータを入れる。同じコンテキストなので以降の遷移でも残る
@@ -64,7 +64,11 @@ for (const s of TARGETS) {
   }
   // Next.js の開発インジケータは製品の一部ではないので隠す
   await page.addStyleTag({ content: "nextjs-portal,[data-nextjs-dev-tools-button],#__next-build-watcher{display:none!important}" });
-  await page.waitForTimeout(2500); // 棒グラフなどの入場アニメーションが終わるまで
+  await page.waitForTimeout(1200);
+  // 入場アニメーションを最後まで進める（時計を差し替えていると途中で止まって薄いまま撮れることがある）
+  await page.clock.runFor(3000);
+  await page.evaluate(() => document.getAnimations().forEach((a) => { try { a.finish(); } catch {} }));
+  await page.waitForTimeout(300);
   await mkdir(s.dir ?? OUT, { recursive: true });
   await page.screenshot({ path: `${s.dir ?? OUT}/${s.name}.png` });
   console.log("撮影:", s.name, `${s.viewport.width}x${s.viewport.height}`);

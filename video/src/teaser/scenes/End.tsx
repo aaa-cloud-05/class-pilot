@@ -1,8 +1,11 @@
 import { AbsoluteFill, Img, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { Sfx } from "../../parts/Sfx";
 import { C, jakarta, noto, WASH } from "../../theme";
 import { Rise, useLayout } from "../stage";
 
-/** 21–25秒: ロゴ・URL・ひとこと。最後の数秒は止まって読ませる */
+export const END_FRAMES = 105;
+
+/** 27–30秒: ロゴ・URL。最後の数秒は止まって読ませる */
 export function End() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -43,10 +46,11 @@ export function End() {
             </svg>
           </div>
         </Rise>
-        <Rise at={28}>
-          <div style={{ marginTop: 26, fontSize: wide ? 32 : 30, fontWeight: 700, color: C.sub }}>ログインしなくても、すぐ試せます</div>
+        <Rise at={30}>
+          <div style={{ marginTop: 30, fontSize: wide ? 28 : 26, fontWeight: 700, color: C.sub }}>WebClass も、かんたんな設定で取り込めます</div>
         </Rise>
       </div>
+      <Sfx at={2} name="pop" volume={0.4} />
     </AbsoluteFill>
   );
 }

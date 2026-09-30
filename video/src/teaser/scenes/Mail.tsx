@@ -1,11 +1,12 @@
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { MailCard } from "../../parts/MailCard";
 import { Phone, phoneMetrics } from "../../parts/Phone";
+import { Sfx } from "../../parts/Sfx";
 import { camStyle, Cursor, project, Ripple, tween, type Key } from "../camera";
 import shots from "../shots.json";
 import { BOX, Caption, clamp, ease, Stage } from "../stage";
 
-export const MAIL_FRAMES = 135;
+export const MAIL_FRAMES = 110;
 
 const PHONE_W = 440;
 const X0 = (BOX.w - PHONE_W) / 2;
@@ -23,7 +24,7 @@ const CAM: Key<{ z: number; px: number; py: number }>[] = [
 ];
 
 /**
- * 17–21秒: 締切の前に通知が届く → 押すと本物のメール。
+ * 20–23.5秒: 締切の前に通知が届く → 押すと本物のメール。
  * 通知のカードは OG と同じ部品（件名はアプリが送るものと同じ形）。
  */
 export function Mail() {
@@ -75,6 +76,8 @@ export function Mail() {
       </div>
       <Ripple x={tap.x} y={tap.y} t={frame - TAP} />
       <Cursor x={curPos.x} y={curPos.y} press={press} opacity={ease(frame, 20, 8) * (1 - ease(frame, TAP + 10, 10))} />
+      <Sfx at={12} name="chime" volume={0.45} />
+      <Sfx at={TAP} name="click" volume={0.6} />
     </Stage>
   );
 }
