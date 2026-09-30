@@ -30,6 +30,7 @@ Google Classroom + WebClass の課題を集約し、締切をメール/ブラウ
 
 ## 開発・運用の制約（重要）
 - **DB スキーマ変更は `prisma db push`** を使う。`migrate dev` は履歴ドリフトで**本番DBのリセットを要求する**ので使わない。build は `migrate deploy` しない（スキーマは手動 push 運用）。
+- **Supabase の Data API はオフ、全テーブルで RLS オン（許可ルールなし）**（2026-10-01）。アプリは Prisma で `postgres`（テーブルの持ち主・RLS を素通りする）として直結するので影響しない。**`prisma db push` で新しいテーブルを作ったら、SQL エディタで `alter table public."テーブル名" enable row level security;` を流す**（新しいテーブルは RLS オフで作られ、Supabase の Security Advisor がエラーを出す）。
 - Windows で `prisma generate` が EPERM になるときは **dev サーバを停止**してから実行。
 - `DATABASE_URL` が Supabase の**プーラー(pgbouncer/6543)**を指しているか要確認（直結だとサーバレスで接続枯渇）。
 - **作業は feature ブランチ→PR**。マージは基本ユーザーが行うが、指示があれば Claude がマージしてよい。

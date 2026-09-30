@@ -32,6 +32,11 @@
 - [x] 🟠 **入力バリデーション**：`sanitizeImportedAssignments` で型・長さ・件数上限・危険な link を除去。各ルートで `invalid_json` / `invalid_payload` を 400 で返す。
 - [x] 🟡 **メールHTMLのエスケープ**：`escapeHtml` で埋め込み前に処理（`src/lib/server/email.ts`）。
 - [ ] 🟡 `Account.refresh_token` 保存（cron は DB ベース化により未使用）。DB 侵害＝全ユーザーの Classroom 読み取り。不要なら保存廃止を検討。
+- [x] 🔴 **Supabase の Data API から全テーブルを読み書きできた**（2026-09-27 に Supabase の Security Advisor が警告）。RLS が全テーブルでオフで、公開用の鍵（anon）に全権限が付いていた。**2026-10-01**: Data API をオフ、8テーブルで RLS オン（許可ルールなし）。アプリは `postgres` で接続するので影響なし（読めることを確認）。アプリは公開用の鍵を使っておらず、リポジトリにも履歴にも無い。API のログにデータへのアクセスは無かった（Supabase のヘルスチェックだけ）。anon / authenticated のテーブル権限は残っている（経路が無いので実害なし。消すなら `revoke all on all tables in schema public from anon, authenticated;`）
+- [ ] 🟠 **ログアウトしても端末に課題が残り、未ログインの画面に出る**（2026-10-01 の点検で判明）。共用 PC だと次に開いた人に課題名・締切が見える。別の人がログインしたときも、一瞬だけ前の人の課題が出る。ログアウトのときに端末の課題（IndexedDB）を消す
+- [ ] 🟠 **cron の認証が、`CRON_SECRET` 未設定だと `Bearer undefined` で通る書き方**（`src/app/api/cron/notify/route.ts`）。通ると全員の通知処理が走り、救済のメールが即時に出る。Vercel の本番に設定されているかを確かめ、未設定なら拒否するように直す
+- [ ] 🟡 Google のアクセストークンを session に載せていて、`/api/auth/session` でブラウザに渡っている（画面では使わない。サーバの同期だけが使う）。読み取り専用の権限だが、XSS があったときの被害を広げる。サーバだけで読むようにする
+- [ ] 🟡 セキュリティヘッダが無い（HSTS だけ Vercel が付ける）。他サイトへの埋め込み防止（`frame-ancestors 'none'`）・`X-Content-Type-Options: nosniff`・`Referrer-Policy` を `next.config.ts` に
 - [ ] 🟡 `CRON_SECRET` 比較が非定数時間（軽微）。ブックマークレットが課題データを URL ハッシュで渡す→履歴に残る（軽微）。
 
 ## やらないと決めたこと（2026-09-29）
