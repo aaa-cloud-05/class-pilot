@@ -5,7 +5,7 @@ export const metadata = {
   title: "プライバシーポリシー",
 };
 
-const UPDATED = "2026年9月29日";
+const UPDATED = "2026年9月30日";
 // Cloudflare Email Routing で個人の Gmail に転送している（受信専用）
 const CONTACT = "support@unionfetch.com";
 
@@ -17,14 +17,14 @@ export default function PrivacyPage() {
 
       <div className="space-y-7 text-sm leading-relaxed text-gray-700">
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
-          <strong>本サービスは個人が開発・運営する非公式のツールです。</strong>
+          <strong>本サービスは非公式のツールです。</strong>
           Google LLC、日本データパシフィック株式会社（WebClass 提供元）その他いかなる組織とも
           提携・関係していません。各サービスの名称・商標は各権利者に帰属します。
         </div>
 
         <p>
           UnionFetch（以下「本サービス」）は、Google Classroom および WebClass の課題を集約し、
-          締切リマインダーを提供する個人開発の Web アプリケーションです。本ポリシーは、本サービスが
+          締切リマインダーを提供する Web アプリケーションです。本ポリシーは、本サービスが
           取得する情報とその取り扱いについて説明します。
         </p>
 
@@ -36,7 +36,13 @@ export default function PrivacyPage() {
               Google Classroom のデータ（受講コース名、課題のタイトル・説明・締切・課題ページへのリンク、提出状況）。
               <strong>読み取り専用</strong>で取得し、Classroom 側のデータを変更することはありません。
             </li>
-            <li>WebClass から取り込んだデータ（コース名、教材、締切、コースページへのリンク、状態）</li>
+            <li>
+              WebClass から取り込んだデータ（コース名、課題名、締切、課題ページへのリンク、提出したかどうか）。詳しくは
+              <Link href="/settings/help/webclass" className="text-blue-600 underline">
+                「WebClass の取り込みについて」
+              </Link>
+              をご覧ください。
+            </li>
             <li>ユーザーが本サービス内で作成・編集した課題、および通知設定</li>
             <li>ご意見・不具合の報告フォーム（Google フォーム）に入力された内容（任意で入力したメールアドレスを含む）</li>
             <li>
@@ -50,9 +56,10 @@ export default function PrivacyPage() {
             <p className="font-semibold text-gray-900 mb-1">取得・保存しない情報</p>
             <ul className="list-disc list-inside space-y-1">
               <li>
-                <strong>成績・点数</strong>（Classroom の評点、WebClass の最高点）は取得・保存しません。
+                <strong>成績・点数</strong>は保存しません。Classroom の評点は取得しません。WebClass
+                の返すデータに含まれる学籍番号・氏名・得点は、取り出さずに捨てます。
               </li>
-              <li>締切管理に不要な情報（WebClass の実施日など）は取り込みません。</li>
+              <li>WebClass の実施日は、提出したかどうかの判定にだけ使い、保存しません。</li>
               <li>
                 上記以外の Google データ（ドライブ、Gmail の本文、連絡先など）にはアクセスしません。
               </li>

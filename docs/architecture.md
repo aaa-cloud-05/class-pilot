@@ -92,31 +92,27 @@ WebClass 取り込み・手動追加もすべて IndexedDB に直接保存され
   - Safari 対策: トランザクション内で `await` しない（自動コミットで `TransactionInactiveError`
     になるため、操作を同期発行して最後に `tx.done` を待つ）
 
-## データフロー④ WebClass 取り込み（ブックマークレット / 自動同期）
+## データフロー④ WebClass 取り込み（ブックマークレット）
 
 **WebClass の内部 JSON API を直接呼ぶ**（旧: 課題実施状況一覧の DOM 解析）。
 API 仕様・調査経緯・負荷対策は [webclass-api.md](./webclass-api.md)。
 
 ```
-WebClass の任意のページで実行（ブックマークレットは手動、ユーザースクリプトは自動）
+WebClass の任意のページで実行（ブックマークレット・手動）。自動取り込みは検証中のため配信停止（2026-09-30）
    → GET  {BASE}/ip_mods.php/plugin/score_summary_table/courses
    → コースの year（無ければコース名の先頭4桁）が2年以上前なら除外
    → GET  .../contents?group_id=<id>   コースごとに直列・250ms間隔
-        ・fetch のキャッシュを無効化しない = If-Modified-Since が自動で付き、
-          変化が無ければ 304（ボディ無し）で返る
+        ・並列にしない。公式の課題実施状況一覧は全コースを並列で読む（ここで読むのはその一部）
+        ・fetch のキャッシュは無効化しないが、WebClass は Last-Modified を毎回いまの時刻で返すので 304 にはならない
         ・contents_kind==="Question" / 非表示でない
         ・締切あり → 締切が180日以内。締切なし → updated が180日以内（期限なしとして取り込む）
         ・提出判定は scores[0].answer_datetime の有無だけを見て、氏名・学籍番号・点数は捨てる
    → transformWebClassPayload() で正規化
    │
-   ├─ ブックマークレット（手動・全端末）
+   └─ ブックマークレット（手動・全端末）
    │    → /import#<JSON> を開く（URLが長すぎる場合は締切の古い順に間引く）
    │    ├─ ログイン中: POST /api/import/webclass（hiddenフィルタ→DB upsert）→ replaceCache → ホームへ
    │    └─ 未ログイン: cacheWebClassAssignments()（IndexedDB の wc- を置換）→ ホームへ
-   │
-   └─ ユーザースクリプト（自動・Tampermonkey・60分に1回）
-        → POST /api/import/webclass に直接（Authorization: Bearer <取り込みトークン>）
-          ※ クロスサイト送信なのでセッション Cookie が付かず、トークンで本人を示す
 ```
 
 所要時間は13コースの実測で、前面のタブなら約5秒。背面のタブは Chrome が
@@ -255,8 +251,7 @@ WebClass の任意のページで実行（ブックマークレットは手動�
 | `PATCH/DELETE /api/assignments/[id]` | 編集 / ソフトデリート | session.user.id |
 | `POST /api/classroom/sync` | Google同期→DB upsert→DB課題返却 | accessToken（無くてもDB返却） |
 | `GET /api/courses` | 全コース（非表示含む）+ hiddenCourses | session.user.id |
-| `POST /api/import/webclass` | WebClass取り込み→DB upsert | session.user.id **または** 取り込みトークン |
-| `GET/POST/DELETE /api/import/token` | 自動同期用トークンの状態/発行/失効 | session.user.id |
+| `POST /api/import/webclass` | WebClass取り込み→DB upsert（`{ assignments }` のみ） | session.user.id |
 | `GET/PATCH /api/notifications/settings` | 通知設定の取得/更新 | session.user.id |
 | `GET/POST/DELETE /api/notifications/push` | Push購読の確認/登録/解除 | session.user.id |
 | `GET /api/cron/notify` | メール通知バッチ | CRON_SECRET |
@@ -271,8 +266,7 @@ src/lib/db.ts                        IndexedDB スキーマ（DB名 classroom-re
 src/lib/server/assignments.ts        DB アクセス（getUserAssignments/sync/edit/softDelete/getUserCourses）
 src/lib/classroom-api.ts             Google Classroom API（fetchAllData は hidden をスキップ）
 src/lib/transform.ts                 Google生データ → Assignment 変換
-src/lib/webclass-script.ts           WebClass API を叩く収集コード（ブックマークレット/ユーザースクリプトを生成）
-src/lib/server/import-token.ts       自動同期用トークンの発行・照合（DBはハッシュのみ保持）
+src/lib/webclass-script.ts           WebClass API を叩く収集コード（ブックマークレットを生成）
 src/lib/webclass.ts                  WebClassペイロード → Assignment 変換・再検証
 src/lib/notification-store.ts        IndexedDB の通知設定/履歴
 src/lib/notification-scheduler.ts    クライアント通知（checkAndNotify）
