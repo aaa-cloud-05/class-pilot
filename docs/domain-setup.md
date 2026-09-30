@@ -257,8 +257,10 @@ features」は**自社機能の宣伝であって、この構成では従って�
 
 apex の MX/SPF は Cloudflare、`send.mail` の MX/SPF は Resend。**名前が違うので衝突しない**（→ §3）。
 
-Resend の API キーは **Permission = Sending access / Domain = `mail.unionfetch.com`** に絞ったものを
-本番用に作成した。このアプリは送信しかしないので、Full access にする理由が無い。
+Resend の API キーは **Full access** が要る。予約したメールの取り消し（`emails.cancel`・2026-09-29 に追加）は
+Sending access のキーでは `401 restricted_api_key`（"This API key is restricted to only send emails"）で断られる。
+最初は Sending access / Domain = `mail.unionfetch.com` に絞ったキーを作っていたため、2026-09-29〜30 は取り消しが
+すべて失敗し、提出・通知オフ・アカウント削除のあとも予約メールが届いて重複した（1日100通の上限に達した）。
 
 ### DMARC の注意（2026年5月に仕様が変わっている）
 
