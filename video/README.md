@@ -8,7 +8,7 @@ cd video
 npm install
 npm run studio       # ブラウザで見ながら直す
 npm run og           # ../public/og.png（1200×630）
-npm run teaser       # out/teaser.mp4（X 用の紹介動画・1080×1080・約29秒）
+npm run teaser       # out/teaser.mp4（X 用の紹介動画・1080×1080・約32秒）
 npm run teaser:wide  # out/teaser-wide.mp4（同じ構成の横長・1920×1080）
 npm run guide        # out/guide.mp4（使い方の動画・1920×1080・約1分35秒）
 npm run audio        # public/audio/ の BGM と効果音を作り直す
@@ -34,6 +34,21 @@ dev サーバ（リポジトリの直下で `npm run dev`）を起動してか�
 - `src/guide/` 使い方の動画。左に説明・右に画面の並べ方は `GuideStage.tsx`。ブラウザ（Chrome・Safari）・Google の許可画面・WebClass は `ui/` で描いたもの
 - `src/parts/` 共通の部品（スマホの枠・メールのカード・札・効果音）。色と書体は `src/theme.ts`（アプリのライトのトークン、ワードマークは Plus Jakarta Sans）
 - 音は `scripts/make-audio.mjs` で合成した WAV（`public/audio/`）。BGM は `Html5Audio`、効果音は `parts/Sfx.tsx`
+
+## 微修正のしかた
+
+1. `npm run studio` でブラウザに Remotion Studio が開く。左で `teaser`（か `guide`）を選び、下のタイムラインで好きなコマへ動かす
+2. 下のファイルを直して保存すると、Studio にすぐ反映される（数字はフレーム。**30 = 1秒**）
+3. よければ `npm run teaser`（`teaser:wide`・`guide`）で書き出す。全体の長さは場面の長さの合計から自動で決まる
+
+| 直したいこと | 場所 |
+|---|---|
+| 場面の長さ（最後に止まって見せる時間） | 各場面のファイルの先頭 `export const 〇〇_FRAMES = …`（例: `src/teaser/scenes/Calendar.tsx` の `CALENDAR_FRAMES`）。増やすと、動きが終わったあと止まっている時間が伸びる |
+| 押す・切り替わるタイミング | 各場面の `CLICK`・`TAP`・`T = { … }`（その場面の頭から何フレーム目か） |
+| 寄り方 | 各場面の `CAM`（`at` フレーム目に、`z` 倍で、ページの `px, py` を真ん中に置く）。キーの間はなめらかにつながる |
+| 見出しの文言 | 各場面の `<Caption lines={[…]}>`（横長は `wideLines`）。使い方の動画は各場面の `steps` |
+| 場面の順番・つなぎ | `src/teaser/Teaser.tsx`（使い方は `src/guide/Guide.tsx`）の `SCENES` と `FADE` |
+| 音量 | BGM は `Teaser.tsx`・`Guide.tsx` の `Bgm` の `volume`、効果音は各場面の `<Sfx volume={…}>` |
 
 ## 決まりごと
 

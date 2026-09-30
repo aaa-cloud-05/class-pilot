@@ -6,7 +6,7 @@ import { camStyle, Cursor, project, Ripple, tween, type Key } from "../camera";
 import shots from "../shots.json";
 import { BOX, Caption, clamp, ease, Stage } from "../stage";
 
-export const MAIL_FRAMES = 110;
+export const MAIL_FRAMES = 150;
 
 const PHONE_W = 440;
 const X0 = (BOX.w - PHONE_W) / 2;

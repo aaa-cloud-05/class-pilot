@@ -14,7 +14,7 @@ BGM と効果音は `video/scripts/make-audio.mjs` で合成したもの（素�
 |---|---|
 | 目的 | タイムラインで手を止めてもらい、unionfetch.com を開いてもらう |
 | 見る人 | 同じ大学で WebClass と Classroom の両方を使っている学生 |
-| 長さ | 約29秒、30fps |
+| 長さ | 約32秒、30fps（カレンダーとメールは、動きのあと少し止めて見せる） |
 | 画面 | **1080×1080（1:1）が本命**（`npm run teaser`）。同じ構成で 1920×1080（`npm run teaser:wide`） |
 | 音 | BGM と効果音（無音でも伝わる作り） |
 
