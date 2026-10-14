@@ -2,6 +2,7 @@ import { linearTiming, TransitionSeries } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { Html5Audio, interpolate, staticFile, useVideoConfig } from "remotion";
 import { Calendar, CALENDAR_FRAMES } from "./scenes/Calendar";
+import { Cover, COVER_FRAMES } from "./scenes/Cover";
 import { End, END_FRAMES } from "./scenes/End";
 import { Mail, MAIL_FRAMES } from "./scenes/Mail";
 import { PhoneTour, PHONE_TOUR_FRAMES } from "./scenes/PhoneTour";
@@ -9,8 +10,9 @@ import { Problems, PROBLEMS_FRAMES } from "./scenes/Problems";
 import { Scatter, SCATTER_FRAMES } from "./scenes/Scatter";
 import { Start, START_FRAMES } from "./scenes/Start";
 
-/** 場面の順と長さ（30fps）。構成案は docs/video-plan.md の A */
+/** 場面の順と長さ（30fps）。構成案は docs/video-plan.md の A。最初の表紙が X のサムネイルになる */
 const SCENES = [
+  { id: "cover", frames: COVER_FRAMES, C: Cover },
   { id: "problems", frames: PROBLEMS_FRAMES, C: Problems },
   { id: "scatter", frames: SCATTER_FRAMES, C: Scatter },
   { id: "phone", frames: PHONE_TOUR_FRAMES, C: PhoneTour },

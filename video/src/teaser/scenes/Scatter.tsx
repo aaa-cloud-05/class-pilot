@@ -27,7 +27,8 @@ function TaskCard({ t }: { t: (typeof TASKS)[number] }) {
       {/* どちらから来たかの札。1列に並んでも混ざっているのが分かるよう、カードの角に付けたまま動かす */}
       <SourceTag source={t.src} size={14} style={{ position: "absolute", right: 14, top: -13, boxShadow: "0 0 0 3px #fff" }} />
       <div style={{ fontSize: 21, fontWeight: 700, color: C.fg, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</div>
-      <div style={{ marginTop: 6, display: "flex", gap: 12, fontSize: 17, fontWeight: 500, color: C.sub, whiteSpace: "nowrap" }}>
+      {/* 17px だと「アルゴリズムとデータ構造」が幅ちょうどで、カードが動くたびに末尾の … が出たり消えたりした。余裕を持って収まる大きさにする */}
+      <div style={{ marginTop: 6, display: "flex", gap: 12, fontSize: 16, fontWeight: 500, color: C.sub, whiteSpace: "nowrap" }}>
         <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{t.course}</span>
         <span style={{ fontVariantNumeric: "tabular-nums" }}>{t.due}</span>
         <span style={{ fontWeight: 700, color: t.soon ? C.warn : C.faint }}>{t.left}</span>
