@@ -1,4 +1,4 @@
-import { AbsoluteFill, Img, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Sfx } from "../../parts/Sfx";
 import { SourceTag } from "../../parts/SourceTag";
 import { C, FLOAT, jakarta, noto, WASH } from "../../theme";
@@ -11,29 +11,25 @@ export const OUTRO_FRAMES = 210;
 /** 補足の文字。薄すぎると大事なことが読み飛ばされるので、灰色の中では濃いめ */
 const NOTE = "#454b53";
 
-function Card({ n, title, body, tag, at }: { n: number; title: string; body: string; tag: "classroom" | "webclass"; at: number }) {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const p = spring({ frame: frame - at, fps, config: { damping: 16, mass: 0.7 } });
+function Card({ n, title, body, tag, big = false }: { n: number; title: string; body: string; tag: "classroom" | "webclass"; big?: boolean }) {
+  const k = big ? 1.25 : 1;
   return (
     <div
       style={{
         display: "flex",
-        gap: 28,
+        gap: 28 * k,
         alignItems: "center",
-        padding: "34px 40px",
-        borderRadius: 28,
+        padding: `${34 * k}px ${40 * k}px`,
+        borderRadius: 28 * k,
         background: "#fff",
         boxShadow: FLOAT,
-        opacity: Math.min(1, p * 1.5),
-        transform: `translateY(${(1 - p) * 30}px)`,
       }}
     >
-      <Num n={n} />
+      <Num n={n} size={76 * k} />
       <div>
-        <SourceTag source={tag} size={20} />
-        <div style={{ marginTop: 12, fontSize: 40, fontWeight: 800, color: C.fg }}>{title}</div>
-        <div style={{ marginTop: 8, fontSize: 26, fontWeight: 600, color: NOTE }}>{body}</div>
+        <SourceTag source={tag} size={20 * k} />
+        <div style={{ marginTop: 12 * k, fontSize: 40 * k, fontWeight: 800, color: C.fg }}>{title}</div>
+        <div style={{ marginTop: 8 * k, fontSize: 26 * k, fontWeight: 600, color: NOTE }}>{body}</div>
       </div>
     </div>
   );
@@ -59,35 +55,34 @@ const Num = ({ n, size = 76 }: { n: number; size?: number }) => (
   </span>
 );
 
-/** はじめ: この動画でやること（2つ） */
+/**
+ * はじめ: この動画でやること（2つ）。X は最初のコマをサムネイルにするので、0 フレーム目から全部見せる
+ * （出てくる動きは付けず、ゆっくり寄るだけ）。タイムラインで小さく出ても読めるよう、文字は大きめ。
+ */
 export function Intro() {
+  const frame = useCurrentFrame();
+  const zoom = interpolate(frame, [0, INTRO_FRAMES], [1, 1.035], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   return (
     <AbsoluteFill style={{ backgroundColor: C.bg, fontFamily: noto }}>
       <AbsoluteFill style={{ background: WASH }} />
-      <div style={{ position: "absolute", left: 130, top: 0, bottom: 0, width: 640, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <Rise at={0}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <Img src={staticFile("mark.png")} style={{ width: 56, height: 56 }} />
-            <span style={{ fontFamily: jakarta, fontWeight: 800, fontSize: 38, color: C.fg }}>UnionFetch</span>
+      <AbsoluteFill style={{ transform: `scale(${zoom})`, transformOrigin: "50% 50%" }}>
+        <div style={{ position: "absolute", left: 120, top: 0, bottom: 0, width: 700, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+            <Img src={staticFile("mark.png")} style={{ width: 72, height: 72 }} />
+            <span style={{ fontFamily: jakarta, fontWeight: 800, fontSize: 50, color: C.fg }}>UnionFetch</span>
           </div>
-        </Rise>
-        <Rise at={6}>
-          <div style={{ marginTop: 30, fontSize: 84, fontWeight: 800, lineHeight: 1.2, letterSpacing: "-0.03em", color: C.fg }}>はじめ方</div>
-        </Rise>
-        <Rise at={12}>
-          <div style={{ marginTop: 22, fontSize: 30, fontWeight: 600, lineHeight: 1.7, color: NOTE }}>
+          <div style={{ marginTop: 34, fontSize: 128, fontWeight: 800, lineHeight: 1.15, letterSpacing: "-0.04em", color: C.fg }}>はじめ方</div>
+          <div style={{ marginTop: 26, fontSize: 40, fontWeight: 700, lineHeight: 1.6, color: NOTE }}>
             PC でもスマホでも、
             <br />
             やることは2つだけ。
           </div>
-        </Rise>
-      </div>
-      <div style={{ position: "absolute", left: 820, right: 130, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 30 }}>
-        <Card n={1} tag="classroom" title="Google でログイン" body="Classroom の課題が自動で入ります" at={22} />
-        <Card n={2} tag="webclass" title="ブックマークを1つ登録" body="WebClass の課題も取り込めます" at={40} />
-      </div>
-      <Sfx at={22} name="pop" volume={0.35} />
-      <Sfx at={40} name="pop" volume={0.35} />
+        </div>
+        <div style={{ position: "absolute", left: 800, right: 110, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 34 }}>
+          <Card big n={1} tag="classroom" title="Google でログイン" body="Classroom の課題が自動で入ります" />
+          <Card big n={2} tag="webclass" title="ブックマークを1つ登録" body="WebClass の課題も取り込めます" />
+        </div>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 }

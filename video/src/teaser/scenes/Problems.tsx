@@ -15,7 +15,7 @@ const Icon = ({ children, color }: { children: ReactNode; color: string }) => (
 /** 学生がいま困っていること。上から順に1枚ずつ出す。text は行ごと（変なところで折り返さないよう区切っておく） */
 const ITEMS = [
   {
-    at: -20, // 1枚目は最初から出しておく（X のサムネイルに入る）
+    at: 10,
     text: ["WebClass と Classroom に分かれていて、", "締切を管理しにくい"],
     tint: "#edf2ff",
     color: C.primary,
@@ -27,7 +27,7 @@ const ITEMS = [
     ),
   },
   {
-    at: 22,
+    at: 34,
     text: ["締切が近づいても通知が来ない"],
     tint: "#fbf3e6",
     color: "#b7791f",
@@ -41,7 +41,7 @@ const ITEMS = [
     ),
   },
   {
-    at: 52,
+    at: 62,
     text: ["気づいたら、締切が過ぎていた"],
     tint: "#fbedec",
     color: C.danger,
@@ -54,12 +54,12 @@ const ITEMS = [
   },
 ];
 
-/** 0–5秒: いまの困りごとを3つ。見出しは 0 フレーム目から見えている（X のサムネイルになる） */
+/** 1–6秒: いまの困りごとを3つ（サムネイルは前の表紙が受け持つ） */
 export function Problems() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   return (
-    <Stage caption={<Caption lines={["課題の締切、", "こんなことない？"]} at={-20} />}>
+    <Stage caption={<Caption lines={["課題の締切、", "こんなことない？"]} at={2} />}>
       <div style={{ position: "absolute", left: 30, top: 40, width: BOX.w - 60, display: "flex", flexDirection: "column", gap: 26 }}>
         {ITEMS.map((it) => {
           const p = spring({ frame: frame - it.at, fps, config: { damping: 14, mass: 0.7 } });

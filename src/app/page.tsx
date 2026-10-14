@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { addDays, addWeeks, endOfWeek, format, isSameDay, startOfWeek } from "date-fns"
 import { ja } from "date-fns/locale"
-import { CalendarRange, ChevronRight, Inbox, X } from "lucide-react"
+import { CalendarRange, ChevronRight, Inbox, LogIn, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ViewAssignment } from "@/lib/assignment-view"
 import { AllList, type FocusWeek } from "@/components/app/all-list"
@@ -46,7 +46,7 @@ function ListSkeleton() {
 type View = "recent" | "all"
 
 export default function MockHomePage() {
-  const { now, assignments, loading, setupDismissed, setAddOpen } = useApp()
+  const { now, assignments, loading, loggedIn, setupDismissed, setAddOpen } = useApp()
   const desktop = useMediaQuery(DESKTOP_QUERY)
   const [view, setView] = useState<View>("recent")
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -217,12 +217,20 @@ export default function MockHomePage() {
         title="課題はまだありません"
         description="Google でログインすると Classroom の課題が、WebClass をつなぐと WebClass の課題が、ここに締切順で並びます。"
         action={
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <ButtonLink href="/settings/setup">WebClass をつなぐ</ButtonLink>
-            <Button variant="secondary" onClick={() => setAddOpen(true)}>
-              自分で追加
-            </Button>
-          </div>
+          // 未ログインで来た人がいちばん最初に押すのはログイン（ここにボタンが無く、ホームで止まっていた）
+          !loggedIn ? (
+            <ButtonLink href="/login">
+              <LogIn className="h-4 w-4" aria-hidden />
+              Google でログイン
+            </ButtonLink>
+          ) : (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <ButtonLink href="/settings/setup">WebClass をつなぐ</ButtonLink>
+              <Button variant="secondary" onClick={() => setAddOpen(true)}>
+                自分で追加
+              </Button>
+            </div>
+          )
         }
       />
     </Card>
